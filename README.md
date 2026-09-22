@@ -1,9 +1,3 @@
-<!--
-  Profile README for github.com/abdulhathi
-  Publish: create a PUBLIC repo named exactly "abdulhathi" and commit this file as README.md.
-  Fill the TODO markers (LinkedIn URL, helpdesk repo link) before publishing.
--->
-
 # Hi, I'm Abdul Hathi 👋
 
 **Staff Engineer · Multi-Cloud Architect (GCP · AWS · Azure)**, with 18+ years across IC, Tech Lead, Senior Engineer and Architect roles in healthcare and enterprise. Currently at **Quantiphi**, based in Irvine, CA.
@@ -11,7 +5,6 @@
 I design distributed, event-driven systems that stay reliable at scale, and I still like shipping the code myself.
 
 [![Website](https://img.shields.io/badge/Website-abdulhathi.com-0A66C2?style=flat-square)](https://www.abdulhathi.com)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat-square&logo=linkedin)](https://www.linkedin.com/in/TODO)
 [![Email](https://img.shields.io/badge/Email-abdulhathi%40gmail.com-EA4335?style=flat-square&logo=gmail&logoColor=white)](mailto:abdulhathi@gmail.com)
 
 ---
@@ -28,7 +21,6 @@ I design distributed, event-driven systems that stay reliable at scale, and I st
 
 | Project | What it shows | Stack |
 |---|---|---|
-| [**AI Helpdesk**](https://github.com/abdulhathi/TODO) | AI-powered ticket triage in a monorepo with shared Zod contracts, a background job queue and E2E tests | Bun · Express 5 · Prisma · pg-boss · React 19 · Playwright |
 | [**OnlineShopMicroservices**](https://github.com/abdulhathi/OnlineShopMicroservices) | E-commerce split into independently deployable services | C# · .NET · Docker |
 | [**microservices-with-kafka**](https://github.com/abdulhathi/microservices-with-kafka) | Event-driven communication between services over Kafka | TypeScript · Kafka |
 | [**todo-gcp-pubsub-retry**](https://github.com/abdulhathi/todo-gcp-pubsub-retry) | Reliable messaging on GCP with retry and dead-letter handling | TypeScript · GCP Pub/Sub |
