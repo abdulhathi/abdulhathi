@@ -1,0 +1,8 @@
+fastapi
+httpx
+pydantic
+pandas
+numpy
+scikit-learn
+sqlalchemy
+pytest
