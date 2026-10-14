@@ -1,0 +1,237 @@
+import type { Topic } from './types';
+
+export const topic: Topic = {
+  id: 'dp-digit',
+  patterns: [
+    { name: 'Walk the digits of N', idea: 'Go left to right along N: a smaller digit frees every later position (count them with a formula), an equal digit keeps you tight.' },
+    { name: 'Memo on position and state', idea: 'When the rule needs memory (used digits, the last digit, a digit sum, a remainder), memoise the free branches on (position, state).' },
+    { name: 'Binary digits', idea: 'The same tight-or-free walk works on the bits of N, often with Fibonacci-like or cycle counts for the free part.' },
+  ],
+  signals: [
+    { see: 'Count the numbers in [low, high], or up to N, whose digits have some property', think: 'Digit DP with f(high) − f(low − 1)', why: 'Counting up to a bound is much easier than counting inside a range.' },
+    { see: 'N is huge: up to 10⁹, 10¹⁸, or a string of 100 digits', think: 'Work on N\'s digits, never loop over the numbers', why: 'There are only about 10 decisions per digit position.' },
+    { see: 'The property needs memory: digits used, previous digit, digit sum, remainder', think: 'Add that memory to the DP state', why: 'The state must hold everything the remaining digits need to know.' },
+    { see: '"All digits distinct" or "at least one repeated digit"', think: 'A 10-bit mask of used digits, or complement counting', why: 'Ten digits fit in a small mask, and "repeated" is "not distinct".' },
+    { see: 'No two adjacent 1s in binary, or counting set bits of all numbers up to N', think: 'Digit DP on the binary digits', why: 'Binary is base 2 with the same tight and free idea.' },
+    { see: 'Leading zeros would break the rule (even-digit counts, stepping numbers, counting zeros)', think: 'Add a "started" flag', why: 'Zeros before the first real digit are not digits of the number.' },
+  ],
+  problems: [
+    // ---------- Walk the digits of N ----------
+    {
+      id: 357, title: 'Count Numbers with Unique Digits', pattern: 'Walk the digits of N', core: true,
+      summary: 'Count the numbers x with 0 ≤ x < 10ⁿ whose digits are all different.',
+      hints: ['Count by how many digits the number has.', 'A k-digit number with distinct digits has 9 choices for its first digit (not 0), then 9, 8, 7 and so on for the rest.'],
+      insight: 'With the bound 10ⁿ there is nothing to stay tight against, so each length is a falling product, 9 × 9 × 8 × …, and the answer is their sum plus 1 for zero.',
+      approach: ['If n is 0, return 1.', 'total = 10 (all one-digit numbers, including 0); term = 9.', 'For k from 2 to n: multiply term by (11 − k) and add it to total.', 'Return total.'],
+      ds: ['Counting formula'], time: 'O(n)', space: 'O(1)',
+      traps: ['The first digit has 9 choices because it cannot be 0; the second also has 9 because it can be 0 but not the first digit.'],
+    },
+    {
+      id: 902, title: 'Numbers At Most N Given Digit Set', pattern: 'Walk the digits of N', core: true,
+      summary: 'Given a set of allowed digits (from 1 to 9) and a number n, count the positive integers up to n that can be written using only those digits, each as often as you like.',
+      hints: [
+        'Numbers with fewer digits than n are always smaller than n.',
+        'For numbers with as many digits as n, go left to right and compare with n\'s digits.',
+        'Choosing a smaller allowed digit frees every later position; choosing the equal digit keeps you tight.',
+      ],
+      insight: 'Count the shorter numbers as D + D² + …, then walk n\'s digits: at each position add (allowed digits below n\'s digit) × D^(positions left), continue only if n\'s digit is itself allowed, and add 1 for n if you get to the end.',
+      approach: [
+        'Let D be the number of allowed digits and L the number of digits of n.',
+        'Add D^k for k from 1 to L − 1.',
+        'For each position i of n: add (allowed digits smaller than n[i]) × D^(L − i − 1).',
+        'If n[i] is not allowed, stop and return the total.',
+        'If every digit of n was allowed, add 1 for n itself.',
+      ],
+      ds: ['Digits of n', 'Counting formula'], time: 'O(L × D)', space: 'O(L)',
+      traps: ['Forgetting n itself when all its digits are allowed.', 'The walk must stop as soon as n\'s digit is not allowed.'],
+    },
+    {
+      id: 233, title: 'Number of Digit One', pattern: 'Walk the digits of N', core: true,
+      summary: 'Count how many times the digit 1 appears when you write out every number from 0 to n.',
+      hints: [
+        'Count the 1s in each position (ones, tens, hundreds…) separately.',
+        'For a position with value p, split n into high = n / (10p), digit = (n / p) mod 10 and low = n mod p.',
+        'The count for that position depends on whether its digit is 0, 1, or 2–9.',
+      ],
+      insight: 'In position p the 1s come in full blocks of p, one block per value of the higher part, plus a partial block decided by the current digit: high·p if the digit is 0, high·p + low + 1 if it is 1, and (high + 1)·p if it is 2–9.',
+      approach: [
+        'For p = 1, 10, 100, … while p ≤ n:',
+        'high = floor(n / (10p)), digit = floor(n / p) mod 10, low = n mod p.',
+        'Add high × p, then add low + 1 if digit is 1, or p if digit is 2 or more.',
+        'Return the total.',
+      ],
+      ds: ['Integer arithmetic'], time: 'O(log n)', space: 'O(1)',
+      traps: ['Looping over every number up to 10⁹ is far too slow.', 'The same answer comes from a general digit DP with a "1s so far" state; the formula is its shortcut.'],
+    },
+    {
+      id: 1067, title: 'Digit Count in Range', pattern: 'Walk the digits of N',
+      summary: 'Given a digit d, count how many times d appears in all the numbers from low to high.',
+      hints: ['Solve "count in 1..n" and subtract: f(high) − f(low − 1).', 'Count per position, as in Number of Digit One.', 'The digit 0 needs care: leading zeros are not written.'],
+      insight: 'The per-position count from problem 233 works for any digit, with one fix for d = 0: the higher part must be at least 1, because a number never starts with zero.',
+      approach: [
+        'f(n): for each position value p, compute high, digit and low as in problem 233.',
+        'For d > 0: add high × p, plus (low + 1) if digit = d, plus p if digit > d.',
+        'For d = 0, only where high ≥ 1: add (high − 1) × p, plus (low + 1) if digit = 0, plus p if digit > 0.',
+        'Return f(high) − f(low − 1).',
+      ],
+      ds: ['Integer arithmetic'], time: 'O(log n)', space: 'O(1)',
+      traps: ['Counting leading zeros is the classic bug for d = 0.', 'Premium problem; the free problem 233 trains the same idea.'],
+    },
+    {
+      id: 2999, title: 'Count the Number of Powerful Integers', pattern: 'Walk the digits of N',
+      summary: 'Count the integers in [start, finish] that end with a given digit string s and whose every digit is at most limit.',
+      hints: [
+        'Count up to a bound and subtract: f(finish) − f(start − 1).',
+        'The last |s| digits are fixed, so only the prefix in front of s is free.',
+        'Walk the prefix digits of N: each prefix digit may be 0..limit.',
+      ],
+      insight: 'With the suffix fixed, count prefixes: walk N\'s leading digits adding (smaller allowed digits) × (limit + 1)^(positions left); if a digit of N exceeds limit, every prefix below is allowed, so add them all and stop; at the end compare N\'s own suffix with s.',
+      approach: [
+        'f(N): if N has fewer digits than s, return 0. Let L = (digits of N) − |s|.',
+        'For each of the first L digits d of N: if d > limit, add (limit + 1)^(L − i) and return. Otherwise add d × (limit + 1)^(L − i − 1).',
+        'If all prefix digits matched, add 1 if N\'s last |s| digits are at least s.',
+        'Answer = f(finish) − f(start − 1).',
+      ],
+      ds: ['Digits of N as a string'], time: 'O(log N)', space: 'O(log N)',
+      traps: [
+        'Shorter numbers are covered automatically: a prefix with leading zeros just means fewer real digits.',
+        'Values up to 10¹⁵ are exact in TypeScript numbers.',
+      ],
+    },
+
+    // ---------- Memo on position and state ----------
+    {
+      id: 788, title: 'Rotated Digits', pattern: 'Memo on position and state',
+      summary: 'Rotating each digit by 180°: 0, 1 and 8 stay the same, 2↔5 and 6↔9 swap, and 3, 4, 7 become invalid. A number is good if it rotates into a valid, different number. Count the good numbers from 1 to n.',
+      hints: ['A number is good if every digit can rotate and at least one of them changes.', 'Brute force passes for n ≤ 10⁴, but try the digit DP: the only state is "has a changing digit appeared yet?".'],
+      insight: 'Digit DP with one bit of state (seen a 2, 5, 6 or 9) and the digits 3, 4, 7 forbidden; count the numbers up to n that finish with the bit set.',
+      approach: [
+        'Walk n\'s digits with a tight flag and a "changed" flag.',
+        'At each position try the allowed digits (0, 1, 8 keep the flag; 2, 5, 6, 9 set it; 3, 4, 7 are skipped), up to n\'s digit while tight.',
+        'Memoise the free branches on (position, changed).',
+        'Count the numbers that end with changed set.',
+      ],
+      ds: ['Digits of n', 'Memo table'], time: 'O(log n × 10)', space: 'O(log n)',
+      traps: ['Numbers made only of 0, 1 and 8 rotate into themselves, so they are not good.'],
+    },
+    {
+      id: 2376, title: 'Count Special Integers', pattern: 'Memo on position and state', core: true,
+      summary: 'Count the positive integers from 1 to n (n up to 2 × 10⁹) whose digits are all distinct.',
+      hints: [
+        'Count the shorter numbers by length with falling products.',
+        'For numbers as long as n, walk n\'s digits and remember which digits are already used.',
+        'Choosing a smaller unused digit leaves a free tail: count it with a product of the remaining choices.',
+      ],
+      insight: 'The state is the set of used digits (a 10-bit mask). In a free tail only the NUMBER of used digits matters, so each free tail is a falling product.',
+      approach: [
+        'For each length k shorter than n: add 9 × 9 × 8 × … (k factors).',
+        'Walk n\'s digits with a used-digit mask. At position i, for each unused digit d below n[i] (and not 0 at the first position), add the ways to fill the remaining positions with distinct unused digits: (10 − i − 1) × (10 − i − 2) × … for the remaining positions.',
+        'If n[i] is already used, stop. Otherwise mark it and continue.',
+        'If you reach the end, add 1 for n itself.',
+      ],
+      ds: ['Bitmask of used digits', 'Counting formula'], time: 'O(log n × 10)', space: 'O(log n)',
+      traps: ['The first position cannot be 0; later positions can.', 'Problem 1012 asks for the complement: numbers with a repeated digit = n − this count.'],
+    },
+    {
+      id: 1012, title: 'Numbers With Repeated Digits', pattern: 'Memo on position and state',
+      summary: 'Count the positive integers from 1 to n that have at least one repeated digit.',
+      hints: ['Counting the opposite is easier: numbers whose digits are all distinct.', 'Then subtract from n.'],
+      insight: 'Complement counting: repeated = n − (numbers up to n with distinct digits), and the distinct count is the used-digit walk from Count Special Integers.',
+      approach: ['Compute distinct(n), the count of 1..n with all distinct digits, with the used-digit walk.', 'Return n − distinct(n).'],
+      ds: ['Bitmask of used digits', 'Counting formula'], time: 'O(log n × 10)', space: 'O(log n)',
+      traps: ['Make sure distinct(n) counts 1..n, not 0..n.'],
+    },
+    {
+      id: 2719, title: 'Count of Integers', pattern: 'Memo on position and state',
+      summary: 'Two numbers are given as strings (up to 10²²) with a range [min_sum, max_sum]. Count the integers between them whose digit sum lies in that range, modulo 10⁹ + 7.',
+      hints: [
+        'Count up to a bound and subtract, but the bounds are strings: compute f(num2) − f(num1) and add num1 back if it qualifies.',
+        'State: position and digit sum so far. Stop exploring once the sum passes max_sum.',
+        'Memoise the free states.',
+      ],
+      insight: 'Digit DP over (position, sum so far, tight). The free states repeat across branches, so memoising them costs about 23 positions × 400 sums × 10 digits.',
+      approach: [
+        'f(N): recurse over positions with (sum, tight). If sum > max_sum return 0; at the end return 1 if sum ≥ min_sum.',
+        'Try digits 0 up to N[pos] when tight, else up to 9; the child stays tight only if the digit equals N[pos].',
+        'Memoise non-tight results on (pos, sum).',
+        'Answer = f(num2) − f(num1) + (1 if num1 itself qualifies), kept non-negative modulo 10⁹ + 7.',
+      ],
+      ds: ['Digits as a string', 'Memo table (position × sum)'], time: 'O(L × max_sum × 10)', space: 'O(L × max_sum)',
+      traps: ['Subtracting 1 from a numeric string is awkward; subtracting f(num1) and adding num1 back avoids it.', 'Add the modulus before taking the remainder after the subtraction.'],
+    },
+    {
+      id: 2801, title: 'Count Stepping Numbers in Range', pattern: 'Memo on position and state',
+      summary: 'A stepping number has adjacent digits that differ by exactly 1. Count the stepping numbers between two bounds given as strings of up to 100 digits, modulo 10⁹ + 7.',
+      hints: [
+        'The state must remember the previous digit.',
+        'Before the number starts, zeros are just padding: keep a "started" flag.',
+        'Use f(high) − f(low) + (1 if low is itself a stepping number).',
+      ],
+      insight: 'Digit DP over (position, last digit, started, tight). Only the last digit matters for the rule, so there are about 100 × 10 free states.',
+      approach: [
+        'f(N): recurse over positions; while not started, a 0 keeps the number unstarted.',
+        'Once started, the next digit must be the last digit ± 1 (and at most N\'s digit while tight).',
+        'Memoise non-tight states on (pos, last, started).',
+        'Count started numbers and combine as f(high) − f(low) + check(low), modulo 10⁹ + 7.',
+      ],
+      ds: ['Digits as a string', 'Memo table (position × last digit)'], time: 'O(L × 10 × 10)', space: 'O(L × 10)',
+      traps: ['A leading zero must not act as the previous digit, or 01 would look like a step.', 'The bounds are too big for any number type: work on the strings.'],
+    },
+    {
+      id: 2827, title: 'Number of Beautiful Integers in the Range', pattern: 'Memo on position and state',
+      summary: 'Count the integers in [low, high] (up to 10⁹) that have as many even digits as odd digits and are divisible by k (k ≤ 20).',
+      hints: [
+        'Two facts are needed: the difference between the even and odd digit counts, and the remainder modulo k.',
+        'Leading zeros must not count as even digits.',
+        'Answer = f(high) − f(low − 1).',
+      ],
+      insight: 'Digit DP with state (position, even − odd difference, remainder mod k, started); a number counts when it ends with difference 0 and remainder 0.',
+      approach: [
+        'Recurse over the digits of the bound with tight and started flags.',
+        'When a real digit is placed, shift the difference by +1 (even) or −1 (odd) and set remainder = (remainder × 10 + digit) mod k.',
+        'At the end, count started numbers with difference 0 and remainder 0.',
+        'Memoise non-tight states; the answer is f(high) − f(low − 1).',
+      ],
+      ds: ['Digits of the bound', 'Memo table'], time: 'O(L² × k × 10)', space: 'O(L² × k)',
+      traps: ['Counting leading zeros as even digits is the usual bug.', 'Numbers with an odd number of digits can never qualify; the DP handles that without a special case.'],
+    },
+
+    // ---------- Binary digits ----------
+    {
+      id: 3007, title: 'Maximum Number That Sum of the Prices Is Less Than or Equal to K', pattern: 'Binary digits',
+      summary: 'The price of a number is the count of 1 bits at positions x, 2x, 3x, … of its binary form (position 1 is the lowest bit). Find the largest num such that the prices of 1..num add up to at most k.',
+      hints: [
+        'The total price only grows with num, so binary search on num.',
+        'For one bit position p, how many of the numbers 0..num have that bit set? The pattern repeats every 2^p numbers.',
+        'Add those counts over the positions x, 2x, 3x, …',
+      ],
+      insight: 'Bit p is set in exactly 2^(p−1) of every 2^p consecutive numbers, so its count up to num is a full-cycle part plus a remainder; binary search num with this O(log num) count.',
+      approach: [
+        'count(num, p) = floor((num + 1) / 2^p) × 2^(p−1) + max(0, ((num + 1) mod 2^p) − 2^(p−1)).',
+        'price(num) = the sum of count(num, p) over p = x, 2x, 3x, … while 2^(p−1) ≤ num.',
+        'Binary search for the largest num with price(num) ≤ k. Bit x alone is set in about half of all numbers, so num never exceeds 2k + 256: a safe upper bound that stays below 2⁵³.',
+        'Return it.',
+      ],
+      ds: ['Binary search', 'Integer arithmetic'], time: 'O(log² k)', space: 'O(1)',
+      traps: ['JavaScript bitwise operators work on 32 bits, but positions go up to about 50: use powers of two with multiplication and Math.floor, or BigInt.', 'Bit positions are 1-indexed in this problem.'],
+    },
+    {
+      id: 600, title: 'Non-negative Integers without Consecutive Ones', pattern: 'Binary digits', core: true,
+      summary: 'Count the integers from 0 to n whose binary form has no two adjacent 1s.',
+      hints: [
+        'Work on the binary digits of n.',
+        'How many k-bit strings have no adjacent 1s? The counts follow the Fibonacci pattern.',
+        'Walk n\'s bits from the top: every 1 bit lets you put a 0 there instead and count all free endings.',
+      ],
+      insight: 'Free k-bit strings with no adjacent 1s number f[k], with f[k] = f[k−1] + f[k−2]. Walking n\'s bits from the top, each 1 bit adds f[bits after it]; stop as soon as n itself shows two adjacent 1s.',
+      approach: [
+        'f[0] = 1, f[1] = 2, f[k] = f[k−1] + f[k−2].',
+        'Scan n\'s bits from the most significant; let k be the number of bits after the current one.',
+        'When the bit is 1: add f[k]. If the previous bit was also 1, return the total right away.',
+        'If the scan finishes, add 1 for n itself.',
+      ],
+      ds: ['Bits of n', 'Fibonacci table'], time: 'O(log n)', space: 'O(log n)',
+      traps: ['The answer includes 0.', 'After two adjacent 1s, add that bit\'s count and stop: n and everything above that prefix is invalid.'],
+    },
+  ],
+};

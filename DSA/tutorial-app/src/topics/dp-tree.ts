@@ -1,0 +1,256 @@
+import type { Topic } from './types';
+
+export const topic: Topic = {
+  id: 'dp-tree',
+  patterns: [
+    { name: 'Return one value up', idea: 'Each node returns one number (a height, a best arm, a sum) and updates a global answer with what passes through it.' },
+    { name: 'Return several values', idea: 'When a choice at a node constrains its children, return one value per choice: robbed or not, covered or not, valid or not.' },
+    { name: 'General trees from edge lists', idea: 'Build an adjacency list, root the tree anywhere, and run the same post-order logic while skipping the parent.' },
+    { name: 'Rerooting', idea: 'Compute the answer for one root, then move the root across each edge and adjust the answer in O(1).' },
+  ],
+  signals: [
+    { see: 'A tree problem where a node\'s answer depends on its children\'s answers', think: 'Post-order: return values up the tree', why: 'Children finish first, so their results are ready when the parent needs them.' },
+    { see: 'The longest or best PATH anywhere in the tree', think: 'Return the best single arm; update a global best where two arms meet', why: 'Every path has one highest node, where its two arms join.' },
+    { see: 'Choosing a node forbids choosing its neighbours (rob, cover, select)', think: 'Return one value per choice', why: 'The parent\'s choice decides which child value it is allowed to use.' },
+    { see: 'An answer is wanted for EVERY node as the root', think: 'Rerooting with two passes', why: 'Moving the root across one edge only changes that edge\'s contribution.' },
+    { see: 'A tree given as an edge list with up to 10⁵ nodes', think: 'Adjacency list plus an iterative DFS with parent tracking', why: 'Deep recursion on a path-shaped tree can overflow the call stack.' },
+    { see: 'Subtree sizes, sums or counts', think: 'One post-order pass', why: 'Each subtree total is its node plus its children\'s totals.' },
+  ],
+  problems: [
+    // ---------- Return one value up ----------
+    {
+      id: 543, title: 'Diameter of Binary Tree', pattern: 'Return one value up', core: true,
+      summary: 'Return the number of edges on the longest path between any two nodes of a binary tree.',
+      hints: [
+        'The longest path bends at some highest node.',
+        'At that node it goes down the left side as far as possible and down the right side as far as possible.',
+        'Have each call return its height, and update a global best with left height + right height.',
+      ],
+      insight: 'Every path has one top node, where its length is left height + right height. A post-order pass returns heights and records the best sum.',
+      approach: [
+        'depth(node) = 0 for a missing node, otherwise 1 + max(depth(left), depth(right)).',
+        'Before returning, update best = max(best, depth(left) + depth(right)).',
+        'Call it on the root and return best.',
+      ],
+      ds: ['Binary tree', 'Recursion (post-order)'], time: 'O(n)', space: 'O(h)',
+      traps: ['The longest path does not have to pass through the root.', 'Count edges, not nodes.'],
+    },
+    {
+      id: 563, title: 'Binary Tree Tilt', pattern: 'Return one value up',
+      summary: 'A node\'s tilt is the absolute difference between the sum of its left subtree and the sum of its right subtree. Return the sum of all tilts.',
+      hints: ['Every tilt needs two subtree sums.', 'Return each subtree\'s sum up the tree, and add the tilt to a running total on the way.'],
+      insight: 'One post-order pass returns subtree sums; each node computes its tilt from its children\'s sums and adds it to a global total.',
+      approach: ['sum(node) = 0 for a missing node.', 'Otherwise get the left and right sums, add |left − right| to the total, and return left + right + the node\'s value.', 'Return the total.'],
+      ds: ['Binary tree', 'Recursion (post-order)'], time: 'O(n)', space: 'O(h)',
+      traps: ['Return the subtree sum, not the tilt: the parent needs sums.'],
+    },
+    {
+      id: 687, title: 'Longest Univalue Path', pattern: 'Return one value up',
+      summary: 'Return the number of edges on the longest path in a binary tree whose nodes all have the same value.',
+      hints: ['It is the diameter idea, but an edge only counts if both of its ends hold the same value.', 'Return the longest same-value arm going down from each node.'],
+      insight: 'Each node returns its longest single arm of equal values. A path through the node joins its left and right arms when the children\'s values match its own.',
+      approach: [
+        'arm(node): get the arm lengths returned by both children.',
+        'leftArm = left child\'s arm + 1 if the left child has the same value, else 0; the same for the right.',
+        'best = max(best, leftArm + rightArm); return max(leftArm, rightArm).',
+      ],
+      ds: ['Binary tree', 'Recursion (post-order)'], time: 'O(n)', space: 'O(h)',
+      traps: ['Return only one arm upwards: a path cannot fork.'],
+    },
+    {
+      id: 1372, title: 'Longest ZigZag Path in a Binary Tree', pattern: 'Return one value up',
+      summary: 'A zigzag path starts at any node and alternates between moving to a left child and moving to a right child. Return the longest one, counted in edges.',
+      hints: ['The direction you arrived from decides where you may go next.', 'Each node can return two numbers: the longest zigzag starting here and going left first, and going right first.'],
+      insight: 'goLeft(node) = 1 + goRight(left child) and goRight(node) = 1 + goLeft(right child); two values per node, maximised over all nodes.',
+      approach: [
+        'Post-order. A missing child reports −1, so that 1 + (−1) = 0.',
+        'left = 1 + the left child\'s "go right" value; right = 1 + the right child\'s "go left" value.',
+        'Update the best with both, and return the pair.',
+      ],
+      ds: ['Binary tree', 'Two values per node'], time: 'O(n)', space: 'O(h)',
+      traps: ['A single node has length 0.', 'A skewed tree can be 5 × 10⁴ deep; an iterative traversal avoids stack overflow in JavaScript.'],
+    },
+    {
+      id: 124, title: 'Binary Tree Maximum Path Sum', pattern: 'Return one value up', core: true,
+      summary: 'A path is any chain of connected nodes, each used at most once, not necessarily through the root. Return the largest sum of node values on a path.',
+      hints: [
+        'Values can be negative, and a branch with a negative sum is better left out.',
+        'Each node returns the best downward arm that starts at it.',
+        'The best path that turns at a node = its value + left arm + right arm, with each arm clamped at 0.',
+      ],
+      insight: 'Return the best single downward arm, clamped at 0, and update a global best with value + left arm + right arm: every path has exactly one turning node.',
+      approach: [
+        'gain(node) = 0 for a missing node.',
+        'left = max(0, gain(left child)), right = max(0, gain(right child)).',
+        'best = max(best, value + left + right).',
+        'Return value + max(left, right).',
+      ],
+      ds: ['Binary tree', 'Recursion (post-order)'], time: 'O(n)', space: 'O(h)',
+      traps: [
+        'Start best at −∞ (or the root\'s value): in an all-negative tree the answer is the largest single value.',
+        'Never return the forked sum upwards; the parent can only use one arm.',
+      ],
+    },
+
+    // ---------- Return several values ----------
+    {
+      id: 337, title: 'House Robber III', pattern: 'Return several values', core: true,
+      summary: 'Houses form a binary tree. Robbing two directly linked houses sets off the alarm. Return the most money you can rob.',
+      hints: ['Robbing a node forbids robbing its children, but not its grandchildren.', 'Return two values from every node: the best total if this node is robbed, and if it is not.'],
+      insight: 'rob(node) = value + skip(left) + skip(right), and skip(node) = best(left) + best(right), where best is the larger of a child\'s two values.',
+      approach: [
+        'A missing node returns (0, 0).',
+        'Get (robL, skipL) and (robR, skipR) from the children.',
+        'rob = value + skipL + skipR; skip = max(robL, skipL) + max(robR, skipR).',
+        'The answer is the larger of the root\'s two values.',
+      ],
+      ds: ['Binary tree', 'Pair of values per node'], time: 'O(n)', space: 'O(h)',
+      traps: ['A recursion that jumps to grandchildren recomputes the same subtrees exponentially; returning a pair avoids it.', 'Skipping a node does not force robbing its children.'],
+    },
+    {
+      id: 979, title: 'Distribute Coins in Binary Tree', pattern: 'Return several values', core: true,
+      summary: 'A binary tree has n nodes and n coins in total, spread unevenly. One move sends a coin along one edge. Find the fewest moves so that every node holds exactly one coin.',
+      hints: ['Look at a single edge. How many coins must cross it?', 'A subtree with k nodes and c coins has c − k extra (or missing) coins, and all of them cross the edge to its parent.'],
+      insight: 'Every subtree reports its excess, coins − nodes. The coins crossing an edge equal |excess| of the subtree below it, so the answer is the sum of |excess| over all subtrees.',
+      approach: [
+        'excess(node) = 0 for a missing node.',
+        'e = coins at the node − 1 + excess(left) + excess(right).',
+        'Add |excess(left)| + |excess(right)| to the move count.',
+        'Return e; the answer is the total of moves.',
+      ],
+      ds: ['Binary tree', 'Recursion (post-order)'], time: 'O(n)', space: 'O(h)',
+      traps: ['Excess can be negative (the subtree needs coins); add its absolute value.'],
+    },
+    {
+      id: 968, title: 'Binary Tree Cameras', pattern: 'Return several values', core: true,
+      summary: 'A camera on a node watches its parent, itself and its children. Find the fewest cameras that watch every node of a binary tree.',
+      hints: [
+        'A leaf should never hold a camera: its parent covers strictly more.',
+        'Give each node one of three states: has a camera, covered without one, not covered.',
+        'Decide bottom-up: if any child is not covered, this node must hold a camera.',
+      ],
+      insight: 'Post-order with three states: a node takes a camera if any child is uncovered, is covered if any child has a camera, and otherwise stays uncovered for its parent to fix. Leaves start uncovered, which puts cameras on their parents.',
+      approach: [
+        'A missing child counts as covered: it needs nothing.',
+        'If either child is uncovered: place a camera here, count it, and report "camera".',
+        'Else if either child has a camera: report "covered".',
+        'Else report "uncovered".',
+        'If the root reports uncovered, add one more camera.',
+      ],
+      ds: ['Binary tree', 'Three-state return value'], time: 'O(n)', space: 'O(h)',
+      traps: ['Forgetting the final check at the root.', 'Treating a missing child as uncovered puts a camera on every leaf.'],
+    },
+    {
+      id: 1373, title: 'Maximum Sum BST in Binary Tree', pattern: 'Return several values',
+      summary: 'Return the largest sum of keys in any subtree of a binary tree that is also a binary search tree (0 if every valid subtree has a negative sum).',
+      hints: [
+        'A subtree is a BST if both children are BSTs and the node\'s value lies strictly between the left subtree\'s maximum and the right subtree\'s minimum.',
+        'So return four facts from each node: is it a BST, its minimum, its maximum and its sum.',
+      ],
+      insight: 'Post-order returns (isBST, min, max, sum). A node forms a BST exactly when both children do and left max < value < right min, and then its sum is a candidate answer.',
+      approach: [
+        'A missing node returns (true, +∞, −∞, 0).',
+        'If both children are BSTs and left.max < value < right.min: the node is a BST with min = min(value, left.min), max = max(value, right.max) and sum = left.sum + right.sum + value; update the best.',
+        'Otherwise return "not a BST".',
+        'Return max(best, 0).',
+      ],
+      ds: ['Binary tree', 'Four values per node'], time: 'O(n)', space: 'O(h)',
+      traps: ['The empty tree counts, so the answer is never below 0.', 'Validating each subtree from scratch is O(n²).'],
+    },
+
+    // ---------- General trees from edge lists ----------
+    {
+      id: 1443, title: 'Minimum Time to Collect All Apples in a Tree', pattern: 'General trees from edge lists',
+      summary: 'Starting and ending at node 0 of an undirected tree, walking one edge takes one second. Find the least time needed to collect every apple.',
+      hints: ['You must walk an edge (there and back) exactly when the subtree below it contains an apple.', 'Return from each subtree the time needed inside it.'],
+      insight: 'The edge to a child is walked twice exactly when that child\'s subtree has an apple, so a post-order pass adds 2 + the child\'s time for such children.',
+      approach: [
+        'Build an adjacency list from the edges.',
+        'dfs(node, parent): total = 0; for each child, t = dfs(child, node); if t > 0 or the child has an apple, add t + 2 to total.',
+        'Return dfs(0, −1).',
+      ],
+      ds: ['Adjacency list', 'DFS with parent'], time: 'O(n)', space: 'O(n)',
+      traps: ['The edges are undirected: pass the parent so you never walk back up.', 'A path-shaped tree is 10⁵ deep; an explicit stack is safer in JavaScript.'],
+    },
+    {
+      id: 2049, title: 'Count Nodes With the Highest Score', pattern: 'General trees from edge lists',
+      summary: 'Removing a node splits a binary tree into up to three parts: its left subtree, its right subtree and the rest. Its score is the product of the part sizes. Count the nodes with the highest score.',
+      hints: ['You need every subtree size.', 'The "rest" part has n − size(node) nodes.'],
+      insight: 'One post-order pass gives subtree sizes. Each node\'s score is the product of its children\'s sizes and n − its own size, skipping parts of size 0.',
+      approach: [
+        'Build child lists from the parents array.',
+        'Compute subtree sizes bottom-up.',
+        'For each node, score = the product of the non-empty parts among size(left), size(right) and n − size(node).',
+        'Track the highest score and how many nodes reach it.',
+      ],
+      ds: ['Child lists', 'Array of sizes'], time: 'O(n)', space: 'O(n)',
+      traps: ['Skip parts of size 0 instead of multiplying by 0.', 'The product reaches about 3.7 × 10¹³, still exact in TypeScript numbers (below 2⁵³).'],
+    },
+    {
+      id: 2538, title: 'Difference Between Maximum and Minimum Price Sum', pattern: 'General trees from edge lists',
+      summary: 'Each node of an unrooted tree has a positive price. Rooted at r, the cost is the largest price sum of a path starting at r minus the smallest such sum. Return the largest cost over all choices of root.',
+      hints: [
+        'With positive prices, the cheapest path from r is r alone.',
+        'So the cost is the best path from r with r\'s own price removed: the best path that drops one endpoint\'s price.',
+        'Return two values per subtree: the best downward path including its end node, and the same path without the end node\'s price.',
+      ],
+      insight: 'The answer is the best path in the tree minus the price of one endpoint. A post-order pass keeping (best arm with its end, best arm without its end) combines two arms at every node.',
+      approach: [
+        'Root anywhere. For a single node: withEnd = price, withoutEnd = 0.',
+        'When merging a child: candidate = max(withEnd + child.withoutEnd, withoutEnd + child.withEnd); update the best.',
+        'Then extend: withEnd = max(withEnd, child.withEnd + price), withoutEnd = max(withoutEnd, child.withoutEnd + price).',
+        'Return the best.',
+      ],
+      ds: ['Adjacency list', 'Two values per node'], time: 'O(n)', space: 'O(n)',
+      traps: ['Trying every root with a fresh DFS is O(n²) for 10⁵ nodes.', 'Exactly one endpoint\'s price is removed: the one playing the root.'],
+    },
+
+    // ---------- Rerooting ----------
+    {
+      id: 834, title: 'Sum of Distances in Tree', pattern: 'Rerooting', core: true,
+      summary: 'For every node of a tree, return the sum of its distances to all the other nodes.',
+      hints: [
+        'A BFS from every node is O(n²).',
+        'Root at 0. Compute subtree sizes and, for each node, the sum of distances to the nodes below it.',
+        'Moving the root from p to its child c: nodes in c\'s subtree get one step closer, all the others one step further.',
+      ],
+      insight: 'answer[c] = answer[p] − size[c] + (n − size[c]). One post-order pass computes sizes and the root\'s answer; one pre-order pass reroots.',
+      approach: [
+        'Pass 1 (post-order from node 0): size[u] = 1 + the children\'s sizes; below[u] = the sum of (below[child] + size[child]).',
+        'answer[0] = below[0].',
+        'Pass 2 (pre-order): for each child c of p, answer[c] = answer[p] − size[c] + n − size[c].',
+        'Return answer.',
+      ],
+      ds: ['Adjacency list', 'Arrays: size, below, answer'], time: 'O(n)', space: 'O(n)',
+      traps: ['Use iterative traversals if the tree may be a long path.'],
+    },
+    {
+      id: 2581, title: 'Count Number of Possible Root Nodes', pattern: 'Rerooting',
+      summary: 'Bob guessed "u is the parent of v" for some edges of an unrooted tree, and at least k guesses are right. Count the nodes that could be the root.',
+      hints: ['For one fixed root, count the correct guesses with one DFS.', 'Moving the root across edge (p, c) only changes the guesses about that edge.'],
+      insight: 'Rerooting: count(c) = count(p) − [p → c was guessed] + [c → p was guessed], so every root\'s count follows from the first one in O(1) each.',
+      approach: [
+        'Put every guess into a set.',
+        'DFS from node 0 and count the guesses that agree with the parent links: count(0).',
+        'Traverse again: count(child) = count(parent) − (1 if (parent, child) was guessed) + (1 if (child, parent) was guessed).',
+        'Return how many nodes have count ≥ k.',
+      ],
+      ds: ['Hash set of guesses', 'Adjacency list'], time: 'O(n + g)', space: 'O(n + g)',
+      traps: ['Encode a guess pair as one number (for example u × n + v) so set lookups are fast.'],
+    },
+    {
+      id: 2858, title: 'Minimum Edge Reversals So Every Node Is Reachable', pattern: 'Rerooting',
+      summary: 'The edges of a tree are directed. For every node, find the fewest edge reversals that let it reach all other nodes.',
+      hints: ['From the starting node, every edge must point away from it.', 'Count the reversals for node 0 with one DFS.', 'Moving the start from p to its child c only changes the edge between them.'],
+      insight: 'Store each edge with cost 0 in its own direction and 1 backwards. Moving the root across an edge adds 1 if the edge pointed p → c and subtracts 1 if it pointed c → p.',
+      approach: [
+        'Adjacency list with (neighbour, 0) along each edge and (neighbour, 1) against it.',
+        'DFS from 0: answer[0] = the sum of the costs of the edges walked outward.',
+        'Second pass: answer[c] = answer[p] + (1 if the edge was p → c, else −1).',
+        'Return answer.',
+      ],
+      ds: ['Adjacency list with directions'], time: 'O(n)', space: 'O(n)',
+      traps: ['The graph is only a tree if you ignore directions: traverse it as undirected and remember each edge\'s direction.'],
+    },
+  ],
+};

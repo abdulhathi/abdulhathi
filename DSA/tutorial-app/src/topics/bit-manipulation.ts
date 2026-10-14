@@ -1,0 +1,323 @@
+import type { Topic } from './types';
+
+export const topic: Topic = {
+  id: 'bit-manipulation',
+  patterns: [
+    { name: 'Read and count bits', idea: 'Test, set and clear single bits with shifts and masks, and count 1-bits with n & (n − 1), which removes the lowest one.' },
+    { name: 'Powers of two', idea: 'A power of two has exactly one 1-bit, so n & (n − 1) is 0. The same trick finds lowest set bits and common prefixes.' },
+    { name: 'XOR cancels pairs', idea: 'x ^ x = 0 and x ^ 0 = x, and the order does not matter: XOR everything together and every pair vanishes.' },
+    { name: 'Bit by bit', idea: 'AND, OR and XOR never mix bit positions, so a problem often splits into 32 one-bit problems. When maximising, a higher bit outweighs all lower bits together, so decide from the top.' },
+    { name: 'Arithmetic with bits', idea: 'Addition is XOR (sum without carries) plus AND shifted left (the carries). Division is subtracting shifted copies of the divisor.' },
+    { name: 'Masks as sets', idea: 'An integer can stand for a set of up to 32 items: OR is union, AND is intersection, and a parity mask records which counts are odd.' },
+  ],
+  signals: [
+    { see: 'Every value appears twice except one (or two)', think: 'XOR everything together', why: 'Pairs cancel, so only the unpaired values survive.' },
+    { see: 'Every value appears k times except one, with O(1) extra space', think: 'Count each bit position modulo k', why: 'The repeated values add a multiple of k to every bit count; the remainder is the single value\'s bit.' },
+    { see: 'Power of two, number of 1-bits, Hamming distance', think: 'n & (n − 1), popcount, XOR', why: 'n & (n − 1) clears the lowest 1-bit; XOR marks where two numbers differ.' },
+    { see: 'A set of at most about 20 items, or the 26 letters', think: 'A bitmask as the set', why: 'Union, intersection and membership become single AND or OR operations.' },
+    { see: 'Substrings where letter counts are odd or even', think: 'A prefix parity mask and XOR', why: 'The parity mask of a substring is the XOR of two prefix masks.' },
+    { see: 'Maximise an XOR', think: 'Greedy from the highest bit, with a set of prefixes or a binary trie', why: 'Setting a higher bit beats any combination of lower bits.' },
+    { see: '"Without using + or −", "without multiplication or division"', think: 'Arithmetic out of AND, XOR and shifts', why: 'The hardware does it that way; you can too.' },
+    { see: 'AND or OR over a whole range of numbers', think: 'Look at the common binary prefix', why: 'Below the first differing bit, every bit takes both values somewhere in the range.' },
+  ],
+  problems: [
+    // ---------- Read and count bits ----------
+    {
+      id: 191, title: 'Number of 1 Bits', pattern: 'Read and count bits', core: true,
+      summary: 'Count the 1-bits in the binary form of a positive integer.',
+      hints: [
+        'You can test the lowest bit with AND 1, then shift right, 31 times.',
+        'A faster loop exists: n & (n − 1) removes exactly the lowest 1-bit.',
+        'Count how many times you can apply it before n reaches 0.',
+      ],
+      insight: 'n & (n − 1) clears the lowest set bit, so a loop that applies it runs once per 1-bit instead of once per bit position. This is Brian Kernighan\'s method.',
+      approach: ['count = 0.', 'While n is not 0: replace n with n AND (n − 1), and add 1 to count.', 'Return count.'],
+      ds: ['Integer'], time: 'O(number of 1-bits), at most 32', space: 'O(1)',
+      traps: [
+        'When shifting instead, use the unsigned right shift (>>>) if the top bit can be set; the signed shift (>>) copies the sign bit and can loop forever on negative values.',
+        'For the follow-up (called many times), a table of the counts for all 256 bytes answers in four lookups.',
+      ],
+    },
+    {
+      id: 338, title: 'Counting Bits', pattern: 'Read and count bits', core: true,
+      summary: 'For every number from 0 to n, return how many 1-bits it has, in O(n) total time.',
+      hints: [
+        'Counting each number separately is O(n log n).',
+        'Shifting i right by one drops its last bit. How is i\'s count related to the count of i >> 1?',
+        'ones(i) = ones(i >> 1) + (i AND 1), and i >> 1 is smaller, so its answer is already known.',
+      ],
+      insight: 'Every number is a smaller number with one more bit on the end, so its count is the smaller number\'s count plus that last bit: a one-line DP over 0 to n.',
+      approach: ['ans[0] = 0.', 'For i from 1 to n: ans[i] = ans[i >> 1] + (i AND 1).', 'Return ans.'],
+      ds: ['Array (a DP table)'], time: 'O(n)', space: 'O(n) for the output',
+      traps: ['Another valid rule: ans[i] = ans[i AND (i − 1)] + 1, which drops the lowest set bit instead.', 'The statement forbids built-in popcount functions.'],
+    },
+    {
+      id: 461, title: 'Hamming Distance', pattern: 'Read and count bits',
+      summary: 'Count the bit positions where two integers differ.',
+      hints: ['Which operator gives a 1 exactly where two bits differ?', 'XOR the two numbers, then count the 1-bits of the result.'],
+      insight: 'x XOR y has a 1 exactly where x and y differ, so the distance is the number of 1-bits in x XOR y.',
+      approach: ['d = x XOR y.', 'Count the 1-bits of d with the n AND (n − 1) loop.', 'Return the count.'],
+      ds: ['Integers'], time: 'O(1)', space: 'O(1)',
+      traps: ['The same problem appears as Minimum Bit Flips to Convert Number (2220).'],
+    },
+    {
+      id: 190, title: 'Reverse Bits', pattern: 'Read and count bits',
+      summary: 'Reverse the order of the 32 bits of an integer.',
+      hints: [
+        'Build the result one bit at a time: take n\'s lowest bit and append it to the result on the right.',
+        'Do exactly 32 rounds, even after n becomes 0, so its leading zeros move to the end.',
+        'TypeScript bitwise results are signed; reinterpret as unsigned with >>> 0 when you need to.',
+      ],
+      insight: 'Thirty-two times: shift the result left, add n\'s lowest bit, and shift n right. The first bit taken from n ends up as the result\'s top bit.',
+      approach: [
+        'result = 0.',
+        'Repeat 32 times: result = (result shifted left by 1) OR (n AND 1); then shift n right by 1 with the unsigned shift.',
+        'Return result, reinterpreted as unsigned (>>> 0) if needed.',
+      ],
+      ds: ['Integer'], time: 'O(32), which is O(1)', space: 'O(1)',
+      traps: [
+        'Stopping when n reaches 0 loses the zeros that should fill the low end of the result.',
+        'The current statement promises an even n below 2³¹, so bit 0 is 0 and the reversed value never has its top bit set: the signed result is already the right non-negative number.',
+        'Follow-up: precompute the reversal of every byte and combine four lookups, or swap halves, then quarters, and so on with masks in five steps.',
+      ],
+    },
+    {
+      id: 476, title: 'Number Complement', pattern: 'Read and count bits',
+      summary: 'Flip every bit of a positive integer\'s binary form (ignoring leading zeros) and return the result.',
+      hints: [
+        'Flipping all 32 bits with NOT also flips the leading zeros. You only want the bits up to the highest 1.',
+        'Build a mask of 1s exactly as long as the number: for 5 (101) the mask is 111.',
+        'XOR with that mask flips exactly those bits.',
+      ],
+      insight: 'XOR with an all-ones mask of the same length flips exactly the meaningful bits and leaves the leading zeros alone.',
+      approach: ['mask = 1. While mask is less than num, set mask to mask × 2 + 1 (one more 1 on the right).', 'Return num XOR mask.'],
+      ds: ['Integers'], time: 'O(log n)', space: 'O(1)',
+      traps: ['NOT on its own flips all 32 bits and gives a negative number.', 'This is the same problem as Complement of Base 10 Integer (1009), except that one allows 0.'],
+    },
+
+    // ---------- Powers of two ----------
+    {
+      id: 231, title: 'Power of Two', pattern: 'Powers of two', core: true,
+      summary: 'Decide whether an integer is a power of two.',
+      hints: ['What does a power of two look like in binary?', 'It has exactly one 1-bit.', 'n AND (n − 1) clears the lowest 1-bit; for a power of two, nothing is left.'],
+      insight: 'A positive number is a power of two exactly when it has a single 1-bit, which is exactly when n AND (n − 1) is 0.',
+      approach: ['If n ≤ 0, return false.', 'Return whether n AND (n − 1) equals 0.'],
+      ds: ['Integer'], time: 'O(1)', space: 'O(1)',
+      traps: ['Exclude 0 and negative numbers first: 0 AND −1 is also 0.', 'n AND −n isolates the lowest 1-bit, which gives an equivalent test: n > 0 and (n AND −n) equals n.'],
+    },
+    {
+      id: 342, title: 'Power of Four', pattern: 'Powers of two',
+      summary: 'Decide whether an integer is a power of four.',
+      hints: [
+        'A power of four is also a power of two, so start with that test.',
+        'Where can its single 1-bit be? At position 0, 2, 4, ...: always an even position.',
+        'Test the position with the mask 0x55555555, whose 1-bits are exactly the even positions.',
+      ],
+      insight: 'Powers of four are the powers of two whose single 1-bit sits in an even position: n > 0, n AND (n − 1) is 0, and n AND 0x55555555 is not 0.',
+      approach: ['If n ≤ 0 or n AND (n − 1) is not 0, return false.', 'Return whether n AND 0x55555555 is not 0.'],
+      ds: ['Integer'], time: 'O(1)', space: 'O(1)',
+      traps: ['Another test: a power of two is a power of four exactly when it leaves remainder 1 on division by 3 (4ᵏ mod 3 is 1, while 2 × 4ᵏ mod 3 is 2).'],
+    },
+    {
+      id: 201, title: 'Bitwise AND of Numbers Range', pattern: 'Powers of two', core: true,
+      summary: 'Return the bitwise AND of every integer from left to right, inclusive.',
+      hints: [
+        'ANDing up to two billion numbers one by one is too slow.',
+        'If left and right differ in some bit, some number between them has a 0 in that bit and in every bit below it.',
+        'The answer is the common binary prefix of left and right, followed by zeros.',
+      ],
+      insight: 'Every bit below the first position where left and right differ takes both values somewhere in the range, so it ends up 0. Only their shared prefix survives.',
+      approach: ['shift = 0.', 'While left is not equal to right: shift both right by 1 and add 1 to shift.', 'Return left shifted back left by shift.'],
+      ds: ['Integers'], time: 'O(32)', space: 'O(1)',
+      traps: ['Another way: while right > left, clear right\'s lowest 1-bit (right AND (right − 1)); then return right.'],
+    },
+
+    // ---------- XOR cancels pairs ----------
+    {
+      id: 136, title: 'Single Number', pattern: 'XOR cancels pairs', core: true,
+      summary: 'Every value in an array appears twice except one. Find that one in linear time with constant extra space.',
+      hints: ['A set works but uses O(n) memory.', 'What is x XOR x? And x XOR 0?', 'XOR all the values together.'],
+      insight: 'XOR undoes itself and the order does not matter, so every pair cancels to 0 and only the single value is left.',
+      approach: ['acc = 0.', 'XOR every value into acc.', 'Return acc.'],
+      ds: ['Integer accumulator'], time: 'O(n)', space: 'O(1)',
+      traps: ['The "twice the sum of distinct values minus the total" trick needs a set, so it breaks the space limit.'],
+    },
+    {
+      id: 389, title: 'Find the Difference', pattern: 'XOR cancels pairs',
+      summary: 'String t is string s shuffled, with one extra letter added somewhere. Find the extra letter.',
+      hints: ['Counting letters works.', 'Or XOR the character codes of both strings: each letter of s is cancelled by its copy in t.'],
+      insight: 'XOR all the character codes of s and t together: every original letter appears twice and cancels, leaving the code of the added letter.',
+      approach: ['acc = 0.', 'XOR in the code of every character of s and every character of t.', 'Return the character whose code is acc.'],
+      ds: ['Integer accumulator'], time: 'O(n)', space: 'O(1)',
+      traps: ['Summing the codes of t and subtracting those of s also works and cannot overflow at these lengths.'],
+    },
+    {
+      id: 260, title: 'Single Number III', pattern: 'XOR cancels pairs', core: true,
+      summary: 'Exactly two values appear once and every other value appears twice. Find the two, in linear time with constant extra space.',
+      hints: [
+        'XOR everything: you get a XOR b, the XOR of the two singles. It is not 0, because they differ.',
+        'Any 1-bit of a XOR b is a position where a and b differ.',
+        'Split the numbers into two groups by that bit and XOR each group: each group holds exactly one single.',
+      ],
+      insight: 'a XOR b has a 1 where the two singles differ. Splitting the array by that bit sends a and b to different groups while each pair stays together, so XORing each group gives one single each.',
+      approach: [
+        'x = XOR of every value, which equals a XOR b.',
+        'low = x AND −x, the lowest 1-bit of x.',
+        'XOR the values that have that bit into one accumulator and the others into a second.',
+        'Return the two accumulators.',
+      ],
+      ds: ['Integer accumulators'], time: 'O(n)', space: 'O(1)',
+      traps: ['Test the bit with (value AND low) ≠ 0, not > 0: if the chosen bit is the sign bit, the AND is negative.'],
+    },
+    {
+      id: 1310, title: 'XOR Queries of a Subarray', pattern: 'XOR cancels pairs',
+      summary: 'Answer many queries, each asking for the XOR of the elements between two positions of an array.',
+      hints: ['Recomputing every query costs O(n) each.', 'XOR undoes itself, the way subtraction undoes addition.', 'With prefix XORs, the XOR of a range is prefix[right + 1] XOR prefix[left].'],
+      insight: 'Like prefix sums: with prefix[i] the XOR of the first i values, the part before left cancels itself, so each range costs one operation.',
+      approach: ['prefix[0] = 0, and prefix[i + 1] = prefix[i] XOR arr[i].', 'For each query [l, r], answer prefix[r + 1] XOR prefix[l].'],
+      ds: ['Prefix array'], time: 'O(n + q)', space: 'O(n)',
+      traps: ['With a prefix array of length n + 1, the range [l, r] uses indices l and r + 1; mixing them up is the usual bug.'],
+    },
+
+    // ---------- Bit by bit ----------
+    {
+      id: 137, title: 'Single Number II', pattern: 'Bit by bit', core: true,
+      summary: 'Every value appears three times except one, which appears once. Find it in linear time with constant extra space.',
+      hints: [
+        'XOR cancels pairs, not triples.',
+        'Look at one bit position. How many numbers have that bit set, and what is the count modulo 3?',
+        'Rebuild the single number from the positions whose count is not a multiple of 3.',
+      ],
+      insight: 'In each bit position the tripled values add a multiple of 3, so the count modulo 3 is exactly the single value\'s bit there. Thirty-two counts rebuild it.',
+      approach: [
+        'For each bit position b from 0 to 31, count how many values have bit b set.',
+        'If the count modulo 3 is 1, set bit b in the result.',
+        'Return the result as a signed 32-bit number; building it with OR in TypeScript already gives that.',
+      ],
+      ds: ['Integers'], time: 'O(32 · n)', space: 'O(1)',
+      traps: [
+        'Negative values have bit 31 set; building the result with 32-bit OR makes a negative answer come out correctly.',
+        'The famous two-variable version (masks for "seen once" and "seen twice") does the same counting modulo 3 for all bits at once.',
+      ],
+    },
+    {
+      id: 1318, title: 'Minimum Flips to Make a OR b Equal to c', pattern: 'Bit by bit',
+      summary: 'Find the fewest single-bit flips in a and b so that a OR b equals c.',
+      hints: ['Bit positions do not affect each other: handle each one separately.', 'Where c has a 1, at least one of a and b needs a 1 there.', 'Where c has a 0, every 1 in a or b at that position must be flipped.'],
+      insight: 'Each position is independent: where c has a 1 it costs 1 only if both a and b have 0; where c has a 0 it costs the number of 1s among a and b.',
+      approach: [
+        'flips = 0. Repeat while any of a, b or c is not 0:',
+        'take the lowest bits of a, b and c.',
+        'If c\'s bit is 1, add 1 when both other bits are 0; otherwise add a\'s bit plus b\'s bit.',
+        'Shift a, b and c right by 1.',
+      ],
+      ds: ['Integers'], time: 'O(32)', space: 'O(1)',
+      traps: ['One position can need two flips: a and b both have 1 where c has 0.'],
+    },
+    {
+      id: 421, title: 'Maximum XOR of Two Numbers in an Array', pattern: 'Bit by bit',
+      summary: 'Find the largest XOR of any two numbers in an array.',
+      hints: [
+        'All pairs is O(n²): about 2 × 10¹⁰ pairs for 2 × 10⁵ numbers.',
+        'A higher bit is worth more than all lower bits together, so settle the answer bit by bit from the top.',
+        'For each bit, assume it can be 1 and check whether two numbers\' prefixes produce that, using a set of prefixes (or a trie).',
+      ],
+      insight: 'Build the answer greedily from the highest bit: try to set the next bit, and keep it if some two prefixes XOR to the candidate. A hash set checks that in O(n), because a XOR b = c exactly when a XOR c = b.',
+      approach: [
+        'answer = 0, mask = 0.',
+        'For bit from 30 down to 0: add the bit to mask, and put every number AND mask into a set.',
+        'candidate = answer with this bit set. If some prefix p in the set has p XOR candidate also in the set, answer = candidate.',
+        'Return answer.',
+      ],
+      ds: ['Hash set', 'or a binary trie'], time: 'O(31 · n)', space: 'O(n)',
+      traps: ['A binary trie gives the same result: for each number, walk the trie preferring the opposite bit at every level. See the Tries chapter.', 'Values are below 2³¹, so bits 30 down to 0 are enough.'],
+    },
+    {
+      id: 89, title: 'Gray Code', pattern: 'Bit by bit',
+      summary: 'List all 2ⁿ numbers with n bits, starting from 0, so that neighbours (and the last and first) differ in exactly one bit.',
+      hints: ['Build the list for n = 2 from the list for n = 1.', 'Take the previous list, then the previous list in reverse with the new top bit set.', 'Or directly: the i-th Gray code is i XOR (i >> 1).'],
+      insight: 'The reflected Gray code: the i-th number is i XOR (i >> 1). Moving from i to i + 1 changes exactly one bit of that expression, including the wrap from the last back to 0.',
+      approach: ['For i from 0 to 2ⁿ − 1, add i XOR (i shifted right by 1).', 'Return the list.'],
+      ds: ['Array'], time: 'O(2ⁿ)', space: 'O(2ⁿ) for the output',
+      traps: ['The mirror construction is the intuition behind the formula; both are accepted.'],
+    },
+
+    // ---------- Arithmetic with bits ----------
+    {
+      id: 371, title: 'Sum of Two Integers', pattern: 'Arithmetic with bits', core: true,
+      summary: 'Add two integers without using the + or − operators.',
+      hints: [
+        'Adding two single bits: the sum bit is XOR and the carry is AND.',
+        'For whole numbers, a XOR b is the sum without carries, and (a AND b) shifted left by 1 is the carries.',
+        'Repeat with those two numbers until there is no carry.',
+      ],
+      insight: 'Addition is XOR plus carries, and the carries are (a AND b) shifted left. Repeating until no carry remains adds the numbers, and 32-bit wrap-around makes negative numbers work too.',
+      approach: ['While b is not 0: carry = (a AND b) shifted left by 1.', 'a = a XOR b, the sum without carries.', 'b = carry.', 'Return a.'],
+      ds: ['Integers'], time: 'O(32)', space: 'O(1)',
+      traps: ['TypeScript bitwise operators work on 32-bit signed integers, which is exactly what makes negatives work here.', 'In languages with unlimited integers (such as Python), negative inputs loop forever unless you mask to 32 bits.'],
+    },
+    {
+      id: 29, title: 'Divide Two Integers', pattern: 'Arithmetic with bits',
+      summary: 'Divide two 32-bit integers, rounding toward zero, without multiplication, division or the remainder operator. The one overflowing case returns 2³¹ − 1.',
+      hints: [
+        'Subtracting the divisor once per step costs as many steps as the quotient: up to two billion.',
+        'Subtract the largest shifted copy of the divisor (divisor × 2ᵏ) that fits, and add 2ᵏ to the quotient.',
+        'Work with absolute values and fix the sign at the end; handle −2³¹ ÷ −1 before anything else.',
+      ],
+      insight: 'Long division in binary: from the highest k down, if the divisor doubled k times still fits in what remains, subtract it and set bit k of the quotient. Thirty-two steps instead of two billion.',
+      approach: [
+        'If dividend is −2³¹ and divisor is −1, return 2³¹ − 1.',
+        'Remember whether the signs differ, and take absolute values as plain numbers (2³¹ fits in a TypeScript number).',
+        'For k from 31 down to 0: if the divisor doubled k times is at most the remaining dividend, subtract it and add 2ᵏ to the quotient.',
+        'Apply the sign and return the quotient.',
+      ],
+      ds: ['Integers'], time: 'O(32), or O(32²) if each doubling is recomputed', space: 'O(1)',
+      traps: [
+        '−2³¹ ÷ −1 is 2³¹, outside the 32-bit range: the statement says to return 2³¹ − 1.',
+        'Doubling with << can overflow 32 bits in TypeScript; doubling a plain number by adding it to itself does not.',
+      ],
+    },
+
+    // ---------- Masks as sets ----------
+    {
+      id: 78, title: 'Subsets', pattern: 'Masks as sets',
+      summary: 'Return every subset of an array of distinct numbers.',
+      hints: ['With at most 10 values there are at most 2¹⁰ = 1,024 subsets.', 'Number the subsets 0 to 2ⁿ − 1: bit i of the number says whether element i is included.', 'For each number, collect the elements whose bit is set.'],
+      insight: 'The integers 0 to 2ⁿ − 1, written in binary, are exactly the 2ⁿ subsets, so one loop over masks lists every subset with no recursion.',
+      approach: ['For mask from 0 to 2ⁿ − 1:', 'build a subset holding every nums[i] whose bit i in mask is 1.', 'Add it to the answer.'],
+      ds: ['Integer masks', 'Arrays'], time: 'O(n · 2ⁿ)', space: 'O(n · 2ⁿ) for the output',
+      traps: ['Backtracking produces the same subsets. Bitmask enumeration is shorter, but only works while n fits in the bits of a number (about 30 with 32-bit operators).'],
+    },
+    {
+      id: 318, title: 'Maximum Product of Word Lengths', pattern: 'Masks as sets',
+      summary: 'Find the largest product of the lengths of two words that share no letters.',
+      hints: ['Comparing two words letter by letter costs time proportional to their length.', 'Store each word\'s set of letters as a 26-bit mask.', 'Two words share no letter exactly when their masks AND to 0.'],
+      insight: 'A 26-bit mask per word turns "share no letters" into a single AND, so comparing all pairs costs O(n²) tiny operations instead of O(n² · L).',
+      approach: [
+        'For each word, build a mask with bit (letter − "a") set for each of its letters.',
+        'For every pair i < j: if mask[i] AND mask[j] is 0, update the best product of their lengths.',
+        'Return the best, or 0 if no pair qualifies.',
+      ],
+      ds: ['Array of 26-bit masks'], time: 'O(n · L + n²)', space: 'O(n)',
+      traps: ['Optional speed-up: words with the same mask only need the longest one.', 'Return 0 when no two words are disjoint.'],
+    },
+    {
+      id: 1915, title: 'Number of Wonderful Substrings', pattern: 'Masks as sets',
+      summary: 'Count the substrings in which at most one letter appears an odd number of times. Only the letters a to j occur.',
+      hints: [
+        'Only whether each letter\'s count is odd or even matters: a 10-bit mask.',
+        'The parity mask of a substring is the XOR of two prefix masks.',
+        'For each prefix, count earlier prefixes with the same mask, or with a mask that differs in exactly one bit.',
+      ],
+      insight: 'With prefix parity masks, a substring is wonderful when its two end masks are equal or differ in one bit. A count of how often each of the 1,024 masks has appeared answers each prefix in 11 lookups.',
+      approach: [
+        'count[mask] = how many prefixes so far had this parity mask; start with count[0] = 1 for the empty prefix.',
+        'Walk the string, flipping the current letter\'s bit in a running mask.',
+        'Add count[mask] (every letter even) and, for each of the 10 bits, count[mask with that bit flipped].',
+        'Then add 1 to count[mask].',
+      ],
+      ds: ['Array of 1,024 counters', 'Bitmask'], time: 'O(10 · n)', space: 'O(2¹⁰)',
+      traps: ['Forgetting the empty prefix (count[0] = 1) misses every substring that starts at index 0.', 'The answer can exceed 2³¹ for 10⁵ characters, which is fine in a TypeScript number but would overflow 32-bit integers.'],
+    },
+  ],
+};

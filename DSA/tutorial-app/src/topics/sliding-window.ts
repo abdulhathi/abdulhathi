@@ -1,0 +1,333 @@
+import type { Topic } from './types';
+
+export const topic: Topic = {
+  id: 'sliding-window',
+  patterns: [
+    { name: 'Fixed-size window', idea: 'The window always holds exactly k elements: one enters on the right and one leaves on the left at every step.' },
+    { name: 'Fixed window with counts', idea: 'A window of fixed size plus a frequency count, compared with a target count: anagrams, permutations, word patterns.' },
+    { name: 'Longest valid window', idea: 'Grow on the right; when the window breaks the rule, shrink on the left until it is valid again. Record the length after each step.' },
+    { name: 'Shortest valid window', idea: 'Grow on the right until the window is valid; then shrink on the left as long as it stays valid, recording the length each time.' },
+    { name: 'Count windows', idea: 'For each right end, count how many left ends give a valid window, usually r − l + 1 or the position of a last occurrence.' },
+    { name: 'Exactly K = at most K − at most (K − 1)', idea: '"Exactly K" does not shrink nicely, but "at most K" does. Count both and subtract.' },
+  ],
+  signals: [
+    { see: 'Contiguous subarray or substring, and the best (longest, shortest, maximum) one', think: 'A sliding window', why: 'Neighbouring windows share almost all their elements, so update the window instead of recomputing it.' },
+    { see: 'A window of a given length k', think: 'A fixed-size window', why: 'Each slide adds one element and removes one, so every window costs O(1) after the first.' },
+    { see: 'At most k changes, at most k distinct values, no repeats', think: 'A variable window that shrinks when the rule breaks', why: 'Making a valid window smaller keeps it valid, so the left edge only ever needs to move right.' },
+    { see: 'Anagram, permutation or "contains all characters of"', think: 'A window with a frequency count', why: 'Two strings are anagrams when their letter counts match, and counts update in O(1) as the window slides.' },
+    { see: 'Count subarrays with exactly k of something', think: 'atMost(k) − atMost(k − 1)', why: 'Windows with at most k shrink cleanly; "exactly" falls out as a difference of two easy counts.' },
+    { see: 'Take elements from both ends of an array', think: 'The middle part that you keep is a window', why: 'Choosing k elements from the ends is the same as choosing which n − k contiguous elements to leave.' },
+    { see: 'Subarray sums with negative numbers allowed', think: 'Not a sliding window: use prefix sums (see the Prefix sums chapter)', why: 'With negatives, growing a window can lower the sum, so you cannot tell which way to move.' },
+  ],
+  problems: [
+    // ---------- Fixed-size window ----------
+    {
+      id: 643, title: 'Maximum Average Subarray I', pattern: 'Fixed-size window', core: true,
+      summary: 'Find the contiguous subarray of exactly length k with the largest average, and return that average.',
+      hints: ['The largest average belongs to the largest sum, since every window has the same length.', 'Do not re-add k numbers for each window: one number enters and one leaves.'],
+      insight: 'Slide a window of size k, keeping its sum up to date with one addition and one subtraction per step; the best sum divided by k is the answer.',
+      approach: ['Add up the first k values; that is the current sum and the best sum.', 'For each r from k to the end: add nums[r], subtract nums[r − k], and update the best.', 'Return best ÷ k.'],
+      ds: ['Array', 'Running sum'], time: 'O(n)', space: 'O(1)',
+      traps: ['Values can be negative, so start best at the first window\'s sum, not at 0.', 'Divide only once at the end.'],
+    },
+    {
+      id: 219, title: 'Contains Duplicate II', pattern: 'Fixed-size window',
+      summary: 'Decide whether the array has two equal values whose positions are at most k apart.',
+      hints: ['For each position, you only care about the previous k values.', 'Keep those k values in a set as the window slides.'],
+      insight: 'A set holding the last k values is a window: a duplicate within distance k exists exactly when the incoming value is already in the set.',
+      approach: ['Scan with an empty set.', 'If nums[i] is already in the set, return true. Otherwise add it.', 'If the set now holds more than k values, remove nums[i − k].', 'Return false at the end.'],
+      ds: ['Hash set'], time: 'O(n)', space: 'O(min(n, k))',
+      traps: ['k can be 0, in which case no pair is allowed.', 'A Map from value to its last index works too: compare the index distance directly.'],
+    },
+    {
+      id: 1456, title: 'Maximum Number of Vowels in a Substring of Given Length', pattern: 'Fixed-size window',
+      summary: 'Return the largest number of vowels found in any substring of length k.',
+      hints: ['Count the vowels in the first k letters.', 'When the window slides, only the letter entering and the letter leaving can change the count.'],
+      insight: 'Keep a running vowel count for a window of size k: add 1 if the entering letter is a vowel, subtract 1 if the leaving letter is.',
+      approach: ['Count vowels in the first k letters; best = that count.', 'For each r from k: add 1 if s[r] is a vowel, subtract 1 if s[r − k] is a vowel, and update best.', 'Return best (you can stop early if best reaches k).'],
+      ds: ['String', 'Counter', 'Set of vowels'], time: 'O(n)', space: 'O(1)',
+    },
+    {
+      id: 1052, title: 'Grumpy Bookstore Owner', pattern: 'Fixed-size window',
+      summary: 'Customers arrive each minute and are only satisfied when the owner is not grumpy. Once a day the owner can stay calm for a fixed number of consecutive minutes. Return the most customers that can be satisfied.',
+      hints: [
+        'Customers in calm minutes are satisfied anyway. Count them first.',
+        'The calm technique only adds customers from grumpy minutes inside its window.',
+        'Slide a window of the given length and track the extra customers it would rescue.',
+      ],
+      insight: 'Split the answer into a fixed part (customers in calm minutes) and a bonus (grumpy-minute customers inside one window), then maximise the bonus with a fixed-size sliding window.',
+      approach: [
+        'Add up customers in minutes where the owner is not grumpy: base.',
+        'Slide a window of length minutes, keeping the sum of customers in grumpy minutes inside it.',
+        'Track the largest such sum: bonus.',
+        'Return base + bonus.',
+      ],
+      ds: ['Array', 'Running sum'], time: 'O(n)', space: 'O(1)',
+      traps: ['Do not count calm-minute customers inside the window twice: the bonus only includes grumpy minutes.'],
+    },
+    {
+      id: 1423, title: 'Maximum Points You Can Obtain from Cards', pattern: 'Fixed-size window',
+      summary: 'Cards with points lie in a row. Take exactly k cards, each from the left end or the right end, and maximise your total.',
+      hints: [
+        'Trying every sequence of left and right choices is exponential.',
+        'Whatever you take, the cards you leave form one contiguous block in the middle.',
+        'Minimise the sum of a window of length n − k; the answer is the total minus that.',
+      ],
+      insight: 'Taking k cards from the ends is the same as leaving a contiguous block of n − k cards, so minimise that block with a fixed-size window.',
+      approach: [
+        'Compute the total of all cards and w = n − k.',
+        'If w is 0, return the total.',
+        'Slide a window of size w and track the smallest window sum.',
+        'Return total − smallest.',
+      ],
+      ds: ['Array', 'Running sum'], time: 'O(n)', space: 'O(1)',
+      traps: ['Handle k = n, where the window is empty.', 'Another view: try taking i cards from the left and k − i from the right with prefix sums; it is the same idea.'],
+    },
+
+    // ---------- Fixed window with counts ----------
+    {
+      id: 567, title: 'Permutation in String', pattern: 'Fixed window with counts', core: true,
+      summary: 'Decide whether some rearrangement of string s1 appears as a substring of string s2.',
+      hints: [
+        'A rearrangement of s1 is a string with exactly the same letter counts.',
+        'Any match has length |s1|, so slide a window of that size over s2.',
+        'Keep 26 counts for the window and compare them with s1\'s counts (or track how many letters already match).',
+      ],
+      insight: 'Two strings are permutations of each other when their letter counts are equal, and a fixed-size window\'s counts update in O(1) per slide.',
+      approach: [
+        'If s1 is longer than s2, return false.',
+        'Count the letters of s1, and of the first |s1| letters of s2.',
+        'Slide the window across s2: add the entering letter, remove the leaving letter.',
+        'Whenever the two count arrays are equal, return true. Return false at the end.',
+      ],
+      ds: ['Two arrays of 26 counts'], time: 'O(26 · n), or O(n) with a matches counter', space: 'O(1)',
+      traps: ['Sorting every window is far too slow.', 'Comparing 26 counts per step is fine; a "number of letters whose counts agree" counter makes it O(1).'],
+    },
+    {
+      id: 438, title: 'Find All Anagrams in a String', pattern: 'Fixed window with counts',
+      summary: 'Return every start index in s where a rearrangement of p begins.',
+      hints: ['This is Permutation in String, but collect every match instead of stopping at the first.', 'Slide a window of length |p| and compare letter counts.'],
+      insight: 'A fixed window of size |p| with letter counts finds every anagram position in one pass.',
+      approach: ['Count p\'s letters and the first |p| letters of s.', 'At each window position, if the counts match, record the start index.', 'Slide: add the entering letter and remove the leaving one.', 'Return the recorded indices.'],
+      ds: ['Two arrays of 26 counts'], time: 'O(26 · n)', space: 'O(1) besides the output',
+      traps: ['Check the last window as well; off-by-one errors usually skip it.'],
+    },
+    {
+      id: 30, title: 'Substring with Concatenation of All Words', pattern: 'Fixed window with counts',
+      summary: 'All given words have the same length. Return every start index in s of a substring made of all the words, each used exactly as often as given, in any order.',
+      hints: [
+        'Every word has length L, so a match is a sequence of whole L-letter chunks.',
+        'Run a separate sliding window for each starting offset 0 to L − 1, moving one word at a time.',
+        'Keep counts of the words in the window; shrink from the left when a word appears too often, and reset when you meet a word that is not in the list.',
+      ],
+      insight: 'Treat each L-letter chunk as one "letter". For each of the L offsets, a sliding window that moves one word at a time, with a word-count map, finds every valid start without rebuilding the counts from scratch.',
+      approach: [
+        'Count the words in a map (they may repeat).',
+        'For each offset from 0 to L − 1, scan s in steps of L with a left edge and a window word-count map.',
+        'If the chunk is not a word, clear the window and move the left edge past it.',
+        'Otherwise add it; while it appears more often than needed, remove chunks from the left. When the window holds all n words, record the left edge and drop one chunk from the left.',
+      ],
+      ds: ['Hash map of word counts', 'Window map'], time: 'O(|s| · L): L offsets, |s| / L chunks each, L letters per chunk', space: 'O(number of words)',
+      traps: ['The word list can contain duplicates; use counts, not a set.', 'Checking every start index and rebuilding the counts each time is O(|s| · n · L), too slow.'],
+    },
+
+    // ---------- Longest valid window ----------
+    {
+      id: 3, title: 'Longest Substring Without Repeating Characters', pattern: 'Longest valid window', core: true,
+      summary: 'Return the length of the longest substring in which no character appears twice.',
+      hints: [
+        'If a window has no repeats, so does every smaller window inside it.',
+        'Grow the window on the right. When the new character is already inside, shrink from the left until it is not.',
+        'A map from each character to its last index lets you jump the left edge in one step.',
+      ],
+      insight: 'The left edge never needs to move backwards: when a repeat enters, everything up to the earlier copy of that character is useless for any longer window.',
+      approach: [
+        'Keep a map from character to its last index, and a left edge l = 0.',
+        'For each r: if s[r] was last seen at index ≥ l, move l to that index + 1.',
+        'Record s[r]\'s index as r and update the best length with r − l + 1.',
+        'Return the best.',
+      ],
+      ds: ['Hash map (character → last index) or a set'], time: 'O(n)', space: 'O(size of the alphabet)',
+      traps: ['Only jump l forward, never back: use the larger of l and lastIndex + 1.', 'The string can contain spaces and symbols, not just letters.', 'The empty string has answer 0.'],
+    },
+    {
+      id: 1004, title: 'Max Consecutive Ones III', pattern: 'Longest valid window', core: true,
+      summary: 'In a binary array, return the longest run of 1s you can make if you may flip at most k zeros.',
+      hints: ['Rephrase: find the longest window containing at most k zeros.', 'Grow on the right; when the window has more than k zeros, move the left edge until it has k again.'],
+      insight: 'Flipping at most k zeros means the window may contain at most k zeros, and that rule only gets easier when the window shrinks.',
+      approach: ['l = 0, zeros = 0.', 'For each r: if nums[r] is 0, add 1 to zeros.', 'While zeros > k: if nums[l] is 0, subtract 1; move l right.', 'Update the best with r − l + 1.'],
+      ds: ['Array', 'Counter'], time: 'O(n)', space: 'O(1)',
+      traps: ['k can be 0, which turns the problem into the longest run of 1s.'],
+    },
+    {
+      id: 424, title: 'Longest Repeating Character Replacement', pattern: 'Longest valid window', core: true,
+      summary: 'You may change at most k characters of an uppercase string. Return the length of the longest substring of one repeated letter you can make.',
+      hints: [
+        'In a window, the cheapest plan is to keep the most frequent letter and change all the others.',
+        'A window is valid when its length minus its highest letter count is at most k.',
+        'Grow on the right; shrink on the left while the window is invalid.',
+      ],
+      insight: 'A window can become one repeated letter with (length − most frequent count) changes; keep that number at most k with a sliding window and 26 counts.',
+      approach: [
+        'Keep 26 counts and l = 0.',
+        'For each r: add s[r] to the counts.',
+        'While (r − l + 1) − (largest count in the window) > k, remove s[l] from the counts and move l right.',
+        'Update the best with r − l + 1.',
+      ],
+      ds: ['Array of 26 counts'], time: 'O(26 · n), or O(n) with the trick below', space: 'O(1)',
+      traps: [
+        'A well-known speed-up keeps the largest count seen so far and never lowers it; the answer stays correct because a window only improves the answer when that count grows.',
+        'You do not need to know which letter wins, only its count.',
+      ],
+    },
+    {
+      id: 904, title: 'Fruit Into Baskets', pattern: 'Longest valid window',
+      summary: 'Walking right along a row of trees, you pick one fruit from each tree but can carry only two fruit types. Return the most fruit you can pick from one contiguous stretch.',
+      hints: ['Strip away the story: find the longest subarray with at most two distinct values.', 'Keep counts of the values in the window; shrink when there are three distinct values.'],
+      insight: 'This is "longest window with at most 2 distinct values": a map of counts tells you when the window breaks the rule, and shrinking fixes it.',
+      approach: ['l = 0 and an empty map of counts.', 'For each r: add fruits[r] to the map.', 'While the map has more than 2 keys: decrease the count of fruits[l], delete it at 0, and move l right.', 'Update the best with r − l + 1.'],
+      ds: ['Hash map of counts'], time: 'O(n)', space: 'O(1), at most 3 keys',
+      traps: ['Delete a key when its count reaches 0, or the number of distinct values stays wrong.'],
+    },
+    {
+      id: 1493, title: "Longest Subarray of 1's After Deleting One Element", pattern: 'Longest valid window',
+      summary: 'You must delete exactly one element from a binary array. Return the length of the longest run of 1s left afterwards.',
+      hints: ['Find the longest window with at most one zero.', 'The deleted element is inside the window, so the answer is the window length minus 1.'],
+      insight: 'A window with at most one zero becomes all 1s after deleting that zero (or any one element if there is no zero), so the answer is the longest such window minus 1.',
+      approach: ['l = 0, zeros = 0.', 'For each r: count a zero if nums[r] is 0; while zeros > 1, move l right, uncounting zeros.', 'Update the best with r − l (the window length minus the deleted element).', 'Return the best.'],
+      ds: ['Array', 'Counter'], time: 'O(n)', space: 'O(1)',
+      traps: ['If the array is all 1s you must still delete one, so the answer is n − 1.'],
+    },
+    {
+      id: 1838, title: 'Frequency of the Most Frequent Element', pattern: 'Longest valid window',
+      summary: 'You may add 1 to any element, at most k times in total. Return the largest number of equal elements you can create.',
+      hints: [
+        'Sort the array. The best group to raise to a target value is the values just below it.',
+        'With nums[r] as the target, the cost to raise a window [l, r] is nums[r] × (window length) − window sum.',
+        'Shrink from the left while the cost exceeds k.',
+      ],
+      insight: 'After sorting, the elements raised to nums[r] should be its nearest smaller neighbours, so the candidates are windows ending at r, and the raising cost has a closed form from the window sum.',
+      approach: ['Sort ascending. l = 0, sum = 0.', 'For each r: add nums[r] to sum.', 'While nums[r] × (r − l + 1) − sum > k, subtract nums[l] from sum and move l right.', 'Update the best with r − l + 1.'],
+      ds: ['Sorting', 'Running sum'], time: 'O(n log n)', space: 'O(1) besides the sort',
+      traps: ['nums[r] × length can reach 10¹⁰; that is exact in a JavaScript number, but would overflow 32-bit integers in other languages.'],
+    },
+
+    {
+      id: 1658, title: 'Minimum Operations to Reduce X to Zero', pattern: 'Longest valid window',
+      summary: 'Each operation removes the leftmost or rightmost element and subtracts it from x. Return the fewest operations that bring x to exactly 0, or −1.',
+      hints: [
+        'The removed elements are a prefix plus a suffix. What is left in the middle?',
+        'The middle part must sum to total − x.',
+        'Find the longest window with that exact sum; all values are positive, so a sliding window works.',
+      ],
+      insight: 'Minimising what you remove from the ends is the same as maximising the contiguous middle you keep, which must sum to total − x.',
+      approach: [
+        'target = total − x. If target < 0, return −1.',
+        'Slide a window with positive values: add nums[r]; while the sum exceeds target, remove nums[l].',
+        'Whenever the sum equals target, update the longest length.',
+        'Return n − longest, or −1 if no window matched.',
+      ],
+      ds: ['Array', 'Running sum'], time: 'O(n)', space: 'O(1)',
+      traps: ['target = 0 means removing everything: the empty window counts, so the answer is n.', 'Running a search over both ends separately is easy to get wrong; the complement turns it into a single window.'],
+    },
+
+    // ---------- Shortest valid window ----------
+    {
+      id: 209, title: 'Minimum Size Subarray Sum', pattern: 'Shortest valid window', core: true,
+      summary: 'Given positive integers, return the length of the shortest contiguous subarray whose sum is at least a target, or 0 if none exists.',
+      hints: ['All values are positive, so adding an element always raises the sum and removing one always lowers it.', 'Grow until the sum reaches the target, then shrink from the left while it still does.'],
+      insight: 'With positive values, once a window reaches the target, shrinking it from the left is the only way it can get shorter, and every left edge only moves forward.',
+      approach: ['l = 0, sum = 0, best = infinity.', 'For each r: add nums[r].', 'While sum ≥ target: update best with r − l + 1, subtract nums[l], move l right.', 'Return best, or 0 if it was never set.'],
+      ds: ['Array', 'Running sum'], time: 'O(n)', space: 'O(1)',
+      traps: ['The follow-up O(n log n) version uses prefix sums and binary search.', 'This only works because every value is positive; with negatives, use prefix sums with a monotonic deque.'],
+    },
+    {
+      id: 76, title: 'Minimum Window Substring', pattern: 'Shortest valid window', core: true,
+      summary: 'Return the shortest substring of s that contains every character of t, counting duplicates, or "" if there is none.',
+      hints: [
+        'Count what t needs. A window is valid when it has at least that many of each character.',
+        'Track how many distinct characters are still missing, so you can tell in O(1) whether the window is valid.',
+        'Grow until valid; then shrink from the left while it stays valid, recording the shortest window.',
+      ],
+      insight: 'A "still missing" counter turns the validity check into O(1), so the classic grow-then-shrink window finds the shortest valid substring in linear time.',
+      approach: [
+        'Count the characters of t in need; missing = number of distinct characters in t.',
+        'For each r: add s[r] to the window counts; if its count now equals the need, decrease missing.',
+        'While missing is 0: record the window if it is the shortest so far; remove s[l], and if its count drops below the need, increase missing; move l right.',
+        'Return the recorded window, or "".',
+      ],
+      ds: ['Hash map (or array of 128) for needed counts', 'Window counts'], time: 'O(m + n)', space: 'O(size of the alphabet)',
+      traps: ['Duplicates in t matter: "aa" needs two a\'s.', 'Uppercase and lowercase letters are different characters.', 'Store the best start and length, and build the substring once at the end.'],
+    },
+
+    // ---------- Count windows ----------
+    {
+      id: 713, title: 'Subarray Product Less Than K', pattern: 'Count windows', core: true,
+      summary: 'Count the contiguous subarrays of positive integers whose product is strictly less than k.',
+      hints: [
+        'Values are at least 1, so extending a subarray never lowers its product.',
+        'For each right end r, find the smallest l with a product below k.',
+        'Every subarray that ends at r and starts anywhere from l to r is valid: add r − l + 1.',
+      ],
+      insight: 'For a fixed right end, the valid left ends form one unbroken range [l, r], so the count of valid subarrays ending at r is just its length.',
+      approach: ['If k ≤ 1, return 0.', 'l = 0, product = 1, count = 0.', 'For each r: multiply in nums[r]; while product ≥ k, divide out nums[l] and move l right.', 'Add r − l + 1 to count.'],
+      ds: ['Array', 'Running product'], time: 'O(n)', space: 'O(1)',
+      traps: ['k = 0 or 1: no product of positive integers is below it, and the shrink loop would run past r.'],
+    },
+    {
+      id: 1358, title: 'Number of Substrings Containing All Three Characters', pattern: 'Count windows',
+      summary: 'A string has only the letters a, b and c. Count the substrings that contain at least one of each.',
+      hints: [
+        'Fix the right end. Which left ends give a substring with all three letters?',
+        'If the last positions of a, b and c are known, any left end up to the smallest of them works.',
+        'Add (smallest last position + 1) for each right end.',
+      ],
+      insight: 'For a right end r, a substring [l, r] contains all three letters exactly when l is at or before the earliest of their latest positions, so you count left ends instead of windows.',
+      approach: ['Keep the last index of a, b and c, starting at −1.', 'For each r: update the last index of s[r].', 'Add (the minimum of the three last indices) + 1 to the count.', 'Return the count.'],
+      ds: ['Three integers (last positions)'], time: 'O(n)', space: 'O(1)',
+      traps: ['While one letter has not appeared yet, its last index is −1 and the term adds 0, which is correct.'],
+    },
+
+    // ---------- Exactly K ----------
+    {
+      id: 930, title: 'Binary Subarrays With Sum', pattern: 'Exactly K = at most K − at most (K − 1)',
+      summary: 'Count the contiguous subarrays of a binary array whose sum equals a goal.',
+      hints: [
+        'Zeros make "sum exactly goal" windows awkward: several left edges work for the same right edge.',
+        'Counting windows with sum at most goal is easy with r − l + 1.',
+        'Exactly goal = at most goal − at most (goal − 1).',
+      ],
+      insight: 'Windows with sum at most g shrink cleanly, so count them twice and subtract: atMost(goal) − atMost(goal − 1).',
+      approach: [
+        'Write atMost(g): if g < 0 return 0; otherwise slide a window, shrinking while the sum exceeds g, and add r − l + 1 at every step.',
+        'Return atMost(goal) − atMost(goal − 1).',
+      ],
+      ds: ['Array', 'Running sum'], time: 'O(n)', space: 'O(1)',
+      traps: ['goal can be 0, which makes atMost(−1) necessary: return 0 for it.', 'Prefix sums with a hash map also solve it, and also work for non-binary arrays.'],
+    },
+    {
+      id: 1248, title: 'Count Number of Nice Subarrays', pattern: 'Exactly K = at most K − at most (K − 1)',
+      summary: 'Count the contiguous subarrays that contain exactly k odd numbers.',
+      hints: ['Replace each number by 1 if it is odd and 0 if it is even.', 'Now it is Binary Subarrays With Sum, with goal k.'],
+      insight: 'Only parity matters: map odd to 1 and even to 0, then count windows with exactly k ones as atMost(k) − atMost(k − 1).',
+      approach: ['Treat odd values as 1 and even values as 0.', 'atMost(g) slides a window, shrinking while it has more than g odd numbers, adding r − l + 1.', 'Return atMost(k) − atMost(k − 1).'],
+      ds: ['Array', 'Counter'], time: 'O(n)', space: 'O(1)',
+    },
+    {
+      id: 992, title: 'Subarrays with K Different Integers', pattern: 'Exactly K = at most K − at most (K − 1)', core: true,
+      summary: 'Count the contiguous subarrays that contain exactly k distinct integers.',
+      hints: [
+        'For a fixed right end, the left ends giving exactly k distinct values form a range, but it is fiddly to track directly.',
+        'Counting subarrays with at most k distinct values is a standard window: add r − l + 1.',
+        'Exactly k = at most k − at most (k − 1).',
+      ],
+      insight: 'The trick turns an awkward "exactly" condition into two windows that each shrink cleanly, and subtracting their counts leaves exactly the subarrays with k distinct values.',
+      approach: [
+        'Write atMost(k): a window with a map of counts; after adding nums[r], shrink while the map has more than k keys, then add r − l + 1.',
+        'Return atMost(k) − atMost(k − 1).',
+      ],
+      ds: ['Hash map (or array) of counts'], time: 'O(n)', space: 'O(n)',
+      traps: ['Delete keys whose count reaches 0, or the distinct count is wrong.', 'Since values are at most n, an array of counts is faster than a Map.'],
+    },
+  ],
+};

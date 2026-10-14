@@ -1,0 +1,430 @@
+import type { Topic } from './types';
+
+export const topic: Topic = {
+  id: 'monotonic-stack',
+  patterns: [
+    { name: 'Next greater or smaller', idea: 'Scan once. The stack holds elements still waiting for their answer; when a new element beats the top, the top has found it.' },
+    { name: 'Both boundaries', idea: 'For each element, find the nearest smaller (or larger) element on the left and on the right. It is the minimum of everything between them.' },
+    { name: 'Contribution counting', idea: 'Instead of visiting every subarray, ask how many subarrays each element is the minimum or maximum of, then multiply and add.' },
+    { name: 'Greedy removal', idea: 'To build the smallest (or largest) sequence, drop an earlier element when a better one arrives, as long as you can still afford to drop it.' },
+    { name: 'Cartesian trees', idea: 'The stack holds the right spine of a tree in which every parent beats its children; one pass builds the whole tree.' },
+    { name: 'Candidate stacks', idea: 'Keep only the elements that could still be part of an answer, in monotonic order, and throw the rest away for good.' },
+  ],
+  signals: [
+    { see: '"Next greater", "next smaller", "previous greater element"', think: 'Monotonic stack of indices', why: 'Each element waits on the stack until the first element that beats it arrives, then is answered and popped.' },
+    { see: '"How many days until a warmer day", "how far to the next taller one"', think: 'Next greater, storing indices', why: 'Storing indices instead of values gives the distance as an index difference.' },
+    { see: 'Largest rectangle, or "each element as the minimum of a range"', think: 'Nearest smaller on both sides', why: 'An element is the minimum of exactly the range that lies between its nearest smaller neighbours.' },
+    { see: '"Sum of the minimum (or maximum) of every subarray"', think: 'Contribution counting with two stack passes', why: 'Counting how many subarrays each element is the minimum of replaces n² subarrays with n multiplications.' },
+    { see: '"Remove k digits", "smallest subsequence", "lexicographically smallest result"', think: 'Greedy stack with a removal budget', why: 'An earlier position matters more than any later one, so a smaller value should push out larger ones before it.' },
+    { see: 'A tree where every parent is the maximum (or minimum) of its range', think: 'Cartesian tree built with a stack', why: 'The stack is the right spine of the tree; each new value pops smaller nodes and adopts them as its left subtree.' },
+    { see: 'Stock span, people who can see each other, buildings with a view', think: 'Stack of the elements that can still block', why: 'An element hidden behind a larger one can never be the answer again, so it is popped for good.' },
+    { see: 'n up to 10⁵ and the brute force looks left or right from every index', think: 'Monotonic stack', why: 'Every index is pushed once and popped at most once, so all the answers together cost O(n).' },
+  ],
+  problems: [
+    // ---------- Next greater or smaller ----------
+    {
+      id: 496, title: 'Next Greater Element I', pattern: 'Next greater or smaller', core: true,
+      summary: 'nums1 is a subset of nums2, and all values are distinct. For each value in nums1, find the first larger value to its right in nums2, or −1 if there is none.',
+      hints: [
+        'Answering each query by scanning to the right costs O(m · n). Can you answer every value of nums2 in a single pass?',
+        'Compute the next greater element for every value of nums2 with a stack, and store each answer in a map.',
+        'Then each query is a single map lookup.',
+      ],
+      insight: 'Run the next-greater scan once over nums2 and save each answer in a hash map keyed by value. The values are distinct, so the map answers every query in O(1).',
+      approach: [
+        'Walk through nums2 with a stack of values that are still waiting for a larger value.',
+        'For each value v: while the top of the stack is smaller than v, pop it and record map[top] = v. Then push v.',
+        'Values left on the stack never see a larger value: they map to −1.',
+        'For each value in nums1, output its map entry.',
+      ],
+      ds: ['Stack', 'Hash map (Map)'], time: 'O(m + n)', space: 'O(n)',
+      traps: ['The answer is the next greater value itself, not its index or the distance.', 'Keying the map by value works only because the values are distinct.'],
+    },
+    {
+      id: 1475, title: 'Final Prices With a Special Discount in a Shop', pattern: 'Next greater or smaller',
+      summary: 'Each item is discounted by the price of the first later item that costs the same or less. Return what you pay for every item.',
+      hints: ['For each item you need the next item to its right that is smaller or equal: a "next smaller" question.', 'Keep a stack of indices whose discount is not known yet, and pop while the new price is at most the price on top.'],
+      insight: 'This is the next smaller-or-equal element. When a new price is at most the price of the item on top of the stack, it is that item\'s discount.',
+      approach: [
+        'Copy the prices into an answer array.',
+        'Scan left to right with a stack of indices still waiting for a discount.',
+        'For each index i: while the stack is not empty and prices[i] ≤ prices[top], pop top and subtract prices[i] from answer[top]. Then push i.',
+        'Items left on the stack pay full price.',
+      ],
+      ds: ['Stack of indices', 'Array'], time: 'O(n)', space: 'O(n)',
+      traps: ['The condition is "less than or equal". A strict comparison misses discounts from items with the same price.', 'With n ≤ 500 a double loop also passes, but the stack is the pattern to learn here.'],
+    },
+    {
+      id: 739, title: 'Daily Temperatures', pattern: 'Next greater or smaller', core: true,
+      summary: 'For each day, return how many days you must wait for a strictly warmer temperature, or 0 if no warmer day comes.',
+      hints: [
+        'Looking ahead from every day is O(n²), too slow for 10⁵ days.',
+        'Keep the days that are still waiting for a warmer day. In what order are their temperatures?',
+        'When a warmer day arrives, every cooler day on top of the stack gets its answer: the difference between the two indices.',
+      ],
+      insight: 'The days still waiting form a stack whose temperatures never rise from bottom to top. A warmer day pops and answers all the cooler days on top at once, so each day is pushed once and popped at most once.',
+      approach: [
+        'Fill the answer with 0 and start with an empty stack of indices.',
+        'For each day i: while the stack is not empty and temps[i] > temps[top], pop top and set answer[top] = i − top.',
+        'Push i.',
+        'Days still on the stack at the end keep their 0.',
+      ],
+      ds: ['Stack of indices', 'Array'], time: 'O(n)', space: 'O(n)',
+      traps: ['Store indices, not temperatures: you need the distance.', 'Strictly warmer means an equal temperature does not pop anything.'],
+    },
+    {
+      id: 503, title: 'Next Greater Element II', pattern: 'Next greater or smaller', core: true,
+      summary: 'In a circular array, find for each element the first larger element you meet when walking right and wrapping around to the start, or −1 if there is none.',
+      hints: ['Pretend the array is written out twice in a row.', 'Run the usual next-greater scan over 2n positions, using index i mod n.', 'Push indices only during the first lap; the second lap only answers.'],
+      insight: 'Walking the array twice simulates the wrap-around: every element gets to see all the elements after it, including those at the start.',
+      approach: [
+        'Fill the answer with −1 and start with an empty stack of indices.',
+        'For i from 0 to 2n − 1, take j as i mod n. While the stack is not empty and nums[j] > nums[top], pop top and set answer[top] = nums[j].',
+        'If i < n, push j.',
+        'Return the answer.',
+      ],
+      ds: ['Stack of indices', 'Array'], time: 'O(n)', space: 'O(n)',
+      traps: ['Without the second lap, elements near the end never see the values at the start.', 'The largest value has no greater element anywhere, so it (and any copy of it) stays −1.'],
+    },
+    {
+      id: 901, title: 'Online Stock Span', pattern: 'Next greater or smaller', core: true,
+      summary: 'Prices arrive one per day. For each new price, report how many consecutive days ending today had a price at most today\'s.',
+      hints: [
+        'Scanning backwards on every call is O(n) per day.',
+        'If yesterday\'s span was 5 and today\'s price is at least yesterday\'s, today\'s span covers those 5 days in one go.',
+        'Keep a stack of (price, span) pairs with strictly decreasing prices, and absorb the spans you pop.',
+      ],
+      insight: 'A past price that is at most today\'s can never stop a future span either, so pop it and add its span to today\'s. The stack keeps only prices that can still block, and they strictly decrease.',
+      approach: ['Keep a stack of (price, span) pairs.', 'On each new price: span = 1. While the stack is not empty and its top price ≤ the new price, pop it and add its span.', 'Push (price, span) and return span.'],
+      ds: ['Stack of pairs'], time: 'O(1) amortised per call', space: 'O(n)',
+      traps: ['Pop on ≤, not <: equal prices count toward the span.', 'One call can pop many pairs, but each pair is popped once in total, so all calls together are linear.'],
+    },
+    {
+      id: 1019, title: 'Next Greater Node In Linked List', pattern: 'Next greater or smaller',
+      summary: 'For each node of a linked list, return the value of the first later node with a strictly larger value, or 0 if there is none.',
+      hints: ['You cannot index into a linked list. Copy the values into an array first, or keep a counter as you walk.', 'Then it is the next-greater pattern with a stack of indices.'],
+      insight: 'Walk the list once and give each node an index. The stack of waiting indices then works exactly as it does on an array, writing answers by index.',
+      approach: [
+        'Walk the list and append each value to an array.',
+        'Scan the array with a stack of indices waiting for a larger value.',
+        'For each value: pop every index whose value is smaller and set its answer to the new value. Push the new index.',
+        'Indices never answered keep 0.',
+      ],
+      ds: ['Linked list', 'Array', 'Stack of indices'], time: 'O(n)', space: 'O(n)',
+      traps: ['Use 0, not −1, when there is no larger node.', 'Strictly larger: an equal value does not count.'],
+    },
+    {
+      id: 1944, title: 'Number of Visible People in a Queue', pattern: 'Next greater or smaller',
+      summary: 'People with distinct heights stand in a row. Person i can see person j further right if everyone between them is shorter than both. Count how many people each person can see.',
+      hints: [
+        'Scan from the right, keeping the people who are still visible from further left.',
+        'Person i sees everyone shorter that they pop off the stack: nobody between them blocks the view.',
+        'After the pops, if someone taller remains on the stack, person i sees that one too.',
+      ],
+      insight: 'Scanning right to left with a stack of decreasing heights, person i sees exactly the people they pop, plus the first taller person left on top. Everyone popped is hidden behind person i from then on.',
+      approach: [
+        'Scan from the last person to the first, keeping a stack of heights that decrease from bottom to top.',
+        'For person i: count = 0. While the top is shorter than heights[i], pop it and add 1.',
+        'If the stack is still not empty, add 1 for the first taller person.',
+        'Record the count and push heights[i].',
+      ],
+      ds: ['Stack'], time: 'O(n)', space: 'O(n)',
+      traps: ['Remember the one taller person who stops the popping: it is visible too.', 'Popping is safe because anyone shorter than person i is hidden behind them for everyone further left.'],
+    },
+
+    // ---------- Both boundaries ----------
+    {
+      id: 1856, title: 'Maximum Subarray Min-Product', pattern: 'Both boundaries',
+      summary: 'The min-product of a subarray is its minimum times its sum. Return the largest min-product of any subarray, modulo 10⁹ + 7, maximising before taking the modulo.',
+      hints: [
+        'Fix which element is the minimum. All values are positive, so for that minimum the widest subarray is best.',
+        'How wide? Up to the nearest strictly smaller value on each side: two stack scans find those limits.',
+        'Prefix sums give the sum of that range in O(1).',
+      ],
+      insight: 'For each element taken as the minimum, the best subarray stretches to the nearest smaller element on each side (with positive values, wider is always better). Stacks find the limits and prefix sums give the sum.',
+      approach: [
+        'Build prefix sums P.',
+        'With a stack, find for each i the nearest index on the left holding a smaller value, and the same on the right.',
+        'Candidate = nums[i] × (sum of the range strictly between those limits), read from P.',
+        'Keep the largest candidate and return it modulo 10⁹ + 7.',
+      ],
+      ds: ['Stack of indices', 'Prefix sums', 'BigInt'], time: 'O(n)', space: 'O(n)',
+      traps: [
+        'A product can reach about 10¹⁸ (the tests promise it fits in 64 bits), far beyond the range where JavaScript numbers are exact (2⁵³): multiply with BigInt.',
+        'Compare the true values and take the modulo only at the end.',
+      ],
+    },
+    {
+      id: 84, title: 'Largest Rectangle in Histogram', pattern: 'Both boundaries', core: true,
+      summary: 'Given the heights of bars that are each 1 wide, find the area of the largest rectangle that fits inside the histogram.',
+      hints: [
+        'The best rectangle\'s height equals one of the bars: the shortest bar it covers.',
+        'For each bar, how far can a rectangle of its height reach to the left and right? Up to the nearest shorter bar.',
+        'An increasing stack gives both limits: when a bar is popped, the incoming bar is its right limit and the bar below it on the stack is its left limit.',
+      ],
+      insight: 'Each bar\'s widest rectangle stretches between the nearest shorter bar on each side, and an increasing stack finds both limits at the moment the bar is popped.',
+      approach: [
+        'Scan i from 0 to n, treating position n as a bar of height 0 so every bar is popped by the end.',
+        'While the bar on top of the stack is at least as tall as the current height, pop it. Its left limit is the index now on top (or −1); its right limit is i.',
+        'Area = height[popped] × (i − left − 1). Keep the best.',
+        'Push i (except the imaginary bar at n).',
+      ],
+      ds: ['Stack of indices', 'Array'], time: 'O(n)', space: 'O(n)',
+      traps: [
+        'Without the height-0 bar at the end, bars still on the stack are never measured.',
+        'Popping equal bars is fine: the last of a run of equal bars is measured later with the full width.',
+      ],
+    },
+    {
+      id: 85, title: 'Maximal Rectangle', pattern: 'Both boundaries',
+      summary: 'In a grid of "0" and "1" characters, find the area of the largest rectangle made only of 1s.',
+      hints: [
+        'Fix the bottom row of the rectangle. How many 1s are stacked without a break above each column?',
+        'Those counts form a histogram, one for each row.',
+        'Run Largest Rectangle in Histogram on every row\'s histogram.',
+      ],
+      insight: 'Treat each row as the floor of a histogram whose bars are the runs of 1s ending at that row. The best rectangle in any of these histograms is the answer.',
+      approach: [
+        'Keep an array heights with one entry per column, all 0.',
+        'For each row: for each column, set heights[c] to heights[c] + 1 if the cell is "1", otherwise to 0.',
+        'Run the histogram stack algorithm on heights and update the best area.',
+        'Return the best area.',
+      ],
+      ds: ['Array of heights', 'Stack of indices'], time: 'O(rows × cols)', space: 'O(cols)',
+      traps: ['The cells are the characters "1" and "0", not numbers.', 'A "0" resets that column\'s height to 0; heights never carry across a gap.'],
+    },
+    {
+      id: 42, title: 'Trapping Rain Water', pattern: 'Both boundaries',
+      summary: 'Given bar heights in a row, compute how much rain water stays trapped between the bars. Solve it here with a stack (the Two pointers chapter solves it with two pointers).',
+      hints: [
+        'Water fills a dip once a taller bar arrives on its right. The dip is bounded by that bar and the bar before the dip.',
+        'Keep a stack of bar indices with decreasing heights. When a taller bar arrives, the bar you pop is the floor of a dip.',
+        'The water above that floor is a horizontal layer: (min(left wall, right wall) − floor height) × width.',
+      ],
+      insight: 'A decreasing stack holds walls waiting for a right wall. When a taller bar arrives, each popped bar is a floor, and the water over it is a layer bounded by the new bar and the bar below it on the stack.',
+      approach: [
+        'Scan left to right with a stack of indices whose heights decrease.',
+        'For bar i: while the stack is not empty and height[i] > height[top], pop the floor. If the stack is now empty, stop: there is no left wall.',
+        'Let left be the new top. Layer height = min(height[left], height[i]) − height[floor]; width = i − left − 1. Add height × width.',
+        'Push i. The running total is the answer.',
+      ],
+      ds: ['Stack of indices'], time: 'O(n)', space: 'O(n)',
+      traps: ['The stack fills water in horizontal layers, not column by column; both methods give the same total.', 'If the stack empties after a pop, the water there would spill out on the left.'],
+    },
+    {
+      id: 1793, title: 'Maximum Score of a Good Subarray', pattern: 'Both boundaries',
+      summary: 'The score of a subarray is its minimum times its length. Find the best score among all subarrays that contain index k.',
+      hints: [
+        'Fix which element is the minimum. The widest subarray where it is the minimum runs between its nearest smaller neighbours.',
+        'Two stack scans give those limits for every element.',
+        'A window only counts if it contains k.',
+      ],
+      insight: 'For each element as the minimum, its widest window lies between the nearest smaller values on each side; keep it if that window contains k, because no window with that minimum can contain k otherwise.',
+      approach: [
+        'With a stack, find for each i the nearest smaller index on the left (L) and on the right (R).',
+        'If L < k < R, the window strictly between them contains k: candidate = nums[i] × (R − L − 1).',
+        'Return the largest candidate.',
+      ],
+      ds: ['Stack of indices'], time: 'O(n)', space: 'O(n)',
+      traps: [
+        'A shorter greedy also works: grow a window outward from k, always stepping toward the larger neighbour, and track min × length.',
+        'If you use that greedy, stepping toward the smaller neighbour first can skip the best window.',
+      ],
+    },
+
+    // ---------- Contribution counting ----------
+    {
+      id: 907, title: 'Sum of Subarray Minimums', pattern: 'Contribution counting', core: true,
+      summary: 'Add up the minimum of every contiguous subarray, modulo 10⁹ + 7.',
+      hints: [
+        'There are about n²/2 subarrays, too many to visit for n = 3 · 10⁴.',
+        'Flip the question: for each element, in how many subarrays is it the minimum?',
+        'That count is (choices of left end) × (choices of right end), limited by the nearest smaller elements. Break ties on one side only.',
+      ],
+      insight: 'Element i is the minimum of left[i] × right[i] subarrays, where left[i] reaches back to the previous strictly smaller element and right[i] forward to the next smaller-or-equal one. Sum arr[i] × left[i] × right[i].',
+      approach: [
+        'Scan left to right with a stack to find, for each i, the distance to the previous strictly smaller element (or to the start): left[i].',
+        'Scan right to left to find the distance to the next smaller-or-equal element (or to the end): right[i].',
+        'Add arr[i] × left[i] × right[i] for every i, reducing modulo 10⁹ + 7 as you go.',
+      ],
+      ds: ['Stack of indices', 'Arrays'], time: 'O(n)', space: 'O(n)',
+      traps: [
+        'With equal values, use a strict comparison on one side and a non-strict one on the other. Otherwise a subarray with two equal minimums is counted twice, or not at all.',
+        'Each term stays below 10¹³, so it is exact in a JavaScript number; reduce after each addition.',
+      ],
+    },
+    {
+      id: 2104, title: 'Sum of Subarray Ranges', pattern: 'Contribution counting',
+      summary: 'The range of a subarray is its maximum minus its minimum. Add up the ranges of all subarrays.',
+      hints: ['The sum of ranges is (sum of all subarray maximums) − (sum of all subarray minimums).', 'Each of those sums is the contribution technique from Sum of Subarray Minimums.', 'For maximums, reverse the comparisons.'],
+      insight: 'Split the sum: the total of maximums minus the total of minimums, each computed in O(n) by counting every element\'s contribution.',
+      approach: [
+        'Compute the sum of subarray minimums with two stack scans (previous smaller, next smaller-or-equal).',
+        'Compute the sum of subarray maximums the same way with the comparisons reversed (previous larger, next larger-or-equal).',
+        'Return the difference.',
+      ],
+      ds: ['Stack of indices', 'Arrays'], time: 'O(n)', space: 'O(n)',
+      traps: ['With n ≤ 1000 a double loop passes too; the follow-up asks for O(n).', 'Negative values are fine: the contribution formula never assumes positive numbers.'],
+    },
+
+    // ---------- Greedy removal ----------
+    {
+      id: 402, title: 'Remove K Digits', pattern: 'Greedy removal', core: true,
+      summary: 'Remove exactly k digits from a number given as a string so that the remaining number is as small as possible.',
+      hints: [
+        'The leftmost digits matter most.',
+        'If a digit is bigger than the digit right after it, removing it makes the number smaller.',
+        'Keep a stack: pop while the top is bigger than the incoming digit and you still have removals left.',
+      ],
+      insight: 'Greedy with an increasing stack: a larger digit followed by a smaller one should go, because making an earlier position smaller beats anything that happens later.',
+      approach: [
+        'For each digit: while k > 0 and the top of the stack is greater than the digit, pop and decrease k. Then push the digit.',
+        'If k is still positive, remove that many digits from the end.',
+        'Strip leading zeros. If nothing is left, the answer is "0".',
+      ],
+      ds: ['Stack (array of characters)'], time: 'O(n)', space: 'O(n)',
+      traps: ['Leading zeros must go: removing one digit from "30045" leaves "0045", which is "45".', 'A number whose digits only rise never pops; its removals come off the end.'],
+    },
+    {
+      id: 316, title: 'Remove Duplicate Letters', pattern: 'Greedy removal', core: true,
+      summary: 'Remove repeated letters so that each letter appears exactly once, choosing the result that comes first in dictionary order.',
+      hints: [
+        'You keep exactly one copy of each letter; choosing which copies decides the order.',
+        'A letter on the stack can make way for a smaller incoming letter only if it appears again later.',
+        'Track the last index of each letter, and which letters are already on the stack.',
+      ],
+      insight: 'Greedy stack: pop a larger letter when a smaller one arrives, but only if the larger letter occurs again later. Skip letters that are already kept.',
+      approach: [
+        'Record the last index of every letter.',
+        'Scan the string with a stack and a set of the letters on the stack.',
+        'If the letter is already on the stack, skip it.',
+        'Otherwise, while the top is larger than the letter and the top appears again later, pop it and remove it from the set. Push the letter.',
+      ],
+      ds: ['Stack', 'Set', 'Last-position array (26 entries)'], time: 'O(n)', space: 'O(1): at most 26 letters are stored',
+      traps: ['Skipping letters already on the stack is essential, or you would pop and re-add the same letter.', 'Problem 1081 is the same problem under another name.'],
+    },
+    {
+      id: 1673, title: 'Find the Most Competitive Subsequence', pattern: 'Greedy removal',
+      summary: 'Choose a subsequence of length k that is smallest in dictionary order.',
+      hints: ['It is Remove K Digits in disguise: you may drop n − k elements.', 'Pop a larger element when a smaller one arrives, but only while enough elements remain to still reach length k.'],
+      insight: 'An increasing stack with a budget: pop the top if it is larger than the incoming value and (stack size − 1) plus the elements still to come is at least k.',
+      approach: [
+        'For each index i: while the stack is not empty, its top is larger than nums[i], and (stack size − 1) + (n − i) ≥ k, pop.',
+        'If the stack holds fewer than k elements, push nums[i].',
+        'Return the stack.',
+      ],
+      ds: ['Stack'], time: 'O(n)', space: 'O(k)',
+      traps: ['Without the budget check you can pop too many and end up shorter than k.'],
+    },
+    {
+      id: 321, title: 'Create Maximum Number', pattern: 'Greedy removal',
+      summary: 'From two arrays of digits, build the largest number with exactly k digits, keeping the digits of each array in their original order.',
+      hints: [
+        'Split k into i digits from the first array and k − i from the second, and try every split.',
+        'For a fixed count, the largest subsequence of one array comes from a decreasing stack with a removal budget.',
+        'Merge the two chosen subsequences greedily, always taking from the one whose remaining part is larger in dictionary order.',
+      ],
+      insight: 'Break it into parts: the best subsequence of each length from each array (monotonic stack), then a merge that compares the remaining suffixes, not only the current digits. Keep the best result over all splits.',
+      approach: [
+        'For each i from max(0, k − n) to min(k, m): take the largest length-i subsequence of nums1 and the largest length-(k − i) subsequence of nums2, each with a stack and a drop budget.',
+        'Merge them: at each step take the next digit from the array whose remaining suffix is larger in dictionary order.',
+        'Keep the largest merged result over all i.',
+      ],
+      ds: ['Stack', 'Arrays'], time: 'O((m + n)³) in the worst case', space: 'O(m + n)',
+      traps: ['When the two current digits are equal, look at what follows; taking from the wrong side can lose a larger digit later.', 'Respect the split range: you cannot take more digits from an array than it has.'],
+    },
+
+    // ---------- Cartesian trees ----------
+    {
+      id: 654, title: 'Maximum Binary Tree', pattern: 'Cartesian trees',
+      summary: 'Build a tree from an array of distinct values: the maximum becomes the root, the part to its left builds the left subtree, and the part to its right builds the right subtree, recursively.',
+      hints: [
+        'The direct recursion is O(n²) when the array is sorted.',
+        'Process the values left to right. Where does each new value go, relative to the right spine of the tree built so far?',
+        'Keep the right spine on a stack: pop smaller values (they become the new node\'s left subtree), then attach the new node as the right child of the stack\'s top.',
+      ],
+      insight: 'This is a max Cartesian tree. A decreasing stack holds the right spine; each new value adopts the last node it pops as its left child and becomes the right child of the node left on top.',
+      approach: [
+        'Scan left to right with a stack of nodes whose values decrease.',
+        'For each value, create a node. Pop every smaller node; the last one popped becomes the new node\'s left child.',
+        'If the stack is not empty, the new node becomes the right child of its top.',
+        'Push the new node. When the scan ends, the bottom of the stack is the root.',
+      ],
+      ds: ['Stack of tree nodes', 'Binary tree'], time: 'O(n)', space: 'O(n)',
+      traps: ['With n ≤ 1000 the recursive build also passes; the stack version is the idea behind the harder problems.', 'Set the left child from the last popped node before linking the new node under the stack\'s top.'],
+    },
+    {
+      id: 1130, title: 'Minimum Cost Tree From Leaf Values', pattern: 'Cartesian trees',
+      summary: 'The array lists a tree\'s leaves from left to right. Every internal node has two children and costs the largest leaf in its left subtree times the largest leaf in its right subtree. Find the smallest possible total cost.',
+      hints: [
+        'Building the tree is the same as repeatedly merging two neighbouring leaves: the smaller one disappears and costs smaller × neighbour.',
+        'Remove the smallest values first, each paired with the smaller of its two neighbours.',
+        'A decreasing stack gives each value its left neighbour (below it on the stack) and its right neighbour (the incoming value).',
+      ],
+      insight: 'Each merge removes the smaller of two neighbours at the cost of their product, so remove small leaves first, pairing each with its smaller neighbour. A decreasing stack does exactly that.',
+      approach: [
+        'Push a sentinel of infinity, then scan the values.',
+        'While the top of the stack is at most the incoming value: pop it as mid and add mid × min(new top, incoming value).',
+        'Push the incoming value.',
+        'At the end, while more than one real value remains, pop the top and add it × the value below it.',
+      ],
+      ds: ['Stack'], time: 'O(n)', space: 'O(n)',
+      traps: ['An interval DP over all split points also works in O(n³) with n ≤ 40; the stack is O(n).', 'Pair the popped value with the smaller neighbour, not the larger one.'],
+    },
+
+    // ---------- Candidate stacks ----------
+    {
+      id: 853, title: 'Car Fleet', pattern: 'Candidate stacks', core: true,
+      summary: 'Cars drive toward a target at fixed speeds and cannot pass each other. A faster car that catches up joins the slower car\'s fleet. Count the fleets that arrive.',
+      hints: [
+        'Sort the cars by starting position, nearest to the target first.',
+        'Work out when each car would arrive if it drove alone.',
+        'A car that would arrive no later than the fleet ahead catches it and merges; otherwise it starts a new fleet.',
+      ],
+      insight: 'Going from the car nearest the target backwards, the arrival times of separate fleets strictly increase. A car whose solo time is not larger than the current fleet\'s time merges into it.',
+      approach: [
+        'Pair each car\'s position with its time to the target: (target − position) / speed.',
+        'Sort by position, largest first.',
+        'Walk through the cars: if a car\'s time is larger than the slowest time so far, it starts a new fleet and becomes the slowest time.',
+        'Return the number of fleets.',
+      ],
+      ds: ['Array of pairs', 'Sorting'], time: 'O(n log n)', space: 'O(n)',
+      traps: ['Catching up exactly at the target still counts as one fleet, so start a new fleet only on "strictly greater".', 'The stack of fleet times shrinks to one variable, because each car only compares with the fleet just ahead.'],
+    },
+    {
+      id: 456, title: '132 Pattern', pattern: 'Candidate stacks',
+      summary: 'Decide whether there are indices i < j < k with nums[i] < nums[k] < nums[j].',
+      hints: [
+        'Scan from the right, looking for the "3" and the "2" of the pattern first.',
+        'Keep a stack of candidates for the "3". When a larger value arrives, everything it pops is a valid "2", because a bigger value sits before it.',
+        'Remember the largest popped "2". If you later meet a value smaller than it, that value is the "1".',
+      ],
+      insight: 'Right to left with a decreasing stack: every value popped by a larger value is a "2" with a "3" before it. Keep the largest such "2"; any later value below it completes the pattern.',
+      approach: [
+        'third = −∞; empty stack.',
+        'For i from n − 1 down to 0: if nums[i] < third, return true.',
+        'While the top of the stack is smaller than nums[i], pop it into third.',
+        'Push nums[i]. If the loop ends, return false.',
+      ],
+      ds: ['Stack'], time: 'O(n)', space: 'O(n)',
+      traps: ['Scanning left to right is much harder; the right-to-left order is what makes the stack work.', 'All comparisons are strict.'],
+    },
+    {
+      id: 962, title: 'Maximum Width Ramp', pattern: 'Candidate stacks',
+      summary: 'Find the largest j − i such that i < j and nums[i] ≤ nums[j].',
+      hints: [
+        'A useful left end must be smaller than every value before it; otherwise an earlier index would make a wider ramp.',
+        'Collect those candidates: their values decrease, so they form a stack.',
+        'Scan j from the right. While the value at the stack\'s top is at most nums[j], record the width and pop.',
+      ],
+      insight: 'Only prefix minimums can be left ends. Scanning right ends from the far right, each candidate is paired with the furthest j that works and then discarded.',
+      approach: [
+        'Push index i whenever nums[i] is smaller than the value at the stack\'s top (a new prefix minimum).',
+        'For j from n − 1 down to 0: while the stack is not empty and nums[top] ≤ nums[j], update best with j − top and pop.',
+        'Return best.',
+      ],
+      ds: ['Stack of indices'], time: 'O(n)', space: 'O(n)',
+      traps: ['Popping is safe because j only moves left: the pair you just found is the widest for that left end.', 'Sorting indices by value gives another O(n log n) solution.'],
+    },
+  ],
+};

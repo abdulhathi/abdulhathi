@@ -1,0 +1,215 @@
+import type { Topic } from './types';
+
+export const topic: Topic = {
+  id: 'game-theory',
+  patterns: [
+    { name: 'Winning and losing positions', idea: 'A position is winning if some move leads to a losing position for the opponent, and losing if every move leads to a winning one.' },
+    { name: 'Nim and Grundy numbers', idea: 'Nim is won by XOR; any impartial game splits into independent parts whose Grundy numbers XOR together like Nim piles.' },
+    { name: 'Minimax on score difference', idea: 'Store "how far ahead the player to move can finish" for each state; the opponent\'s best becomes a subtraction.' },
+    { name: 'Greedy and parity shortcuts', idea: 'Some games collapse to sorting, counting or a parity argument once you see what each move really changes.' },
+    { name: 'Games on graphs', idea: 'With possible draws and cycles, label states backwards from the decided ones, like a topological sort.' },
+  ],
+  signals: [
+    { see: '"both players play optimally", "return true if the first player wins"', think: 'Win/lose DP over positions', why: 'A position\'s outcome depends only on the outcomes of the positions one move away.' },
+    { see: 'Players remove stones and "the player who cannot move loses", with the same moves available to both', think: 'Impartial game: win/lose table, Nim XOR or Grundy numbers', why: 'In impartial games only the position matters, not whose turn it is.' },
+    { see: 'Several independent piles or segments, each a small game', think: 'Sprague–Grundy: XOR the Grundy numbers', why: 'A sum of independent impartial games behaves exactly like Nim with one pile per part.' },
+    { see: 'Players take from the ends of an array, or take 1–3 from the front, and scores are compared', think: 'Minimax DP on score difference', why: 'Maximising (mine − theirs) turns the opponent\'s optimal reply into a single subtraction.' },
+    { see: 'n up to 10⁹ in a "who wins" question', think: 'Find the pattern in small cases and prove it', why: 'No table that size is possible; the answer must be a formula such as n mod 4.' },
+    { see: 'Each player takes items they value, all items eventually taken', think: 'Greedy by combined value', why: 'Taking an item gains your value and denies the opponent theirs, so its worth to the mover is the sum.' },
+    { see: 'Players chase each other on a graph and draws are possible', think: 'Retrograde analysis (backward BFS from decided states)', why: 'Plain recursion loops on cycles; propagating known results backwards resolves every decidable state.' },
+  ],
+  problems: [
+    // ---------- Winning and losing ----------
+    {
+      id: 292, title: 'Nim Game', pattern: 'Winning and losing positions', core: true,
+      summary: 'A heap of n stones; players alternately remove 1, 2 or 3; whoever takes the last stone wins. You move first. Decide whether you can force a win (n up to about 2 × 10⁹).',
+      hints: ['Label small heaps W (player to move wins) or L. Start with 1, 2, 3.', 'What about 4? 5? Do you see a cycle?'],
+      insight: 'Multiples of 4 are losing: whatever you take (1–3), the opponent takes the rest of 4. Every other heap wins by moving to a multiple of 4.',
+      approach: ['If n is a multiple of 4, return false: whatever you take, the opponent takes the rest of that 4 and keeps the heap a multiple of 4.', 'Otherwise return true: take n mod 4 stones, then answer every move so that each round removes exactly 4.'],
+      ds: ['None'], time: 'O(1)', space: 'O(1)',
+      traps: ['A table up to n is too big for 2 × 10⁹; find the pattern on small cases first, then prove it.'],
+    },
+    {
+      id: 1025, title: 'Divisor Game', pattern: 'Winning and losing positions', core: true,
+      summary: 'A number n is on the board. A move picks a divisor x of n with 0 < x < n and replaces n with n − x. The player who cannot move loses. Does the first player win?',
+      hints: ['Build a win/lose table for small n.', 'An odd number has only odd divisors; odd minus odd is even. What can an even player always do?'],
+      insight: 'Even n wins: subtract 1 to give the opponent an odd number, whose divisors are all odd, so they must hand back an even number; eventually the opponent faces 1 and cannot move.',
+      approach: ['Return whether n is even. (A DP over 1 … n with "W if some divisor move reaches L" gives the same table.)', 'If unsure in an interview, write the DP first, observe the pattern, then explain the parity argument.'],
+      ds: ['None (or a boolean array for the DP)'], time: 'O(1)', space: 'O(1)',
+    },
+    {
+      id: 464, title: 'Can I Win', pattern: 'Winning and losing positions', core: true,
+      summary: 'Players alternately pick unused integers from 1 to maxChoosableInteger (at most 20) and add them to a running total. Whoever first reaches the target total wins. Can the first player force a win?',
+      hints: [
+        'The state is which numbers have been used; the running total follows from it.',
+        'Represent the used numbers as a bitmask: 2²⁰ states at most.',
+        'A state wins if some unused number either reaches the target immediately or leads to a losing state for the opponent.',
+      ],
+      insight: 'Memoise win/lose on the bitmask of used numbers: the remaining total is determined by the mask, and there are at most 2²⁰ masks.',
+      approach: [
+        'If the target is 0 or less, return true. If 1 + 2 + … + max is less than the target, return false.',
+        'f(mask, remaining): for each unused number x, if x ≥ remaining or f(mask with x, remaining − x) is false, return true.',
+        'Otherwise return false. Memoise by mask.',
+      ],
+      ds: ['Bitmask', 'Memo (Map or array of size 2ⁿ)'], time: 'O(2ⁿ × n)', space: 'O(2ⁿ)',
+      traps: ['If the numbers cannot reach the target at all, nobody wins and the answer is false.', 'Memoising by (mask, total) is redundant: the total is fixed by the mask.'],
+    },
+    {
+      id: 1510, title: 'Stone Game IV', pattern: 'Winning and losing positions',
+      summary: 'Players alternately remove a non-zero square number of stones (1, 4, 9, …) from a pile of n; the player who cannot move loses. Does the first player win? n is up to 10⁵.',
+      hints: ['win[0] = false: no move.', 'win[i] is true if some square k² ≤ i makes win[i − k²] false.'],
+      insight: 'Fill a win/lose table from 0 upwards: a pile is winning exactly when some square move leaves the opponent a losing pile.',
+      approach: ['win[0] = false.', 'For i from 1 to n: win[i] = true if any k with k² ≤ i has win[i − k²] false.', 'Return win[n].'],
+      ds: ['Boolean array'], time: 'O(n √n)', space: 'O(n)',
+      traps: ['Stop scanning squares as soon as you find a losing target.'],
+    },
+
+    // ---------- Nim and Grundy ----------
+    {
+      id: 1908, title: 'Game of Nim', pattern: 'Nim and Grundy numbers',
+      summary: 'Several piles of stones; a move removes any positive number of stones from one pile; the player who cannot move loses. Does the first player win?',
+      hints: ['With one pile, the first player takes everything.', 'Try two equal piles: the second player can copy every move.', 'Combine all pile sizes with XOR.'],
+      insight: "Bouton's theorem: the first player wins exactly when the XOR of all pile sizes is non-zero, because from XOR 0 every move makes it non-zero, and from non-zero some move makes it 0.",
+      approach: ['XOR all pile sizes together.', 'Return whether the result is not zero.'],
+      ds: ['Array'], time: 'O(n)', space: 'O(1)',
+      traps: ['Summing piles instead of XOR-ing them gives wrong answers, for example piles 1, 2, 3 (sum 6, XOR 0: the first player loses).'],
+    },
+    {
+      id: 294, title: 'Flip Game II', pattern: 'Nim and Grundy numbers',
+      summary: 'A string of plus and minus signs. A move turns two neighbouring plus signs into two minus signs; the player who cannot move loses. Decide whether the first player can guarantee a win.',
+      hints: [
+        'Backtracking with memoisation on the string works for short inputs.',
+        'A move only affects one run of consecutive "+". The runs are independent games.',
+        'Compute the Grundy number of a run of length L, then XOR over all runs.',
+      ],
+      insight: 'Each run of "+" is an independent impartial game. g(L) = mex of g(i) XOR g(L − 2 − i) over every split; the board wins exactly when the XOR of g over all runs is non-zero.',
+      approach: [
+        'g(0) = g(1) = 0. For L from 2 up to the longest run, collect g(i) XOR g(L − 2 − i) for i from 0 to L − 2, and set g(L) to the smallest non-negative value not in that set.',
+        'Split the string on "−" into runs of "+".',
+        'XOR g(run length) over all runs; return whether the result is non-zero.',
+      ],
+      ds: ['Array of Grundy numbers', 'Set (for mex)'], time: 'O(n²)', space: 'O(n)',
+      traps: ['Plain backtracking without memoisation is exponential.', 'Memoising on the whole string works but is slower than Grundy numbers.'],
+    },
+
+    // ---------- Minimax ----------
+    {
+      id: 486, title: 'Predict the Winner', pattern: 'Minimax on score difference', core: true,
+      summary: 'Players alternately take a number from either end of an array and add it to their score. Does player 1 finish with at least as much as player 2?',
+      hints: [
+        'Tracking both scores is awkward. Track the difference: (score of the player to move) − (the other\'s score).',
+        'best(i, j) = max(nums[i] − best(i + 1, j), nums[j] − best(i, j − 1)).',
+        'Player 1 wins when best(0, n − 1) ≥ 0.',
+      ],
+      insight: 'Define best(i, j) as how far ahead the player to move ends on nums[i..j]; after you take an end, the opponent is the player to move, so subtract their best on what remains.',
+      approach: ['best(i, i) = nums[i].', 'For i from n − 1 down to 0 and j from i + 1 up: best(i, j) = max(nums[i] − best(i + 1, j), nums[j] − best(i, j − 1)).', 'Return best(0, n − 1) ≥ 0.'],
+      ds: ['2D table (interval DP)'], time: 'O(n²)', space: 'O(n²), or O(n) with one row',
+      traps: ['Greedy "take the bigger end" fails: on [3, 9, 1, 2] it takes 3 and hands the 9 to the opponent, while taking 2 first wins 11 to 4.', 'A tie counts as a win for player 1: use ≥.'],
+    },
+    {
+      id: 877, title: 'Stone Game', pattern: 'Minimax on score difference', core: true,
+      summary: 'An even number of piles in a row, with an odd total. Players take a whole pile from either end. Does Alice (first) end with more stones?',
+      hints: ['The interval DP from Predict the Winner solves it.', 'Colour the piles alternately by index. Can Alice always take all the even-index piles, or all the odd-index ones?'],
+      insight: 'With an even number of piles, the first player can always take every even-indexed pile or every odd-indexed pile (the opponent is always left with ends of the other colour); one colour totals more since the sum is odd, so Alice always wins.',
+      approach: ['Return true. (The minimax DP on score difference confirms it and is the general method when the rules change.)', 'Be ready to explain the colouring argument.'],
+      ds: ['None (or a 2D table for the DP)'], time: 'O(1)', space: 'O(1)',
+      traps: ['The constant answer relies on the even number of piles and odd total; for other rules use the DP.'],
+    },
+    {
+      id: 1140, title: 'Stone Game II', pattern: 'Minimax on score difference',
+      summary: 'Players take all the piles from the first X remaining piles, where 1 ≤ X ≤ 2M, and then M becomes max(M, X); M starts at 1. Return the most stones Alice can get.',
+      hints: [
+        'State: (index of the first remaining pile, M).',
+        'Whatever you do not take, the opponent plays optimally on: your total = (all remaining stones) − (opponent\'s best from the next state).',
+        'Use suffix sums for "all remaining stones".',
+      ],
+      insight: 'best(i, M) = max over X of suffix(i) − best(i + X, max(M, X)), where suffix(i) is the total of the remaining piles; when 2M reaches the end, take everything.',
+      approach: [
+        'Precompute suffix sums.',
+        'best(i, M): if i + 2M ≥ n, return suffix(i). Otherwise try X from 1 to 2M and keep the maximum of suffix(i) − best(i + X, max(M, X)).',
+        'Memoise on (i, M) and return best(0, 1).',
+      ],
+      ds: ['Memo table (n × n)', 'Suffix sums'], time: 'O(n³)', space: 'O(n²)',
+      traps: ['M only matters up to n, which bounds the memo table.'],
+    },
+    {
+      id: 1690, title: 'Stone Game VII', pattern: 'Minimax on score difference',
+      summary: 'Players remove the leftmost or rightmost stone and score the sum of the stones that remain. Alice maximises the final score difference and Bob minimises it. Return the difference.',
+      hints: ['This is Predict the Winner, but the points for a move are the sum of what remains.', 'Use prefix sums to get the sum of any range in O(1).'],
+      insight: 'best(i, j) = max(sum(i + 1, j) − best(i + 1, j), sum(i, j − 1) − best(i, j − 1)): the score difference for the player to move, with range sums from prefix sums.',
+      approach: ['Build prefix sums.', 'Fill best(i, j) for i from n − 1 down and j from i + 1 up using the formula; best(i, i) = 0.', 'Return best(0, n − 1).'],
+      ds: ['2D table', 'Prefix sums'], time: 'O(n²)', space: 'O(n²), or O(n) with one row',
+      traps: ['"Bob minimises the difference" is just Bob maximising his own difference; one formula covers both players.'],
+    },
+    {
+      id: 375, title: 'Guess Number Higher or Lower II', pattern: 'Minimax on score difference',
+      summary: 'A number is hidden in 1 … n. Each wrong guess x costs x, and you learn higher or lower. Return the least money that guarantees a win no matter what the number is.',
+      hints: [
+        'You pick the guess to minimise cost; the adversary picks the side that maximises it.',
+        'cost(i, j) = min over x in i…j of x + max(cost(i, x − 1), cost(x + 1, j)).',
+        'Ranges of length 1 cost nothing.',
+      ],
+      insight: 'Minimax interval DP: you minimise over guesses x, the worst case maximises over the two sides, so cost(i, j) = min over x of x + max(cost(i, x − 1), cost(x + 1, j)).',
+      approach: ['cost(i, j) = 0 when i ≥ j.', 'Fill ranges by increasing length, trying every guess x.', 'Return cost(1, n).'],
+      ds: ['2D table (interval DP)'], time: 'O(n³)', space: 'O(n²)',
+      traps: ['Binary search (always the middle) is not optimal here, because guesses have different costs.'],
+    },
+    {
+      id: 1406, title: 'Stone Game III', pattern: 'Minimax on score difference',
+      summary: 'Players take 1, 2 or 3 stones from the front of a row of values (which may be negative). Return who wins, or "Tie".',
+      hints: ['Work backwards from the end of the row.', 'diff(i) = best (mine − theirs) from position i = max over k of (sum of the next k values) − diff(i + k).'],
+      insight: 'A one-dimensional minimax DP on score difference: diff(i) = max over k = 1…3 of (values i…i + k − 1) − diff(i + k); the sign of diff(0) names the winner.',
+      approach: ['diff(n) = 0.', 'For i from n − 1 down to 0, try k = 1, 2, 3 (inside the array) with a running sum, and keep the best sum − diff(i + k).', 'Return "Alice" if diff(0) > 0, "Bob" if < 0, otherwise "Tie".'],
+      ds: ['1D array'], time: 'O(n)', space: 'O(n), or O(1) with four variables',
+      traps: ['Values can be negative, so taking more is not always better: try all three options.'],
+    },
+
+    // ---------- Greedy and parity ----------
+    {
+      id: 1561, title: 'Maximum Number of Coins You Can Get', pattern: 'Greedy and parity shortcuts',
+      summary: 'You pick triples of piles; from each triple Alice takes the largest, you the second largest, and Bob the smallest. Maximise your total.',
+      hints: ['Bob\'s pile is wasted, so give him the smallest piles.', 'Sort. Pair the two largest remaining piles with the smallest one.'],
+      insight: 'Sort the piles; Bob gets the n smallest, and from the rest you take every second pile starting from the second largest.',
+      approach: ['Sort ascending.', 'Starting at index n (where n = number of triples), add every second pile: indices n, n + 2, n + 4, …', 'Return the sum.'],
+      ds: ['Array (sorted)'], time: 'O(n log n)', space: 'O(1) besides sorting',
+    },
+    {
+      id: 1686, title: 'Stone Game VI', pattern: 'Greedy and parity shortcuts',
+      summary: 'Each stone has a value for Alice and a (different) value for Bob. Players alternately take any stone. Return 1, −1 or 0 for an Alice win, a Bob win or a draw.',
+      hints: ['Taking a stone gains your value and stops the opponent gaining theirs.', 'So a stone is worth aliceValue + bobValue to whoever takes it.'],
+      insight: 'Both players should take stones in decreasing order of aliceValue + bobValue, because taking one swings the difference by exactly that amount.',
+      approach: ['Sort stone indices by aliceValue + bobValue, largest first.', 'Alice takes positions 0, 2, 4, … and adds her values; Bob takes 1, 3, 5, … and adds his.', 'Compare the totals.'],
+      ds: ['Array of indices (sorted)'], time: 'O(n log n)', space: 'O(n)',
+      traps: ['Sorting by your own value alone is wrong: denying the opponent counts too.'],
+    },
+    {
+      id: 2038, title: 'Remove Colored Pieces if Both Neighbors are the Same Color', pattern: 'Greedy and parity shortcuts',
+      summary: 'Alice may remove an inner A whose neighbours are both A, Bob an inner B whose neighbours are both B. They alternate, Alice first; whoever cannot move loses. Does Alice win?',
+      hints: ['Does Alice\'s move ever change what Bob can do?', 'Count how many moves each player has in total.'],
+      insight: 'Moves never interfere (removing an A from inside an A-run never creates or destroys a B-move), so each player has a fixed number of moves: the count of positions inside runs of three or more. Alice wins if she has strictly more.',
+      approach: ['Count positions i with colors[i − 1], colors[i], colors[i + 1] all A, and separately all B.', 'Return whether the A count is greater than the B count.'],
+      ds: ['String', 'Two counters'], time: 'O(n)', space: 'O(1)',
+      traps: ['Equal counts mean Alice runs out first and loses.'],
+    },
+
+    // ---------- Graph games ----------
+    {
+      id: 913, title: 'Cat and Mouse', pattern: 'Games on graphs',
+      summary: 'On an undirected graph, a mouse (starting at node 1, moving first) and a cat (node 2, never allowed into the hole at node 0) alternate moves. The mouse wins at the hole, the cat wins by catching it, and a repeated position is a draw. Return the result with optimal play.',
+      hints: [
+        'State = (mouse node, cat node, whose turn). There are at most 50 × 50 × 2.',
+        'Recursion with memoisation gets stuck in cycles. Start from the states whose result is known and work backwards.',
+        'A state is a win for the player to move if one move reaches their win; it is a loss if every move reaches the opponent\'s win. Count unresolved moves per state.',
+      ],
+      insight: 'Retrograde analysis: seed the decided states (mouse in hole, cat on mouse), then BFS backwards. A parent becomes a win for its mover as soon as one child is that mover\'s win, and a loss once all its children are losses; whatever stays unresolved is a draw.',
+      approach: [
+        'Seed a queue with (0, c, any turn) = mouse win and (m, m, any turn) = cat win for m > 0.',
+        'For each state, keep a count of its possible moves (the cat cannot move to 0).',
+        'Pop a decided state and visit its parents (states one move earlier). If the parent\'s mover wins in this child, decide the parent as that win. Otherwise decrement the parent\'s count, and if it reaches 0, decide the parent as the opponent\'s win.',
+        'Return the result of (mouse 1, cat 2, mouse to move), or draw if it was never decided.',
+      ],
+      ds: ['3D state arrays', 'Queue (BFS)', 'Degree counters'], time: 'O(n³)', space: 'O(n²)',
+      traps: ['A depth-limited recursion (stop after 2n moves) is a common but fragile alternative.', 'Remember the cat may not enter node 0 when counting its moves.'],
+    },
+  ],
+};
