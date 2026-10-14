@@ -1,0 +1,15 @@
+services:
+  rabbitmq:
+    image: rabbitmq:4-management
+    hostname: shopflow-rabbit # RabbitMQ stores data per node name, so keep it fixed
+    ports:
+      - "5672:5672"   # AMQP: your apps connect here
+      - "15672:15672" # Management UI: http://localhost:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: shopflow
+      RABBITMQ_DEFAULT_PASS: shopflow
+    volumes:
+      - rabbit-data:/var/lib/rabbitmq
+
+volumes:
+  rabbit-data:

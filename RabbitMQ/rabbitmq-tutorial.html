@@ -1,0 +1,2043 @@
+<meta charset="utf-8">
+<title>RabbitMQ ShopFlow Lab</title>
+<meta name="description" content="A step-by-step RabbitMQ tutorial: build a small TypeScript order pipeline and learn queues, acks, exchanges, routing, confirms, dead letters, RPC and reconnection.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: a sticky chapter rail beside a 70ch reading column; code and diagrams may run wider.
+   Entity colours (producer, exchange, queue, consumer, dead letter) are shared by prose chips and diagrams. */
+:root {
+  --bg: #F4F6F9;
+  --surface: #FFFFFF;
+  --sunken: #EAEDF2;
+  --ink: #131821;
+  --ink-2: #3A4251;
+  --ink-3: #667085;
+  --line: #D8DDE6;
+  --accent: #0A7468;
+  --accent-tint: #DCF2EE;
+
+  --producer: #2A56CC; --producer-tint: #E4EBFB;
+  --exchange: #7A3EC2; --exchange-tint: #F0E7FA;
+  --queue: #0A7468;    --queue-tint: #DCF2EE;
+  --consumer: #8F5C00; --consumer-tint: #F9EED6;
+  --dead: #BC3328;     --dead-tint: #FAE4E1;
+
+  --code-bg: #121723;
+  --code-head: #1A2130;
+  --code-ink: #E2E7F0;
+  --code-dim: #8A93A8;
+  --tok-kw: #C8A2FF;
+  --tok-str: #98E2AE;
+  --tok-num: #FFC27A;
+  --tok-com: #7A849A;
+  --tok-fn: #8CC2FF;
+  --tok-type: #7EDFD1;
+
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --step--1: 0.875rem;
+  --step-0: 1rem;
+  --step-1: 1.25rem;
+  --step-2: 1.6rem;
+  --step-3: clamp(2.1rem, 1.6rem + 2.2vw, 3.1rem);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1117; --surface: #161A22; --sunken: #1C212B;
+    --ink: #E7EAF0; --ink-2: #BAC1CE; --ink-3: #858E9F; --line: #2A303B;
+    --accent: #4CCFBD; --accent-tint: #0F2F2B;
+    --producer: #8EA8F5; --producer-tint: #1A2445;
+    --exchange: #C5A4F4; --exchange-tint: #291C41;
+    --queue: #4CCFBD;    --queue-tint: #0F2F2B;
+    --consumer: #EBBA55; --consumer-tint: #35280C;
+    --dead: #F08A80;     --dead-tint: #3F1918;
+    --code-bg: #0A0D13; --code-head: #121722;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1117; --surface: #161A22; --sunken: #1C212B;
+  --ink: #E7EAF0; --ink-2: #BAC1CE; --ink-3: #858E9F; --line: #2A303B;
+  --accent: #4CCFBD; --accent-tint: #0F2F2B;
+  --producer: #8EA8F5; --producer-tint: #1A2445;
+  --exchange: #C5A4F4; --exchange-tint: #291C41;
+  --queue: #4CCFBD;    --queue-tint: #0F2F2B;
+  --consumer: #EBBA55; --consumer-tint: #35280C;
+  --dead: #F08A80;     --dead-tint: #3F1918;
+  --code-bg: #0A0D13; --code-head: #121722;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 var(--step-0)/1.65 var(--body);
+}
+table { font-size: inherit; }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px;
+}
+code, kbd { font-family: var(--mono); font-size: 0.88em; }
+p code, li code, td code, dd code {
+  background: var(--sunken); padding: 0.1em 0.35em; border-radius: 4px; overflow-wrap: anywhere;
+}
+
+/* ---------- page grid ---------- */
+.page {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 56px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-inline: 24px;
+}
+.rail {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  align-self: start;
+  max-height: 100vh;
+  overflow-y: auto;
+  padding-block: 36px 24px;
+}
+main { min-width: 0; padding-block: 44px 120px; }
+.prose { max-width: 70ch; }
+
+/* ---------- rail ---------- */
+.toc summary {
+  list-style: none; cursor: pointer;
+  font: 600 var(--step--1)/1.3 var(--body); color: var(--ink-2);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.toc summary::-webkit-details-marker { display: none; }
+.brand { font: 700 1.05rem/1.2 var(--display); color: var(--ink); letter-spacing: -0.01em; }
+.progress { margin-block: 14px 18px; }
+.progress-text { font: 500 0.78rem/1.3 var(--mono); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.bar { height: 6px; border-radius: 3px; background: var(--sunken); margin-top: 6px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.3s; }
+.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+.toc a {
+  display: grid; grid-template-columns: 1.9em 1fr auto; gap: 4px; align-items: baseline;
+  padding: 5px 8px; border-radius: 6px; text-decoration: none;
+  color: var(--ink-2); font-size: 0.9rem; line-height: 1.35;
+}
+.toc a:hover { background: var(--sunken); color: var(--ink); }
+.toc a.is-current { background: var(--accent-tint); color: var(--ink); }
+.toc .n { font: 500 0.75rem/1 var(--mono); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.toc .tick { font-size: 0.8rem; color: var(--accent); visibility: hidden; }
+.toc a.is-done .tick { visibility: visible; }
+.toc .group { font: 500 0.7rem/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); padding: 14px 8px 6px; }
+
+@media (max-width: 960px) {
+  .page { grid-template-columns: minmax(0, 1fr); gap: 0; padding-inline: 16px; }
+  .rail { position: static; max-height: none; padding-block: 16px 0; }
+  .toc { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .toc[open] summary { margin-bottom: 4px; }
+  main { padding-top: 28px; }
+}
+@media (min-width: 961px) { .toc summary .toggle-hint { display: none; } }
+
+/* ---------- hero ---------- */
+.hero { padding-bottom: 40px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.kicker { font: 500 0.78rem/1.4 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin: 0 0 14px; }
+h1 {
+  font: 700 var(--step-3)/1.05 var(--display);
+  letter-spacing: -0.025em; margin: 0 0 18px; text-wrap: balance; max-width: 18ch;
+}
+.lede { font-size: 1.14rem; color: var(--ink-2); max-width: 62ch; margin: 0 0 28px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px 28px; margin: 0; }
+.facts div { min-width: 0; }
+.facts dt { font: 500 0.72rem/1.3 var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-3); }
+.facts dd { margin: 4px 0 0; font-size: 0.95rem; color: var(--ink); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 22px 0 0; padding: 0; list-style: none; font-size: 0.85rem; color: var(--ink-2); }
+.legend li { display: flex; align-items: center; gap: 7px; }
+.swatch { width: 12px; height: 12px; border-radius: 3px; border: 1.5px solid; }
+
+/* ---------- chapters ---------- */
+.chapter { padding-top: 56px; scroll-margin-top: 12px; }
+.ch-head { margin-bottom: 22px; }
+.eyebrow { font: 500 0.78rem/1.4 var(--mono); color: var(--ink-3); margin: 0 0 8px; font-variant-numeric: tabular-nums; }
+.eyebrow b { color: var(--accent); font-weight: 600; }
+h2 { font: 700 var(--step-2)/1.15 var(--display); letter-spacing: -0.015em; margin: 0 0 10px; text-wrap: balance; }
+h3 { font: 600 var(--step-1)/1.3 var(--display); letter-spacing: -0.01em; margin: 34px 0 10px; text-wrap: balance; }
+h4 { font: 600 1rem/1.4 var(--body); margin: 22px 0 6px; }
+.goal { color: var(--ink-2); margin: 0; }
+.prose p, .prose ul, .prose ol { margin: 0 0 14px; }
+.prose li { margin-bottom: 6px; }
+.prose li::marker { color: var(--ink-3); }
+
+/* entity chips: same colours as the diagrams */
+code.e-p, code.e-x, code.e-q, code.e-c, code.e-k, code.e-d { border: 1px solid; padding: 0.05em 0.35em; }
+code.e-p { color: var(--producer); background: var(--producer-tint); border-color: color-mix(in srgb, var(--producer) 30%, transparent); }
+code.e-x { color: var(--exchange); background: var(--exchange-tint); border-color: color-mix(in srgb, var(--exchange) 30%, transparent); }
+code.e-q { color: var(--queue); background: var(--queue-tint); border-color: color-mix(in srgb, var(--queue) 30%, transparent); }
+code.e-c { color: var(--consumer); background: var(--consumer-tint); border-color: color-mix(in srgb, var(--consumer) 30%, transparent); }
+code.e-d { color: var(--dead); background: var(--dead-tint); border-color: color-mix(in srgb, var(--dead) 30%, transparent); }
+code.e-k { color: var(--ink); background: var(--surface); border-color: var(--line); border-style: dashed; }
+
+/* ---------- code, terminal, output ---------- */
+figure { margin: 18px 0 22px; min-width: 0; }
+.code { border-radius: 10px; overflow: hidden; background: var(--code-bg); }
+.code figcaption {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 7px 8px 7px 14px; background: var(--code-head);
+  font: 500 0.78rem/1.3 var(--mono); color: var(--code-dim);
+}
+.code .file { min-width: 0; overflow-wrap: anywhere; }
+.copy {
+  font: 500 0.74rem/1 var(--mono); color: var(--code-ink); background: transparent;
+  border: 1px solid #3A4458; border-radius: 6px; padding: 5px 9px; cursor: pointer; flex-shrink: 0;
+}
+.copy:hover { background: #263043; }
+.code pre { margin: 0; padding: 14px 16px 16px; overflow-x: auto; }
+.code code { font: 400 0.84rem/1.6 var(--mono); color: var(--code-ink); background: none; padding: 0; white-space: pre; tab-size: 2; }
+.hljs-keyword, .hljs-built_in, .hljs-literal { color: var(--tok-kw); }
+.hljs-string, .hljs-regexp, .hljs-template-variable { color: var(--tok-str); }
+.hljs-number { color: var(--tok-num); }
+.hljs-comment { color: var(--tok-com); font-style: italic; }
+.hljs-title, .hljs-title.function_ { color: var(--tok-fn); }
+.hljs-type, .hljs-title.class_, .hljs-attr { color: var(--tok-type); }
+.hljs-subst, .hljs-params, .hljs-variable { color: var(--code-ink); }
+.hljs-meta, .hljs-bullet { color: var(--tok-num); }
+
+.out { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+.out figcaption { padding: 7px 14px; font: 500 0.74rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); border-bottom: 1px solid var(--line); background: var(--sunken); }
+.out pre { margin: 0; padding: 12px 16px 14px; overflow-x: auto; font: 400 0.82rem/1.6 var(--mono); color: var(--ink-2); }
+.out .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.out .cols pre + pre { border-left: 1px solid var(--line); }
+@media (max-width: 600px) { .out .cols pre + pre { border-left: 0; border-top: 1px solid var(--line); } }
+.out .tag { display: block; font: 500 0.7rem/1.3 var(--mono); color: var(--ink-3); margin-bottom: 4px; letter-spacing: 0.04em; }
+
+/* ---------- diagrams ---------- */
+.diagram { margin: 22px 0 26px; }
+.dg-scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 10px; }
+.dg { display: block; width: 100%; min-width: 640px; height: auto; }
+.diagram figcaption { font-size: 0.86rem; color: var(--ink-3); margin-top: 8px; max-width: 70ch; }
+.dg-node rect, .dg-node polygon { stroke-width: 1.5; }
+.dg-node.producer rect { fill: var(--producer-tint); stroke: var(--producer); }
+.dg-node.exchange polygon { fill: var(--exchange-tint); stroke: var(--exchange); }
+.dg-node.queue rect { fill: var(--queue-tint); stroke: var(--queue); }
+.dg-node.consumer rect { fill: var(--consumer-tint); stroke: var(--consumer); }
+.dg-node.dead rect { fill: var(--dead-tint); stroke: var(--dead); }
+.dg-node .slot { stroke-width: 2.4; stroke-linecap: round; opacity: 0.55; }
+.dg-node.queue .slot { stroke: var(--queue); }
+.dg-node.dead .slot { stroke: var(--dead); }
+.dg .lbl { font: 600 12px var(--mono); fill: var(--ink); }
+.dg .sub { font: 500 9.5px var(--body); letter-spacing: 0.08em; fill: var(--ink-3); }
+.dg-edge { fill: none; stroke-width: 1.6; stroke: var(--ink-3); }
+.dg-edge.dead { stroke: var(--dead); stroke-dasharray: 5 4; }
+.dg-edge.reply { stroke: var(--producer); stroke-dasharray: 5 4; }
+.dg-edge.retry { stroke: var(--queue); stroke-dasharray: 5 4; }
+.dg-ah { fill: var(--ink-3); }
+.dg-ah.dead { fill: var(--dead); }
+.dg-ah.reply { fill: var(--producer); }
+.dg-ah.retry { fill: var(--queue); }
+.dg-pill rect { fill: var(--surface); stroke: var(--line); }
+.dg-pill text { font: 500 11px var(--mono); fill: var(--ink-2); }
+.dg-pill.dead text { fill: var(--dead); }
+.dg-pill.retry text { fill: var(--queue); }
+.dg-pill.reply text { fill: var(--producer); }
+
+/* ---------- boxes ---------- */
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 20px; margin: 20px 0; max-width: 70ch; }
+.box > :last-child { margin-bottom: 0; }
+.box-label { display: inline-block; font: 600 0.72rem/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; padding: 5px 8px; border-radius: 5px; margin-bottom: 10px; }
+.box.key { background: var(--accent-tint); border-color: transparent; }
+.box.key .box-label { background: var(--accent); color: var(--surface); }
+.box.try .box-label { background: var(--producer-tint); color: var(--producer); }
+.box.warn .box-label { background: var(--dead-tint); color: var(--dead); }
+.box.check .box-label { background: var(--consumer-tint); color: var(--consumer); }
+.box ol, .box ul { padding-left: 1.2em; margin: 0 0 10px; }
+.box p { margin: 0 0 10px; }
+details.answer { margin: 4px 0 12px; }
+details.answer summary { cursor: pointer; color: var(--accent); font-size: 0.92rem; }
+details.answer p { margin: 6px 0 0; color: var(--ink-2); }
+
+/* ---------- tables ---------- */
+.table-wrap { overflow-x: auto; margin: 18px 0 22px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table.t { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+.t th, .t td { text-align: left; vertical-align: top; padding: 9px 14px; border-bottom: 1px solid var(--line); }
+.t tr:last-child td { border-bottom: 0; }
+.t th { font: 600 0.74rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); background: var(--sunken); white-space: nowrap; }
+.t td:first-child { white-space: nowrap; }
+.t .yes { color: var(--accent); font-weight: 600; }
+.t .no { color: var(--ink-3); }
+.t.matrix td:not(:first-child), .t.matrix th:not(:first-child) { text-align: center; }
+
+.tree { font: 400 0.84rem/1.55 var(--mono); }
+
+/* ---------- done toggle ---------- */
+.done {
+  display: inline-flex; align-items: center; gap: 10px; margin-top: 26px;
+  padding: 10px 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface);
+  font-size: 0.92rem; color: var(--ink-2); cursor: pointer; user-select: none;
+}
+.done input { width: 18px; height: 18px; accent-color: var(--accent); margin: 0; }
+.done:has(input:checked) { border-color: var(--accent); background: var(--accent-tint); color: var(--ink); }
+
+footer.end { margin-top: 72px; padding-top: 24px; border-top: 1px solid var(--line); color: var(--ink-3); font-size: 0.88rem; max-width: 70ch; }
+</style>
+
+<div class="page">
+  <aside class="rail">
+    <details class="toc" id="toc">
+      <summary><span class="brand">ShopFlow Lab</span><span class="toggle-hint">Chapters ▾</span></summary>
+      <div class="progress">
+        <div class="progress-text" id="progress-text">0 of 15 chapters done</div>
+        <div class="bar"><i id="progress-bar"></i></div>
+      </div>
+      <ol>
+        <li class="group">Foundations</li>
+        <li><a href="#ch-build"><span class="n">01</span><span>What you will build</span><span class="tick">✓</span></a></li>
+        <li><a href="#ch-vocab"><span class="n">02</span><span>The vocabulary</span><span class="tick">✓</span></a></li>
+        <li><a href="#ch-run"><span class="n">03</span><span>Run RabbitMQ</span><span class="tick">✓</span></a></li>
+        <li><a href="#ch-setup"><span class="n">04</span><span>Set up the project</span><span class="tick">✓</span></a></li>
+        <li class="group">Core patterns</li>
+        <li><a href="#ch-hello"><span class="n">05</span><span>Hello queue</span><span class="tick">✓</span></a></li>
+        <li><a href="#ch-work"><span class="n">06</span><span>Work queues and acks</span><span class="tick">✓</span></a></li>
+        <li><a href="#ch-fanout"><span class="n">07</span><span>Fanout: publish/subscribe</span><span class="tick">✓</span></a></li>
+        <li><a href="#ch-direct"><span class="n">08</span><span>Direct: routing by key</span><span class="tick">✓</span></a></li>
+        <li><a href="#ch-topic"><span class="n">09</span><span>Topic: routing by pattern</span><span class="tick">✓</span></a></li>
+        <li class="group">Production concerns</li>
+        <li><a href="#ch-reliable"><span class="n">10</span><span>Reliable delivery</span><span class="tick">✓</span></a></li>
+        <li><a href="#ch-types"><span class="n">11</span><span>Queue types</span><span class="tick">✓</span></a></li>
+        <li><a href="#ch-dlx"><span class="n">12</span><span>Dead letters and retries</span><span class="tick">✓</span></a></li>
+        <li><a href="#ch-rpc"><span class="n">13</span><span>Request/reply (RPC)</span><span class="tick">✓</span></a></li>
+        <li class="group">Finish</li>
+        <li><a href="#ch-shopflow"><span class="n">14</span><span>Assemble ShopFlow</span><span class="tick">✓</span></a></li>
+        <li><a href="#ch-ship"><span class="n">15</span><span>Ship it to GitHub</span><span class="tick">✓</span></a></li>
+        <li class="group">Reference</li>
+        <li><a href="#ref-trouble"><span class="n">A</span><span>Troubleshooting</span></a></li>
+        <li><a href="#ref-api"><span class="n">B</span><span>amqplib cheat sheet</span></a></li>
+      </ol>
+    </details>
+  </aside>
+
+  <main>
+    <header class="hero">
+      <p class="kicker">Hands-on tutorial · TypeScript · RabbitMQ 4</p>
+      <h1>Learn RabbitMQ by building ShopFlow</h1>
+      <p class="lede">You will build a small order pipeline for an online shop, one RabbitMQ concept at a time. Each chapter adds a few files, gives you the commands to run, and tells you what to look for in the terminal and in the management UI.</p>
+      <dl class="facts">
+        <div><dt>Tested with</dt><dd>RabbitMQ 4.2 · amqplib 2.2 · Node 25</dd></div>
+        <div><dt>You need</dt><dd>Docker, Node 18 or newer, basic TypeScript</dd></div>
+        <div><dt>Time</dt><dd>About 6–8 hours across 15 chapters</dd></div>
+        <div><dt>You finish with</dt><dd>A pinnable repo: <code>rabbitmq-shopflow</code></dd></div>
+      </dl>
+    </header>
+
+    <!-- ============================================================ 01 -->
+    <section class="chapter" id="ch-build">
+      <header class="ch-head prose">
+        <p class="eyebrow"><b>01</b> · Foundations</p>
+        <h2>What you will build</h2>
+        <p class="goal">ShopFlow takes orders over HTTP and hands the work to independent services through RabbitMQ.</p>
+      </header>
+      <div class="prose">
+        <p>The order API never calls the fulfilment or email services directly. It publishes an <em>order created</em> event and returns. The fulfilment service packs the order and publishes <em>order shipped</em>. The notification service emails the customer for both events. If a service is slow, restarting, or scaled to five copies, the API does not notice. That decoupling is the reason message brokers exist.</p>
+      </div>
+      <figure class="diagram">
+        <div class="dg-scroll"><svg class="dg" viewBox="0 0 1000 400" role="img" aria-labelledby="shopflow1-t"><title id="shopflow1-t">ShopFlow architecture: the order API publishes to the shop topic exchange, which routes to fulfilment and notification queues; fulfilment publishes shipped events back; failed messages go to shop.dead.</title><defs><marker id="shopflow1-ah-flow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah flow" d="M0,0 L10,5 L0,10 z"/></marker><marker id="shopflow1-ah-dead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah dead" d="M0,0 L10,5 L0,10 z"/></marker><marker id="shopflow1-ah-reply" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah reply" d="M0,0 L10,5 L0,10 z"/></marker><marker id="shopflow1-ah-retry" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah retry" d="M0,0 L10,5 L0,10 z"/></marker></defs><path class="dg-edge flow" d="M152.5,120.0 C204.2,120.0 223.9,120.0 275.6,120.0" marker-end="url(#shopflow1-ah-flow)"/><g class="dg-pill flow"><rect x="154.2" y="111.0" width="119.6" height="18" rx="9"/><text x="214.1" y="123.8" text-anchor="middle">order.created.eu</text></g><path class="dg-edge flow" d="M414.4,120.0 C476.1,120.0 499.6,120.0 561.2,120.0" marker-end="url(#shopflow1-ah-flow)"/><g class="dg-pill flow"><rect x="431.3" y="111.0" width="113.0" height="18" rx="9"/><text x="487.8" y="123.8" text-anchor="middle">order.created.*</text></g><path class="dg-edge flow" d="M411.8,124.0 C517.0,124.0 445.1,236.0 550.3,236.0" marker-end="url(#shopflow1-ah-flow)"/><g class="dg-pill flow"><rect x="431.5" y="220.0" width="113.0" height="18" rx="9"/><text x="488.0" y="232.8" text-anchor="middle">order.created.*</text></g><path class="dg-edge flow" d="M400.3,142.0 C514.6,142.0 436.1,264.0 550.3,264.0" marker-end="url(#shopflow1-ah-flow)"/><g class="dg-pill flow"><rect x="431.5" y="250.0" width="113.0" height="18" rx="9"/><text x="488.0" y="262.8" text-anchor="middle">order.shipped.*</text></g><path class="dg-edge flow" d="M718.8,120.0 C760.6,120.0 776.5,120.0 818.3,120.0" marker-end="url(#shopflow1-ah-flow)"/><path class="dg-edge flow" d="M729.7,250.0 C765.7,250.0 775.0,250.0 811.0,250.0" marker-end="url(#shopflow1-ah-flow)"/><path class="dg-edge flow" d="M900.0,95.0 L900.0,40.0 L345.0,40.0 L345.0,95.0" marker-end="url(#shopflow1-ah-flow)"/><g class="dg-pill flow"><rect x="562.7" y="31.0" width="119.6" height="18" rx="9"/><text x="622.5" y="43.8" text-anchor="middle">order.shipped.eu</text></g><path class="dg-edge dead" d="M640.0,275.0 C640.0,311.0 640.0,289.0 640.0,325.0" marker-end="url(#shopflow1-ah-dead)"/><g class="dg-pill dead"><rect x="593.4" y="291.0" width="93.2" height="18" rx="9"/><text x="640.0" y="303.8" text-anchor="middle">dead letters</text></g><path class="dg-edge dead" d="M712.5,350.0 C766.8,350.0 787.6,350.0 841.9,350.0" marker-end="url(#shopflow1-ah-dead)"/><g class="dg-node producer"><rect x="27.5" y="95.0" width="125.0" height="50" rx="14"/><text class="lbl" x="90.0" y="118.0" text-anchor="middle">order-api.ts</text><text class="sub" x="90.0" y="134.0" text-anchor="middle">HTTP → PRODUCER</text></g><g class="dg-node exchange"><polygon points="291.6,95.0 398.4,95.0 414.4,120.0 398.4,145.0 291.6,145.0 275.6,120.0"/><text class="lbl" x="345.0" y="118.0" text-anchor="middle">shop</text><text class="sub" x="345.0" y="134.0" text-anchor="middle">TOPIC EXCHANGE</text></g><g class="dg-node queue"><rect x="561.2" y="95.0" width="157.5" height="50" rx="5"/><line class="slot" x1="708.8" y1="109.0" x2="708.8" y2="131.0"/><line class="slot" x1="702.8" y1="109.0" x2="702.8" y2="131.0"/><line class="slot" x1="696.8" y1="109.0" x2="696.8" y2="131.0"/><text class="lbl" x="631.0" y="118.0" text-anchor="middle">shop.fulfilment</text><text class="sub" x="631.0" y="134.0" text-anchor="middle">QUORUM QUEUE</text></g><g class="dg-node queue"><rect x="550.3" y="225.0" width="179.4" height="50" rx="5"/><line class="slot" x1="719.7" y1="239.0" x2="719.7" y2="261.0"/><line class="slot" x1="713.7" y1="239.0" x2="713.7" y2="261.0"/><line class="slot" x1="707.7" y1="239.0" x2="707.7" y2="261.0"/><text class="lbl" x="631.0" y="248.0" text-anchor="middle">shop.notifications</text><text class="sub" x="631.0" y="264.0" text-anchor="middle">QUORUM QUEUE</text></g><g class="dg-node consumer"><rect x="818.3" y="95.0" width="163.4" height="50" rx="14"/><text class="lbl" x="900.0" y="118.0" text-anchor="middle">fulfilment-service</text><text class="sub" x="900.0" y="134.0" text-anchor="middle">CONSUMER + PRODUCER</text></g><g class="dg-node consumer"><rect x="811.0" y="225.0" width="178.0" height="50" rx="14"/><text class="lbl" x="900.0" y="248.0" text-anchor="middle">notification-service</text><text class="sub" x="900.0" y="264.0" text-anchor="middle">CONSUMER</text></g><g class="dg-node exchange"><polygon points="583.5,325.0 696.5,325.0 712.5,350.0 696.5,375.0 583.5,375.0 567.5,350.0"/><text class="lbl" x="640.0" y="348.0" text-anchor="middle">shop.dlx</text><text class="sub" x="640.0" y="364.0" text-anchor="middle">FANOUT EXCHANGE</text></g><g class="dg-node dead"><rect x="841.9" y="325.0" width="116.2" height="50" rx="5"/><line class="slot" x1="948.1" y1="339.0" x2="948.1" y2="361.0"/><line class="slot" x1="942.1" y1="339.0" x2="942.1" y2="361.0"/><line class="slot" x1="936.1" y1="339.0" x2="936.1" y2="361.0"/><text class="lbl" x="891.0" y="348.0" text-anchor="middle">shop.dead</text><text class="sub" x="891.0" y="364.0" text-anchor="middle">PARKING LOT</text></g></svg></div>
+        <figcaption>The finished ShopFlow app (chapter 14). Both work queues dead-letter failed messages to <code class="e-x">shop.dlx</code>.</figcaption>
+      </figure>
+      <ul class="legend" aria-label="Diagram legend">
+        <li><span class="swatch" style="background:var(--producer-tint);border-color:var(--producer)"></span>Producer</li>
+        <li><span class="swatch" style="background:var(--exchange-tint);border-color:var(--exchange)"></span>Exchange</li>
+        <li><span class="swatch" style="background:var(--queue-tint);border-color:var(--queue)"></span>Queue</li>
+        <li><span class="swatch" style="background:var(--consumer-tint);border-color:var(--consumer)"></span>Consumer</li>
+        <li><span class="swatch" style="background:var(--dead-tint);border-color:var(--dead)"></span>Dead letters</li>
+        <li><code class="e-k">order.created.*</code>&nbsp;Routing key or binding pattern</li>
+      </ul>
+      <div class="prose">
+        <h3>The route through the concepts</h3>
+        <p>Every chapter builds one small piece in its own folder, so you can rerun any step later. The same colours are used for names in the text and boxes in the diagrams.</p>
+      </div>
+      <div class="table-wrap">
+        <table class="t">
+          <thead><tr><th>Ch.</th><th>Concept</th><th>You build</th><th>Folder</th></tr></thead>
+          <tbody>
+            <tr><td>05</td><td>Queues, default exchange, auto-ack</td><td>Send and receive one message</td><td><code>src/01-hello</code></td></tr>
+            <tr><td>06</td><td>Competing consumers, manual acks, prefetch, durability</td><td>Order packing workers</td><td><code>src/02-work-queues</code></td></tr>
+            <tr><td>07</td><td>Fanout exchange, bindings, exclusive queues</td><td>Email, analytics and live feed</td><td><code>src/03-fanout</code></td></tr>
+            <tr><td>08</td><td>Direct exchange, routing keys</td><td>Regional warehouses</td><td><code>src/04-direct</code></td></tr>
+            <tr><td>09</td><td>Topic exchange, wildcards</td><td>Event listeners by pattern</td><td><code>src/05-topic</code></td></tr>
+            <tr><td>10</td><td>Publisher confirms, mandatory, at-least-once</td><td>A publisher that knows its messages arrived</td><td><code>src/06-reliability</code></td></tr>
+            <tr><td>12</td><td>Dead-letter exchanges, TTL, delayed retries, delivery limit</td><td>A payment worker that survives failures</td><td><code>src/07-dead-letters</code></td></tr>
+            <tr><td>13</td><td>replyTo, correlationId</td><td>A shipping-quote service</td><td><code>src/08-rpc</code></td></tr>
+            <tr><td>14</td><td>Topology as code, reconnection, idempotency</td><td>The full ShopFlow app</td><td><code>src/09-shopflow</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="box key">
+        <span class="box-label">How to work through it</span>
+        <ol>
+          <li><strong>Read the concept</strong> before the code. Each chapter opens with one idea.</li>
+          <li><strong>Type the code</strong> rather than pasting it. You will remember the API far better.</li>
+          <li><strong>Run it</strong> with several terminal tabs open, and keep the management UI visible.</li>
+          <li><strong>Do the experiments.</strong> Breaking things on purpose is where the learning happens.</li>
+          <li><strong>Answer the checkpoint</strong> before opening the answer, then tick the chapter off.</li>
+        </ol>
+      </div>
+      <label class="done"><input type="checkbox" id="done-ch-build" data-done="ch-build"> I finished this chapter</label>
+    </section>
+
+    <!-- ============================================================ 02 -->
+    <section class="chapter" id="ch-vocab">
+      <header class="ch-head prose">
+        <p class="eyebrow"><b>02</b> · Foundations</p>
+        <h2>The vocabulary</h2>
+        <p class="goal">Ten words explain almost everything RabbitMQ does. Learn them once and every later chapter reads easily.</p>
+      </header>
+      <figure class="diagram">
+        <div class="dg-scroll"><svg class="dg" viewBox="0 0 940 230" role="img" aria-labelledby="concepts1-t"><title id="concepts1-t">A producer publishes to an exchange, bindings route copies to queues, consumers receive from queues and acknowledge.</title><defs><marker id="concepts1-ah-flow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah flow" d="M0,0 L10,5 L0,10 z"/></marker><marker id="concepts1-ah-dead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah dead" d="M0,0 L10,5 L0,10 z"/></marker><marker id="concepts1-ah-reply" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah reply" d="M0,0 L10,5 L0,10 z"/></marker><marker id="concepts1-ah-retry" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah retry" d="M0,0 L10,5 L0,10 z"/></marker></defs><path class="dg-edge flow" d="M146.0,115.0 C190.5,115.0 207.5,115.0 252.0,115.0" marker-end="url(#concepts1-ah-flow)"/><g class="dg-pill flow"><rect x="149.1" y="106.0" width="99.8" height="18" rx="9"/><text x="199.0" y="118.8" text-anchor="middle">publish + key</text></g><path class="dg-edge flow" d="M428.0,115.0 C501.9,115.0 470.1,55.0 544.0,55.0" marker-end="url(#concepts1-ah-flow)"/><g class="dg-pill flow"><rect x="455.9" y="76.0" width="60.2" height="18" rx="9"/><text x="486.0" y="88.8" text-anchor="middle">binding</text></g><path class="dg-edge flow" d="M428.0,115.0 C501.9,115.0 470.1,175.0 544.0,175.0" marker-end="url(#concepts1-ah-flow)"/><g class="dg-pill flow"><rect x="455.9" y="136.0" width="60.2" height="18" rx="9"/><text x="486.0" y="148.8" text-anchor="middle">binding</text></g><path class="dg-edge flow" d="M656.0,55.0 C714.0,55.0 736.0,55.0 794.0,55.0" marker-end="url(#concepts1-ah-flow)"/><g class="dg-pill flow"><rect x="675.1" y="46.0" width="99.8" height="18" rx="9"/><text x="725.0" y="58.8" text-anchor="middle">deliver · ack</text></g><path class="dg-edge flow" d="M656.0,175.0 C714.0,175.0 736.0,175.0 794.0,175.0" marker-end="url(#concepts1-ah-flow)"/><g class="dg-pill flow"><rect x="675.1" y="166.0" width="99.8" height="18" rx="9"/><text x="725.0" y="178.8" text-anchor="middle">deliver · ack</text></g><g class="dg-node producer"><rect x="34.0" y="90.0" width="112.0" height="50" rx="14"/><text class="lbl" x="90.0" y="113.0" text-anchor="middle">producer</text><text class="sub" x="90.0" y="129.0" text-anchor="middle">PRODUCER</text></g><g class="dg-node exchange"><polygon points="268.0,90.0 412.0,90.0 428.0,115.0 412.0,140.0 268.0,140.0 252.0,115.0"/><text class="lbl" x="340.0" y="113.0" text-anchor="middle">exchange</text><text class="sub" x="340.0" y="129.0" text-anchor="middle">ROUTES BY TYPE + KEY</text></g><g class="dg-node queue"><rect x="544.0" y="30.0" width="112.0" height="50" rx="5"/><line class="slot" x1="646.0" y1="44.0" x2="646.0" y2="66.0"/><line class="slot" x1="640.0" y1="44.0" x2="640.0" y2="66.0"/><line class="slot" x1="634.0" y1="44.0" x2="634.0" y2="66.0"/><text class="lbl" x="591.0" y="53.0" text-anchor="middle">queue A</text><text class="sub" x="591.0" y="69.0" text-anchor="middle">QUEUE</text></g><g class="dg-node queue"><rect x="544.0" y="150.0" width="112.0" height="50" rx="5"/><line class="slot" x1="646.0" y1="164.0" x2="646.0" y2="186.0"/><line class="slot" x1="640.0" y1="164.0" x2="640.0" y2="186.0"/><line class="slot" x1="634.0" y1="164.0" x2="634.0" y2="186.0"/><text class="lbl" x="591.0" y="173.0" text-anchor="middle">queue B</text><text class="sub" x="591.0" y="189.0" text-anchor="middle">QUEUE</text></g><g class="dg-node consumer"><rect x="794.0" y="30.0" width="112.0" height="50" rx="14"/><text class="lbl" x="850.0" y="53.0" text-anchor="middle">consumer</text><text class="sub" x="850.0" y="69.0" text-anchor="middle">CONSUMER</text></g><g class="dg-node consumer"><rect x="794.0" y="150.0" width="112.0" height="50" rx="14"/><text class="lbl" x="850.0" y="173.0" text-anchor="middle">consumer</text><text class="sub" x="850.0" y="189.0" text-anchor="middle">CONSUMER</text></g></svg></div>
+        <figcaption>The core path every message takes: producer → exchange → binding → queue → consumer.</figcaption>
+      </figure>
+      <div class="box key">
+        <span class="box-label">The one idea to keep</span>
+        <p>Producers never publish straight into a queue. They publish to an <strong>exchange</strong> with a <strong>routing key</strong>. The exchange looks at its type and its <strong>bindings</strong> and decides which queues get a copy. Even <code>sendToQueue()</code> goes through an exchange: the nameless default exchange.</p>
+      </div>
+      <div class="table-wrap">
+        <table class="t">
+          <thead><tr><th>Term</th><th>What it is</th></tr></thead>
+          <tbody>
+            <tr><td>Broker</td><td>The RabbitMQ server. It stores and routes messages.</td></tr>
+            <tr><td>Connection</td><td>One TCP connection from your process to the broker. Expensive to open, so keep one per process.</td></tr>
+            <tr><td>Channel</td><td>A lightweight virtual connection inside a connection. Almost every operation happens on a channel.</td></tr>
+            <tr><td><code class="e-p">Producer</code></td><td>Code that publishes messages.</td></tr>
+            <tr><td><code class="e-x">Exchange</code></td><td>Receives messages and routes them to queues. Its type (direct, fanout, topic, headers) sets the routing rule.</td></tr>
+            <tr><td><code class="e-k">Routing key</code></td><td>A string the producer attaches to each message, such as <code class="e-k">order.created.eu</code>.</td></tr>
+            <tr><td>Binding</td><td>A rule that links an exchange to a queue, optionally with a key or pattern.</td></tr>
+            <tr><td><code class="e-q">Queue</code></td><td>An ordered buffer that holds messages until a consumer takes them.</td></tr>
+            <tr><td><code class="e-c">Consumer</code></td><td>Code that subscribes to a queue and processes its messages.</td></tr>
+            <tr><td>Ack</td><td>The consumer telling the broker "done, delete it". Without an ack, the broker keeps the message and can redeliver it.</td></tr>
+            <tr><td>Virtual host</td><td>A namespace for exchanges, queues and permissions. We use the default <code>/</code>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="prose">
+        <h3>What a message carries</h3>
+        <p>RabbitMQ treats the body as bytes. Everything else travels as properties or delivery information.</p>
+      </div>
+      <div class="table-wrap">
+        <table class="t">
+          <thead><tr><th>Part</th><th>Examples</th><th>Set by</th></tr></thead>
+          <tbody>
+            <tr><td>Body</td><td>JSON order, bytes of any format</td><td>Producer</td></tr>
+            <tr><td>Properties</td><td><code>contentType</code>, <code>persistent</code>, <code>messageId</code>, <code>correlationId</code>, <code>replyTo</code>, <code>expiration</code>, <code>headers</code></td><td>Producer</td></tr>
+            <tr><td>Delivery info</td><td><code>exchange</code>, <code>routingKey</code>, <code>redelivered</code>, <code>deliveryTag</code></td><td>Broker, on delivery</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="box check">
+        <span class="box-label">Checkpoint</span>
+        <p>A producer calls <code>channel.publish('shop', 'order.created.eu', body)</code>, but no queue is bound to <code class="e-x">shop</code>. Where does the message go?</p>
+        <details class="answer"><summary>Show answer</summary><p>Nowhere. The exchange finds no matching binding and drops the message. Chapter 10 shows how to get it back with the <code>mandatory</code> flag.</p></details>
+      </div>
+      <label class="done"><input type="checkbox" id="done-ch-vocab" data-done="ch-vocab"> I finished this chapter</label>
+    </section>
+
+    <!-- ============================================================ 03 -->
+    <section class="chapter" id="ch-run">
+      <header class="ch-head prose">
+        <p class="eyebrow"><b>03</b> · Foundations</p>
+        <h2>Run RabbitMQ</h2>
+        <p class="goal">Start a broker with the management UI in Docker and learn where to look while you work.</p>
+      </header>
+      <div class="prose">
+        <p>Create the project folder and save this file in it as <code>docker-compose.yml</code>.</p>
+      </div>
+      <figure class="code"><figcaption><span class="file">docker-compose.yml</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-yaml">services:
+  rabbitmq:
+    image: rabbitmq:4-management
+    hostname: shopflow-rabbit # RabbitMQ stores data per node name, so keep it fixed
+    ports:
+      - "5672:5672"   # AMQP: your apps connect here
+      - "15672:15672" # Management UI: http://localhost:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: shopflow
+      RABBITMQ_DEFAULT_PASS: shopflow
+    volumes:
+      - rabbit-data:/var/lib/rabbitmq
+
+volumes:
+  rabbit-data:</code></pre></figure>
+      <figure class="code term"><figcaption><span class="file">Terminal</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-bash">mkdir rabbitmq-shopflow &amp;&amp; cd rabbitmq-shopflow
+# save docker-compose.yml here, then:
+docker compose up -d
+docker compose logs -f rabbitmq</code></pre></figure>
+      <div class="prose">
+        <p>Wait for <code>Server startup complete; 4 plugins started.</code> in the log, then press <kbd>Ctrl</kbd>+<kbd>C</kbd> to stop following it. The broker keeps running.</p>
+        <p>Port <code>5672</code> speaks AMQP 0-9-1, the protocol your code uses. Port <code>15672</code> serves the management UI.</p>
+        <h3>Tour the management UI</h3>
+        <p>Open <a href="http://localhost:15672">http://localhost:15672</a> and sign in as <code>shopflow</code> / <code>shopflow</code>.</p>
+        <ul>
+          <li><strong>Overview</strong>: message rates and node health. Watch the graphs move while scripts run.</li>
+          <li><strong>Connections</strong> and <strong>Channels</strong>: every running script appears here. Close one from the UI to see how your code reacts.</li>
+          <li><strong>Exchanges</strong>: the built-in <code>amq.*</code> exchanges and the default exchange, shown as <code>(AMQP default)</code>. Click one to see its bindings.</li>
+          <li><strong>Queues and Streams</strong>: the most useful tab. <strong>Ready</strong> means waiting for a consumer; <strong>Unacked</strong> means delivered but not yet acknowledged. A queue's page lets you publish, get, purge or delete messages.</li>
+          <li><strong>Admin</strong>: users, virtual hosts and policies.</li>
+        </ul>
+        <h3>The same information from the command line</h3>
+      </div>
+      <figure class="code term"><figcaption><span class="file">Terminal</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-bash">docker compose exec rabbitmq rabbitmqctl list_queues name type messages_ready messages_unacknowledged consumers
+docker compose exec rabbitmq rabbitmqctl list_exchanges name type
+docker compose exec rabbitmq rabbitmqctl list_bindings source_name destination_name routing_key</code></pre></figure>
+      <div class="box warn">
+        <span class="box-label">If it does not start</span>
+        <p>Two problems came up while testing this tutorial on Docker Desktop. <strong>"authentication required - incorrect username or password"</strong> when pulling the image means Docker holds a stale Docker Hub login: run <code>docker logout</code> (or sign in again in Docker Desktop) and retry. A crash mentioning <strong><code>.erlang.cookie: eacces</code></strong> is fixed by adding <code>user: "999:999"</code> under the <code>rabbitmq</code> service, which runs it as the image's own <code>rabbitmq</code> user.</p>
+      </div>
+      <label class="done"><input type="checkbox" id="done-ch-run" data-done="ch-run"> I finished this chapter</label>
+    </section>
+
+    <!-- ============================================================ 04 -->
+    <section class="chapter" id="ch-setup">
+      <header class="ch-head prose">
+        <p class="eyebrow"><b>04</b> · Foundations</p>
+        <h2>Set up the project</h2>
+        <p class="goal">A TypeScript project that runs any file with one command, plus two helpers every chapter reuses.</p>
+      </header>
+      <figure class="code term"><figcaption><span class="file">Terminal</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-bash">npm init -y
+npm pkg set type=module
+npm install amqplib
+npm install -D tsx typescript @types/node</code></pre></figure>
+      <div class="prose">
+        <p><code>amqplib</code> is the Node client for RabbitMQ. Version 2 ships its own TypeScript types and can reconnect by itself (chapter 14). <code>tsx</code> runs TypeScript files directly, so there is no build step: every script runs with <code>npx tsx path/to/file.ts</code>.</p>
+        <p>Add a <code>tsconfig.json</code> so your editor and <code>npx tsc</code> can type-check the project.</p>
+      </div>
+      <figure class="code"><figcaption><span class="file">tsconfig.json</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-json">{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": ["node"]
+  },
+  "include": ["src"]
+}</code></pre></figure>
+      <div class="box warn">
+        <span class="box-label">TypeScript 7</span>
+        <p>TypeScript 7 no longer loads <code>@types/node</code> on its own. Without <code>"types": ["node"]</code>, the checker reports <code>Cannot find name 'process'</code> and <code>'Buffer'</code>.</p>
+      </div>
+      <div class="prose">
+        <h3>Where everything will live</h3>
+      </div>
+      <figure class="out"><figcaption>Project layout when you finish</figcaption><pre class="tree">rabbitmq-shopflow/
+├── docker-compose.yml
+├── package.json
+├── tsconfig.json
+└── src/
+    ├── lib/
+    │   ├── rabbit.ts          connect helpers (this chapter)
+    │   ├── order.ts           fake order generator (this chapter)
+    │   └── service.ts         reconnecting service runner (chapter 14)
+    ├── 01-hello/              chapter 05
+    ├── 02-work-queues/        chapter 06
+    ├── 03-fanout/             chapter 07
+    ├── 04-direct/             chapter 08
+    ├── 05-topic/              chapter 09
+    ├── 06-reliability/        chapter 10
+    ├── 07-dead-letters/       chapter 12
+    ├── 08-rpc/                chapter 13
+    └── 09-shopflow/           chapter 14</pre></figure>
+      <div class="prose">
+        <h3>The connection helper</h3>
+        <p>Every script opens one connection and one channel the same way.</p>
+      </div>
+      <figure class="code"><figcaption><span class="file">src/lib/rabbit.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import * as amqp from 'amqplib';
+
+// Every script connects the same way. Set RABBIT_URL to point at another broker.
+export const RABBIT_URL = process.env.RABBIT_URL ?? 'amqp://shopflow:shopflow@localhost:5672';
+
+export async function connect() {
+  const connection = await amqp.connect(RABBIT_URL);
+  const channel = await connection.createChannel();
+  return { connection, channel };
+}
+
+// A confirm channel makes the broker acknowledge every publish (chapter 8).
+export async function connectWithConfirms() {
+  const connection = await amqp.connect(RABBIT_URL);
+  const channel = await connection.createConfirmChannel();
+  return { connection, channel };
+}
+
+// RabbitMQ only moves bytes. We agree on JSON for every message body.
+export function toBuffer(value: unknown) {
+  return Buffer.from(JSON.stringify(value));
+}</code></pre></figure>
+      <div class="box key">
+        <span class="box-label">Connections and channels</span>
+        <p>A connection is a TCP socket with a handshake, authentication and heartbeats. A channel is a cheap virtual connection multiplexed inside it. Open <strong>one connection per process</strong> and channels as needed. Opening a connection for every message is the most common RabbitMQ performance mistake.</p>
+      </div>
+      <div class="prose">
+        <h3>The order generator</h3>
+        <p>Realistic fake orders, so the later chapters have something to route.</p>
+      </div>
+      <figure class="code"><figcaption><span class="file">src/lib/order.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import { randomUUID } from 'node:crypto';
+
+export type Region = 'us' | 'eu' | 'apac';
+
+export type Order = {
+  id: string;
+  customer: string;
+  region: Region;
+  items: { sku: string; qty: number }[];
+  total: number;
+};
+
+export const REGIONS: Region[] = ['us', 'eu', 'apac'];
+const CUSTOMERS = ['ada@example.com', 'grace@example.com', 'linus@example.com', 'margaret@example.com'];
+const SKUS = ['KB-101', 'MS-220', 'HD-330', 'CB-440', 'ST-550'];
+
+export function pick&lt;T&gt;(list: T[]): T {
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+// A random but realistic order. Pass overrides to pin any field.
+export function fakeOrder(overrides: Partial&lt;Order&gt; = {}): Order {
+  const items = Array.from({ length: 1 + Math.floor(Math.random() * 4) }, () =&gt; ({
+    sku: pick(SKUS),
+    qty: 1 + Math.floor(Math.random() * 3),
+  }));
+  return {
+    id: `ord_${randomUUID().slice(0, 8)}`,
+    customer: pick(CUSTOMERS),
+    region: pick(REGIONS),
+    items,
+    total: Number(items.reduce((sum, i) =&gt; sum + i.qty * 24.5, 0).toFixed(2)),
+    ...overrides,
+  };
+}</code></pre></figure>
+      <label class="done"><input type="checkbox" id="done-ch-setup" data-done="ch-setup"> I finished this chapter</label>
+    </section>
+
+    <!-- ============================================================ 05 -->
+    <section class="chapter" id="ch-hello">
+      <header class="ch-head prose">
+        <p class="eyebrow"><b>05</b> · Core patterns · <code>src/01-hello</code></p>
+        <h2>Hello queue</h2>
+        <p class="goal">Send one message to a queue and receive it. You will meet queue declaration, the default exchange and auto-ack.</p>
+      </header>
+      <figure class="diagram">
+        <div class="dg-scroll"><svg class="dg" viewBox="0 0 860 110" role="img" aria-labelledby="hello1-t"><title id="hello1-t">send.ts publishes through the default exchange into the hello queue; receive.ts consumes it.</title><defs><marker id="hello1-ah-flow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah flow" d="M0,0 L10,5 L0,10 z"/></marker><marker id="hello1-ah-dead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah dead" d="M0,0 L10,5 L0,10 z"/></marker><marker id="hello1-ah-reply" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah reply" d="M0,0 L10,5 L0,10 z"/></marker><marker id="hello1-ah-retry" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah retry" d="M0,0 L10,5 L0,10 z"/></marker></defs><path class="dg-edge flow" d="M141.0,55.0 C177.0,55.0 188.4,55.0 224.4,55.0" marker-end="url(#hello1-ah-flow)"/><g class="dg-pill flow"><rect x="142.7" y="46.0" width="80.0" height="18" rx="9"/><text x="182.7" y="58.8" text-anchor="middle">key: hello</text></g><path class="dg-edge flow" d="M375.6,55.0 C416.9,55.0 432.7,55.0 474.0,55.0" marker-end="url(#hello1-ah-flow)"/><path class="dg-edge flow" d="M586.0,55.0 C637.7,55.0 657.3,55.0 709.0,55.0" marker-end="url(#hello1-ah-flow)"/><g class="dg-pill flow"><rect x="624.0" y="46.0" width="47.0" height="18" rx="9"/><text x="647.5" y="58.8" text-anchor="middle">noAck</text></g><g class="dg-node producer"><rect x="29.0" y="30.0" width="112.0" height="50" rx="14"/><text class="lbl" x="85.0" y="53.0" text-anchor="middle">send.ts</text><text class="sub" x="85.0" y="69.0" text-anchor="middle">PRODUCER</text></g><g class="dg-node exchange"><polygon points="240.4,30.0 359.6,30.0 375.6,55.0 359.6,80.0 240.4,80.0 224.4,55.0"/><text class="lbl" x="300.0" y="53.0" text-anchor="middle">(default)</text><text class="sub" x="300.0" y="69.0" text-anchor="middle">DEFAULT EXCHANGE</text></g><g class="dg-node queue"><rect x="474.0" y="30.0" width="112.0" height="50" rx="5"/><line class="slot" x1="576.0" y1="44.0" x2="576.0" y2="66.0"/><line class="slot" x1="570.0" y1="44.0" x2="570.0" y2="66.0"/><line class="slot" x1="564.0" y1="44.0" x2="564.0" y2="66.0"/><text class="lbl" x="521.0" y="53.0" text-anchor="middle">hello</text><text class="sub" x="521.0" y="69.0" text-anchor="middle">QUEUE</text></g><g class="dg-node consumer"><rect x="709.0" y="30.0" width="112.0" height="50" rx="14"/><text class="lbl" x="765.0" y="53.0" text-anchor="middle">receive.ts</text><text class="sub" x="765.0" y="69.0" text-anchor="middle">CONSUMER</text></g></svg></div>
+        <figcaption><code class="e-p">send.ts</code> publishes with routing key <code class="e-k">hello</code>; the default exchange delivers it to the queue of the same name.</figcaption>
+      </figure>
+      <figure class="code"><figcaption><span class="file">src/01-hello/send.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import { connect } from '../lib/rabbit.js';
+
+const QUEUE = 'hello';
+const { connection, channel } = await connect();
+
+// Declaring is idempotent: it creates the queue only if it does not exist yet.
+await channel.assertQueue(QUEUE, { durable: false });
+
+// sendToQueue publishes through the default exchange, using the queue name as routing key.
+channel.sendToQueue(QUEUE, Buffer.from('Hello, RabbitMQ!'));
+console.log("[x] Sent 'Hello, RabbitMQ!'");
+
+await channel.close();
+await connection.close();</code></pre></figure>
+      <figure class="code"><figcaption><span class="file">src/01-hello/receive.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import { connect } from '../lib/rabbit.js';
+
+const QUEUE = 'hello';
+const { channel } = await connect();
+
+// Declare here too, so it works no matter which side starts first.
+await channel.assertQueue(QUEUE, { durable: false });
+console.log(`[*] Waiting for messages in '${QUEUE}'. Press Ctrl+C to exit.`);
+
+await channel.consume(
+  QUEUE,
+  (msg) =&gt; {
+    if (!msg) return; // null means the broker cancelled this consumer
+    console.log(`[x] Received '${msg.content.toString()}'`);
+  },
+  { noAck: true }, // auto-ack: the broker forgets the message as soon as it is sent
+);</code></pre></figure>
+      <div class="prose"><h3>Run it</h3></div>
+      <figure class="code term"><figcaption><span class="file">Terminal 1</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-bash">npx tsx src/01-hello/receive.ts</code></pre></figure>
+      <figure class="code term"><figcaption><span class="file">Terminal 2</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-bash">npx tsx src/01-hello/send.ts</code></pre></figure>
+      <figure class="out"><figcaption>What you should see</figcaption><div class="cols"><pre><span class="tag">Terminal 1</span>[*] Waiting for messages in 'hello'. Press Ctrl+C to exit.
+[x] Received 'Hello, RabbitMQ!'</pre><pre><span class="tag">Terminal 2</span>[x] Sent 'Hello, RabbitMQ!'</pre></div></figure>
+      <div class="prose">
+        <h3>What just happened</h3>
+        <ul>
+          <li><strong><code>assertQueue</code></strong> creates the queue if it is missing and does nothing if it already exists with the same settings. Both sides call it, so start order does not matter.</li>
+          <li><strong><code>sendToQueue</code></strong> publishes to the default exchange, which has an implicit binding to every queue by name. The routing key <code class="e-k">hello</code> lands in queue <code class="e-q">hello</code>.</li>
+          <li><strong><code>noAck: true</code></strong> means the broker deletes the message the moment it sends it. Simple, but a crash mid-processing loses the message. Chapter 06 fixes this.</li>
+          <li><strong><code>durable: false</code></strong> means the queue disappears if the broker restarts. Fine for a hello world, wrong for orders.</li>
+        </ul>
+      </div>
+      <div class="box try">
+        <span class="box-label">Try this</span>
+        <ol>
+          <li>Stop the receiver. Run <code>send.ts</code> three times.</li>
+          <li>Open <strong>Queues and Streams</strong>: <code class="e-q">hello</code> shows <strong>Ready 3</strong>. The queue buffers messages until someone wants them.</li>
+          <li>Start the receiver again. All three arrive at once.</li>
+        </ol>
+      </div>
+      <div class="box check">
+        <span class="box-label">Checkpoint</span>
+        <p>Why does the receiver declare the queue even though the sender already does?</p>
+        <details class="answer"><summary>Show answer</summary><p>Because you cannot know which process starts first. If the receiver tried to consume from a queue that does not exist, the broker would close the channel with a <code>NOT_FOUND</code> error. Declaring is idempotent, so both sides do it safely.</p></details>
+      </div>
+      <label class="done"><input type="checkbox" id="done-ch-hello" data-done="ch-hello"> I finished this chapter</label>
+    </section>
+
+    <!-- ============================================================ 06 -->
+    <section class="chapter" id="ch-work">
+      <header class="ch-head prose">
+        <p class="eyebrow"><b>06</b> · Core patterns · <code>src/02-work-queues</code></p>
+        <h2>Work queues and acks</h2>
+        <p class="goal">Spread slow jobs across several workers without losing any, even when a worker crashes.</p>
+      </header>
+      <div class="prose">
+        <p>Packing an order takes time: one second per line item in our simulation. One worker cannot keep up, so you run several. They <strong>compete</strong> for messages on the same queue, and each order goes to exactly one of them.</p>
+      </div>
+      <figure class="diagram">
+        <div class="dg-scroll"><svg class="dg" viewBox="0 0 760 200" role="img" aria-labelledby="work1-t"><title id="work1-t">new-order.ts fills the orders.fulfilment queue; two workers compete for orders, one at a time.</title><defs><marker id="work1-ah-flow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah flow" d="M0,0 L10,5 L0,10 z"/></marker><marker id="work1-ah-dead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah dead" d="M0,0 L10,5 L0,10 z"/></marker><marker id="work1-ah-reply" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah reply" d="M0,0 L10,5 L0,10 z"/></marker><marker id="work1-ah-retry" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah retry" d="M0,0 L10,5 L0,10 z"/></marker></defs><path class="dg-edge flow" d="M154.8,100.0 C204.8,100.0 223.9,100.0 273.9,100.0" marker-end="url(#work1-ah-flow)"/><g class="dg-pill flow"><rect x="174.4" y="91.0" width="80.0" height="18" rx="9"/><text x="214.4" y="103.8" text-anchor="middle">persistent</text></g><path class="dg-edge flow" d="M446.1,100.0 C525.5,100.0 500.8,45.0 580.2,45.0" marker-end="url(#work1-ah-flow)"/><g class="dg-pill flow"><rect x="473.1" y="63.5" width="80.0" height="18" rx="9"/><text x="513.1" y="76.3" text-anchor="middle">prefetch 1</text></g><path class="dg-edge flow" d="M446.1,100.0 C527.1,100.0 503.0,155.0 584.0,155.0" marker-end="url(#work1-ah-flow)"/><g class="dg-pill flow"><rect x="475.0" y="118.5" width="80.0" height="18" rx="9"/><text x="515.0" y="131.3" text-anchor="middle">prefetch 1</text></g><g class="dg-node producer"><rect x="35.2" y="75.0" width="119.6" height="50" rx="14"/><text class="lbl" x="95.0" y="98.0" text-anchor="middle">new-order.ts</text><text class="sub" x="95.0" y="114.0" text-anchor="middle">PRODUCER</text></g><g class="dg-node queue"><rect x="273.9" y="75.0" width="172.1" height="50" rx="5"/><line class="slot" x1="436.0" y1="89.0" x2="436.0" y2="111.0"/><line class="slot" x1="430.0" y1="89.0" x2="430.0" y2="111.0"/><line class="slot" x1="424.0" y1="89.0" x2="424.0" y2="111.0"/><text class="lbl" x="351.0" y="98.0" text-anchor="middle">orders.fulfilment</text><text class="sub" x="351.0" y="114.0" text-anchor="middle">DURABLE QUEUE</text></g><g class="dg-node consumer"><rect x="580.2" y="20.0" width="119.6" height="50" rx="14"/><text class="lbl" x="640.0" y="43.0" text-anchor="middle">worker alice</text><text class="sub" x="640.0" y="59.0" text-anchor="middle">CONSUMER</text></g><g class="dg-node consumer"><rect x="584.0" y="130.0" width="112.0" height="50" rx="14"/><text class="lbl" x="640.0" y="153.0" text-anchor="middle">worker bob</text><text class="sub" x="640.0" y="169.0" text-anchor="middle">CONSUMER</text></g></svg></div>
+        <figcaption>Two workers on one durable queue. Each takes one order, packs it, acks, then takes the next.</figcaption>
+      </figure>
+      <figure class="code"><figcaption><span class="file">src/02-work-queues/new-order.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import { connect, toBuffer } from '../lib/rabbit.js';
+import { fakeOrder } from '../lib/order.js';
+
+const QUEUE = 'orders.fulfilment';
+const count = Number(process.argv[2] ?? 6);
+
+const { connection, channel } = await connect();
+await channel.assertQueue(QUEUE, { durable: true }); // the queue survives a broker restart
+
+for (let i = 0; i &lt; count; i++) {
+  const order = fakeOrder();
+  channel.sendToQueue(QUEUE, toBuffer(order), {
+    persistent: true, // the message is written to disk, not only kept in memory
+    contentType: 'application/json',
+    messageId: order.id,
+  });
+  console.log(`[x] Queued ${order.id} (${order.items.length} line items)`);
+}
+
+await channel.close();
+await connection.close();</code></pre></figure>
+      <figure class="code"><figcaption><span class="file">src/02-work-queues/worker.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import { setTimeout as sleep } from 'node:timers/promises';
+import { connect } from '../lib/rabbit.js';
+import type { Order } from '../lib/order.js';
+
+const QUEUE = 'orders.fulfilment';
+const name = process.argv[2] ?? `worker-${process.pid}`;
+
+const { channel } = await connect();
+await channel.assertQueue(QUEUE, { durable: true });
+
+// Fair dispatch: never give this worker more than one unacknowledged order.
+await channel.prefetch(1);
+console.log(`[${name}] Waiting for orders...`);
+
+await channel.consume(
+  QUEUE,
+  async (msg) =&gt; {
+    if (!msg) return;
+    const order = JSON.parse(msg.content.toString()) as Order;
+    const seconds = order.items.length; // one second per line item to pack
+
+    console.log(`[${name}] Packing ${order.id} (${seconds}s)`);
+    await sleep(seconds * 1000);
+
+    channel.ack(msg); // only now does the broker delete the message
+    console.log(`[${name}] Done ${order.id}`);
+  },
+  { noAck: false }, // manual acks: an unacked order is redelivered if this worker dies
+);</code></pre></figure>
+      <div class="prose"><h3>Run it</h3></div>
+      <figure class="code term"><figcaption><span class="file">Terminal 1 and 2</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-bash">npx tsx src/02-work-queues/worker.ts alice
+npx tsx src/02-work-queues/worker.ts bob</code></pre></figure>
+      <figure class="code term"><figcaption><span class="file">Terminal 3</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-bash">npx tsx src/02-work-queues/new-order.ts 6</code></pre></figure>
+      <figure class="out"><figcaption>What you should see (ids and sizes vary)</figcaption><div class="cols"><pre><span class="tag">alice</span>[alice] Packing ord_bc6aa84c (1s)
+[alice] Done ord_bc6aa84c
+[alice] Packing ord_dd3a8231 (1s)
+[alice] Done ord_dd3a8231
+[alice] Packing ord_d111c5c4 (3s)
+[alice] Done ord_d111c5c4</pre><pre><span class="tag">bob</span>[bob] Packing ord_9800c0b1 (1s)
+[bob] Done ord_9800c0b1
+[bob] Packing ord_cb01f26c (4s)
+[bob] Done ord_cb01f26c
+[bob] Packing ord_ce2e7ce6 (4s)
+[bob] Done ord_ce2e7ce6</pre></div></figure>
+      <div class="prose">
+        <h3>The four ideas in this chapter</h3>
+        <h4>Competing consumers</h4>
+        <p>Several consumers on one queue share the work. Add a worker to go faster; remove one and the rest carry on. This is how you scale a consumer horizontally.</p>
+        <h4>Manual acknowledgements</h4>
+        <p>With <code>noAck: false</code>, the broker keeps each message until the worker calls <code>channel.ack(msg)</code>. If the worker's channel or connection closes first, the broker puts the message back in the queue and delivers it to another worker, with <code>msg.fields.redelivered</code> set to <code>true</code>. Always ack <em>after</em> the work is done.</p>
+        <h4>Prefetch</h4>
+        <p>Without a limit, the broker pushes messages to consumers as fast as it can, round-robin, regardless of how busy they are. <code>channel.prefetch(1)</code> says "at most one unacked message for me", so a worker stuck on a 4-second order does not hoard the queue. Higher values (10 to 50) give more throughput for fast jobs.</p>
+        <h4>Durability takes two settings</h4>
+        <p>A <strong>durable queue</strong> survives a broker restart. A <strong>persistent message</strong> is written to disk. You need both: a persistent message in a non-durable queue is lost with the queue, and a durable queue full of transient messages comes back empty.</p>
+      </div>
+      <div class="box try">
+        <span class="box-label">Try this</span>
+        <ol>
+          <li><strong>Crash a worker.</strong> Run only <code>alice</code>, queue 6 orders, and press <kbd>Ctrl</kbd>+<kbd>C</kbd> while she is packing. Start <code>bob</code>: he receives the order alice never acked. Log <code>msg.fields.redelivered</code> to see <code>true</code>.</li>
+          <li><strong>Forget the ack.</strong> Comment out <code>channel.ack(msg)</code>. In the UI, <strong>Unacked</strong> climbs and never falls. Stop the worker and watch them move back to <strong>Ready</strong>.</li>
+          <li><strong>Survive a restart.</strong> Stop all workers, queue 6 orders, then run <code>docker compose restart rabbitmq</code>. The orders are still there.</li>
+        </ol>
+      </div>
+      <div class="box warn">
+        <span class="box-label">Gotcha</span>
+        <p>You cannot change <code>durable</code> (or any other setting) on a queue that already exists. The broker closes the channel with <code>PRECONDITION_FAILED - inequivalent arg 'durable'</code>. Delete the queue in the UI first, or use a new name.</p>
+      </div>
+      <div class="box check">
+        <span class="box-label">Checkpoint</span>
+        <p>Two workers with prefetch 1. The first order takes 10 seconds and the next five take 1 second each. Who packs what?</p>
+        <details class="answer"><summary>Show answer</summary><p>The worker on the long order receives nothing else until it acks. The other worker packs all five short orders in about 5 seconds. Without prefetch, the broker would have pushed three orders to each worker up front, and two short orders would wait behind the long one.</p></details>
+      </div>
+      <label class="done"><input type="checkbox" id="done-ch-work" data-done="ch-work"> I finished this chapter</label>
+    </section>
+
+    <!-- ============================================================ 07 -->
+    <section class="chapter" id="ch-fanout">
+      <header class="ch-head prose">
+        <p class="eyebrow"><b>07</b> · Core patterns · <code>src/03-fanout</code></p>
+        <h2>Fanout: publish/subscribe</h2>
+        <p class="goal">Send every order to several services at once, without the publisher knowing who they are.</p>
+      </header>
+      <div class="prose">
+        <p>A work queue gives each message to <em>one</em> consumer. Now you want the opposite: the email service, the analytics service and a live dashboard should <em>all</em> see every order. Each gets its own queue, and a <strong>fanout exchange</strong> copies every message to every bound queue.</p>
+      </div>
+      <figure class="diagram">
+        <div class="dg-scroll"><svg class="dg" viewBox="0 0 960 270" role="img" aria-labelledby="fanout1-t"><title id="fanout1-t">place-order.ts publishes to the orders.placed fanout exchange, which copies every order to the email, analytics and live-feed queues.</title><defs><marker id="fanout1-ah-flow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah flow" d="M0,0 L10,5 L0,10 z"/></marker><marker id="fanout1-ah-dead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah dead" d="M0,0 L10,5 L0,10 z"/></marker><marker id="fanout1-ah-reply" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah reply" d="M0,0 L10,5 L0,10 z"/></marker><marker id="fanout1-ah-retry" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah retry" d="M0,0 L10,5 L0,10 z"/></marker></defs><path class="dg-edge flow" d="M162.1,135.0 C198.1,135.0 210.6,135.0 246.6,135.0" marker-end="url(#fanout1-ah-flow)"/><g class="dg-pill flow"><rect x="161.0" y="126.0" width="86.6" height="18" rx="9"/><text x="204.3" y="138.8" text-anchor="middle">key ignored</text></g><path class="dg-edge flow" d="M393.4,135.0 C472.5,135.0 417.6,50.0 496.6,50.0" marker-end="url(#fanout1-ah-flow)"/><path class="dg-edge flow" d="M393.4,135.0 C430.7,135.0 444.8,135.0 482.1,135.0" marker-end="url(#fanout1-ah-flow)"/><path class="dg-edge flow" d="M393.4,135.0 C481.7,135.0 430.3,220.0 518.5,220.0" marker-end="url(#fanout1-ah-flow)"/><path class="dg-edge flow" d="M683.4,50.0 C726.3,50.0 742.7,50.0 785.6,50.0" marker-end="url(#fanout1-ah-flow)"/><path class="dg-edge flow" d="M698.0,135.0 C734.0,135.0 735.0,135.0 771.0,135.0" marker-end="url(#fanout1-ah-flow)"/><path class="dg-edge flow" d="M661.5,220.0 C719.7,220.0 741.9,220.0 800.2,220.0" marker-end="url(#fanout1-ah-flow)"/><g class="dg-node producer"><rect x="27.9" y="110.0" width="134.2" height="50" rx="14"/><text class="lbl" x="95.0" y="133.0" text-anchor="middle">place-order.ts</text><text class="sub" x="95.0" y="149.0" text-anchor="middle">PRODUCER</text></g><g class="dg-node exchange"><polygon points="262.6,110.0 377.4,110.0 393.4,135.0 377.4,160.0 262.6,160.0 246.6,135.0"/><text class="lbl" x="320.0" y="133.0" text-anchor="middle">orders.placed</text><text class="sub" x="320.0" y="149.0" text-anchor="middle">FANOUT EXCHANGE</text></g><g class="dg-node queue"><rect x="496.6" y="25.0" width="186.7" height="50" rx="5"/><line class="slot" x1="673.3" y1="39.0" x2="673.3" y2="61.0"/><line class="slot" x1="667.3" y1="39.0" x2="667.3" y2="61.0"/><line class="slot" x1="661.3" y1="39.0" x2="661.3" y2="61.0"/><text class="lbl" x="581.0" y="48.0" text-anchor="middle">orders.placed.email</text><text class="sub" x="581.0" y="64.0" text-anchor="middle">DURABLE QUEUE</text></g><g class="dg-node queue"><rect x="482.1" y="110.0" width="215.9" height="50" rx="5"/><line class="slot" x1="688.0" y1="124.0" x2="688.0" y2="146.0"/><line class="slot" x1="682.0" y1="124.0" x2="682.0" y2="146.0"/><line class="slot" x1="676.0" y1="124.0" x2="676.0" y2="146.0"/><text class="lbl" x="581.0" y="133.0" text-anchor="middle">orders.placed.analytics</text><text class="sub" x="581.0" y="149.0" text-anchor="middle">DURABLE QUEUE</text></g><g class="dg-node queue"><rect x="518.5" y="195.0" width="142.9" height="50" rx="5"/><line class="slot" x1="651.4" y1="209.0" x2="651.4" y2="231.0"/><line class="slot" x1="645.4" y1="209.0" x2="645.4" y2="231.0"/><line class="slot" x1="639.4" y1="209.0" x2="639.4" y2="231.0"/><text class="lbl" x="581.0" y="218.0" text-anchor="middle">amq.gen-N7Kd…</text><text class="sub" x="581.0" y="234.0" text-anchor="middle">EXCLUSIVE QUEUE</text></g><g class="dg-node consumer"><rect x="785.6" y="25.0" width="148.8" height="50" rx="14"/><text class="lbl" x="860.0" y="48.0" text-anchor="middle">subscriber email</text><text class="sub" x="860.0" y="64.0" text-anchor="middle">CONSUMER</text></g><g class="dg-node consumer"><rect x="771.0" y="110.0" width="178.0" height="50" rx="14"/><text class="lbl" x="860.0" y="133.0" text-anchor="middle">subscriber analytics</text><text class="sub" x="860.0" y="149.0" text-anchor="middle">CONSUMER</text></g><g class="dg-node consumer"><rect x="800.2" y="195.0" width="119.6" height="50" rx="14"/><text class="lbl" x="860.0" y="218.0" text-anchor="middle">live-feed.ts</text><text class="sub" x="860.0" y="234.0" text-anchor="middle">CONSUMER</text></g></svg></div>
+        <figcaption>One publish, three copies. The publisher only knows the exchange <code class="e-x">orders.placed</code>.</figcaption>
+      </figure>
+      <figure class="code"><figcaption><span class="file">src/03-fanout/place-order.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import { connect, toBuffer } from '../lib/rabbit.js';
+import { fakeOrder } from '../lib/order.js';
+
+const EXCHANGE = 'orders.placed';
+const count = Number(process.argv[2] ?? 3);
+
+const { connection, channel } = await connect();
+await channel.assertExchange(EXCHANGE, 'fanout', { durable: true });
+
+for (let i = 0; i &lt; count; i++) {
+  const order = fakeOrder();
+  // A fanout exchange ignores the routing key, so we pass an empty string.
+  channel.publish(EXCHANGE, '', toBuffer(order), { persistent: true, contentType: 'application/json' });
+  console.log(`[x] Order placed ${order.id} by ${order.customer}`);
+}
+
+await channel.close();
+await connection.close();</code></pre></figure>
+      <figure class="code"><figcaption><span class="file">src/03-fanout/subscriber.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import { connect } from '../lib/rabbit.js';
+import type { Order } from '../lib/order.js';
+
+const EXCHANGE = 'orders.placed';
+const service = process.argv[2];
+if (!service) {
+  console.error('Usage: npx tsx src/03-fanout/subscriber.ts &lt;service-name&gt;');
+  process.exit(1);
+}
+
+// Each service owns a named, durable queue, so it never misses an order while it is down.
+const queue = `orders.placed.${service}`;
+const { channel } = await connect();
+
+await channel.assertExchange(EXCHANGE, 'fanout', { durable: true });
+await channel.assertQueue(queue, { durable: true });
+await channel.bindQueue(queue, EXCHANGE, ''); // the binding connects exchange to queue
+
+console.log(`[${service}] Listening on ${queue}`);
+await channel.consume(queue, (msg) =&gt; {
+  if (!msg) return;
+  const order = JSON.parse(msg.content.toString()) as Order;
+  console.log(`[${service}] Got ${order.id} ($${order.total})`);
+  channel.ack(msg);
+});</code></pre></figure>
+      <figure class="code"><figcaption><span class="file">src/03-fanout/live-feed.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import { connect } from '../lib/rabbit.js';
+import type { Order } from '../lib/order.js';
+
+const EXCHANGE = 'orders.placed';
+const { channel } = await connect();
+await channel.assertExchange(EXCHANGE, 'fanout', { durable: true });
+
+// An empty name asks the broker for a unique queue. Exclusive means it is deleted
+// when this connection closes: perfect for a live view that only cares about "now".
+const { queue } = await channel.assertQueue('', { exclusive: true });
+await channel.bindQueue(queue, EXCHANGE, '');
+
+console.log(`[live] Watching orders through temporary queue ${queue}`);
+await channel.consume(
+  queue,
+  (msg) =&gt; {
+    if (!msg) return;
+    const order = JSON.parse(msg.content.toString()) as Order;
+    console.log(`[live] ${order.id}  ${order.region}  $${order.total}`);
+  },
+  { noAck: true },
+);</code></pre></figure>
+      <div class="prose"><h3>Run it</h3></div>
+      <figure class="code term"><figcaption><span class="file">Terminals 1, 2 and 3</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-bash">npx tsx src/03-fanout/subscriber.ts email
+npx tsx src/03-fanout/subscriber.ts analytics
+npx tsx src/03-fanout/live-feed.ts</code></pre></figure>
+      <figure class="code term"><figcaption><span class="file">Terminal 4</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-bash">npx tsx src/03-fanout/place-order.ts 3</code></pre></figure>
+      <figure class="out"><figcaption>What you should see</figcaption><div class="cols"><pre><span class="tag">email</span>[email] Listening on orders.placed.email
+[email] Got ord_bc6aa870 ($49)
+[email] Got ord_e55ebf36 ($98)
+[email] Got ord_ed71192d ($147)</pre><pre><span class="tag">live feed</span>[live] Watching orders through temporary queue amq.gen-N7KdKTR0RsT1Et88u2Ai-Q
+[live] ord_bc6aa870  eu  $49
+[live] ord_e55ebf36  apac  $98
+[live] ord_ed71192d  us  $147</pre></div></figure>
+      <div class="prose">
+        <h3>Two kinds of subscriber queue</h3>
+        <ul>
+          <li><strong>Named and durable</strong> (<code class="e-q">orders.placed.email</code>): owned by a service. Messages wait there while the service is down, so it never misses an order.</li>
+          <li><strong>Server-named and exclusive</strong> (<code class="e-q">amq.gen-…</code>): the broker picks the name and deletes the queue when the connection closes. Right for a live view that only cares about now.</li>
+        </ul>
+        <p>The <strong>binding</strong> (<code>bindQueue</code>) is what connects a queue to an exchange. A fanout exchange ignores routing keys, which is why every call passes an empty string.</p>
+      </div>
+      <div class="box try">
+        <span class="box-label">Try this</span>
+        <ol>
+          <li>Stop the email subscriber and place 3 orders. In the UI, <code class="e-q">orders.placed.email</code> shows <strong>Ready 3</strong>. Restart it and the backlog arrives.</li>
+          <li>Stop the live feed. Its <code class="e-q">amq.gen-…</code> queue vanishes from the Queues tab. Orders placed now are never seen by it.</li>
+          <li>Open <strong>Exchanges → orders.placed</strong> and look at the bindings list.</li>
+        </ol>
+      </div>
+      <div class="box check">
+        <span class="box-label">Checkpoint</span>
+        <p>Next month you add a fraud-check service. What changes in <code class="e-p">place-order.ts</code>?</p>
+        <details class="answer"><summary>Show answer</summary><p>Nothing. The fraud service declares its own queue and binds it to <code class="e-x">orders.placed</code>. Producers and consumers only share the exchange name, which is the decoupling you are after.</p></details>
+      </div>
+      <label class="done"><input type="checkbox" id="done-ch-fanout" data-done="ch-fanout"> I finished this chapter</label>
+    </section>
+
+    <!-- ============================================================ 08 -->
+    <section class="chapter" id="ch-direct">
+      <header class="ch-head prose">
+        <p class="eyebrow"><b>08</b> · Core patterns · <code>src/04-direct</code></p>
+        <h2>Direct: routing by key</h2>
+        <p class="goal">Send each order only to the warehouse that serves its region.</p>
+      </header>
+      <div class="prose">
+        <p>A <strong>direct exchange</strong> compares the message's routing key with each binding key and delivers on an exact match. The order's region becomes the routing key. One queue can have several bindings, so a single warehouse can serve two regions.</p>
+      </div>
+      <figure class="diagram">
+        <div class="dg-scroll"><svg class="dg" viewBox="0 0 960 220" role="img" aria-labelledby="direct1-t"><title id="direct1-t">route-orders.ts publishes with the region as routing key; the direct exchange sends us orders to warehouse.us and eu and apac orders to warehouse.eu-apac.</title><defs><marker id="direct1-ah-flow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah flow" d="M0,0 L10,5 L0,10 z"/></marker><marker id="direct1-ah-dead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah dead" d="M0,0 L10,5 L0,10 z"/></marker><marker id="direct1-ah-reply" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah reply" d="M0,0 L10,5 L0,10 z"/></marker><marker id="direct1-ah-retry" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah retry" d="M0,0 L10,5 L0,10 z"/></marker></defs><path class="dg-edge flow" d="M165.8,110.0 C201.8,110.0 199.6,110.0 235.6,110.0" marker-end="url(#direct1-ah-flow)"/><g class="dg-pill flow"><rect x="154.1" y="101.0" width="93.2" height="18" rx="9"/><text x="200.7" y="113.8" text-anchor="middle">key = region</text></g><path class="dg-edge flow" d="M404.4,110.0 C485.4,110.0 451.2,45.0 532.2,45.0" marker-end="url(#direct1-ah-flow)"/><g class="dg-pill flow"><rect x="454.7" y="68.5" width="27.2" height="18" rx="9"/><text x="468.3" y="81.3" text-anchor="middle">us</text></g><path class="dg-edge flow" d="M404.4,110.0 C469.7,110.0 448.6,156.0 514.0,156.0" marker-end="url(#direct1-ah-flow)"/><g class="dg-pill flow"><rect x="445.6" y="124.0" width="27.2" height="18" rx="9"/><text x="459.2" y="136.8" text-anchor="middle">eu</text></g><path class="dg-edge flow" d="M389.0,134.0 C462.5,134.0 440.5,184.0 514.0,184.0" marker-end="url(#direct1-ah-flow)"/><g class="dg-pill flow"><rect x="431.3" y="150.0" width="40.4" height="18" rx="9"/><text x="451.5" y="162.8" text-anchor="middle">apac</text></g><path class="dg-edge flow" d="M667.8,45.0 C720.9,45.0 741.1,45.0 794.2,45.0" marker-end="url(#direct1-ah-flow)"/><path class="dg-edge flow" d="M686.0,170.0 C723.8,170.0 738.2,170.0 776.0,170.0" marker-end="url(#direct1-ah-flow)"/><g class="dg-node producer"><rect x="24.2" y="85.0" width="141.5" height="50" rx="14"/><text class="lbl" x="95.0" y="108.0" text-anchor="middle">route-orders.ts</text><text class="sub" x="95.0" y="124.0" text-anchor="middle">PRODUCER</text></g><g class="dg-node exchange"><polygon points="251.6,85.0 388.4,85.0 404.4,110.0 388.4,135.0 251.6,135.0 235.6,110.0"/><text class="lbl" x="320.0" y="108.0" text-anchor="middle">orders.by-region</text><text class="sub" x="320.0" y="124.0" text-anchor="middle">DIRECT EXCHANGE</text></g><g class="dg-node queue"><rect x="532.2" y="20.0" width="135.6" height="50" rx="5"/><line class="slot" x1="657.8" y1="34.0" x2="657.8" y2="56.0"/><line class="slot" x1="651.8" y1="34.0" x2="651.8" y2="56.0"/><line class="slot" x1="645.8" y1="34.0" x2="645.8" y2="56.0"/><text class="lbl" x="591.0" y="43.0" text-anchor="middle">warehouse.us</text><text class="sub" x="591.0" y="59.0" text-anchor="middle">QUEUE</text></g><g class="dg-node queue"><rect x="514.0" y="145.0" width="172.1" height="50" rx="5"/><line class="slot" x1="676.1" y1="159.0" x2="676.1" y2="181.0"/><line class="slot" x1="670.1" y1="159.0" x2="670.1" y2="181.0"/><line class="slot" x1="664.1" y1="159.0" x2="664.1" y2="181.0"/><text class="lbl" x="591.0" y="168.0" text-anchor="middle">warehouse.eu-apac</text><text class="sub" x="591.0" y="184.0" text-anchor="middle">QUEUE</text></g><g class="dg-node consumer"><rect x="794.2" y="20.0" width="141.5" height="50" rx="14"/><text class="lbl" x="865.0" y="43.0" text-anchor="middle">warehouse.ts us</text><text class="sub" x="865.0" y="59.0" text-anchor="middle">CONSUMER</text></g><g class="dg-node consumer"><rect x="776.0" y="145.0" width="178.0" height="50" rx="14"/><text class="lbl" x="865.0" y="168.0" text-anchor="middle">warehouse.ts eu apac</text><text class="sub" x="865.0" y="184.0" text-anchor="middle">CONSUMER</text></g></svg></div>
+        <figcaption><code class="e-q">warehouse.eu-apac</code> has two bindings, <code class="e-k">eu</code> and <code class="e-k">apac</code>.</figcaption>
+      </figure>
+      <figure class="code"><figcaption><span class="file">src/04-direct/route-orders.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import { connect, toBuffer } from '../lib/rabbit.js';
+import { fakeOrder } from '../lib/order.js';
+
+const EXCHANGE = 'orders.by-region';
+const count = Number(process.argv[2] ?? 6);
+
+const { connection, channel } = await connect();
+await channel.assertExchange(EXCHANGE, 'direct', { durable: true });
+
+for (let i = 0; i &lt; count; i++) {
+  const order = fakeOrder();
+  // The routing key is the region. A direct exchange matches it exactly against bindings.
+  channel.publish(EXCHANGE, order.region, toBuffer(order), { persistent: true, contentType: 'application/json' });
+  console.log(`[x] ${order.id} -&gt; ${order.region}`);
+}
+
+await channel.close();
+await connection.close();</code></pre></figure>
+      <figure class="code"><figcaption><span class="file">src/04-direct/warehouse.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import { connect } from '../lib/rabbit.js';
+import type { Order } from '../lib/order.js';
+
+const EXCHANGE = 'orders.by-region';
+const regions = process.argv.slice(2);
+if (regions.length === 0) {
+  console.error('Usage: npx tsx src/04-direct/warehouse.ts &lt;region&gt; [region...]');
+  process.exit(1);
+}
+
+const queue = `warehouse.${regions.join('-')}`;
+const { channel } = await connect();
+
+await channel.assertExchange(EXCHANGE, 'direct', { durable: true });
+await channel.assertQueue(queue, { durable: true });
+for (const region of regions) {
+  await channel.bindQueue(queue, EXCHANGE, region); // one binding per routing key
+}
+
+console.log(`[${queue}] Shipping orders for: ${regions.join(', ')}`);
+await channel.consume(queue, (msg) =&gt; {
+  if (!msg) return;
+  const order = JSON.parse(msg.content.toString()) as Order;
+  console.log(`[${queue}] ${order.id} (${msg.fields.routingKey})`);
+  channel.ack(msg);
+});</code></pre></figure>
+      <div class="prose"><h3>Run it</h3></div>
+      <figure class="code term"><figcaption><span class="file">Terminals 1 and 2</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-bash">npx tsx src/04-direct/warehouse.ts us
+npx tsx src/04-direct/warehouse.ts eu apac</code></pre></figure>
+      <figure class="code term"><figcaption><span class="file">Terminal 3</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-bash">npx tsx src/04-direct/route-orders.ts 6</code></pre></figure>
+      <figure class="out"><figcaption>What you should see</figcaption><div class="cols"><pre><span class="tag">warehouse.us</span>[warehouse.us] Shipping orders for: us
+[warehouse.us] ord_b5b03498 (us)</pre><pre><span class="tag">warehouse.eu-apac</span>[warehouse.eu-apac] Shipping orders for: eu, apac
+[warehouse.eu-apac] ord_c27cf733 (eu)
+[warehouse.eu-apac] ord_d37482f7 (eu)
+[warehouse.eu-apac] ord_854be5ad (eu)
+[warehouse.eu-apac] ord_15220e7e (apac)
+[warehouse.eu-apac] ord_31e38205 (apac)</pre></div></figure>
+      <div class="prose">
+        <ul>
+          <li><strong>Exact match only.</strong> <code class="e-k">us</code> matches <code class="e-k">us</code>, never <code class="e-k">US</code> or <code class="e-k">us-west</code>.</li>
+          <li><strong>The same key on two queues</strong> gives both a copy, so a direct exchange can fan out per key.</li>
+          <li><strong>No match means the message is dropped</strong>, silently. The producer is not told.</li>
+        </ul>
+      </div>
+      <div class="box try">
+        <span class="box-label">Try this</span>
+        <ol>
+          <li>Start a third warehouse with <code>warehouse.ts us eu</code>. Route 6 orders: <code class="e-k">eu</code> orders now reach two queues.</li>
+          <li>Stop all warehouses. In the UI, delete the queues <code class="e-q">warehouse.eu-apac</code> and <code class="e-q">warehouse.us-eu</code>. Route 6 orders. Only <code class="e-q">warehouse.us</code> grows; every <code class="e-k">eu</code> and <code class="e-k">apac</code> order is gone. Remember this for chapter 10.</li>
+        </ol>
+      </div>
+      <label class="done"><input type="checkbox" id="done-ch-direct" data-done="ch-direct"> I finished this chapter</label>
+    </section>
+
+    <!-- ============================================================ 09 -->
+    <section class="chapter" id="ch-topic">
+      <header class="ch-head prose">
+        <p class="eyebrow"><b>09</b> · Core patterns · <code>src/05-topic</code></p>
+        <h2>Topic: routing by pattern</h2>
+        <p class="goal">Let each consumer choose the events it wants with wildcard patterns.</p>
+      </header>
+      <div class="prose">
+        <p>Order events now carry structured keys: <code class="e-k">order.&lt;event&gt;.&lt;region&gt;</code>, for example <code class="e-k">order.cancelled.eu</code>. A <strong>topic exchange</strong> splits keys on dots and matches them against binding patterns with two wildcards:</p>
+        <ul>
+          <li><code class="e-k">*</code> matches exactly one word.</li>
+          <li><code class="e-k">#</code> matches zero or more words.</li>
+        </ul>
+      </div>
+      <figure class="diagram">
+        <div class="dg-scroll"><svg class="dg" viewBox="0 0 1000 270" role="img" aria-labelledby="topic1-t"><title id="topic1-t">emit-events.ts publishes order.event.region keys to the order.events topic exchange; three listener queues bind with wildcard patterns.</title><defs><marker id="topic1-ah-flow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah flow" d="M0,0 L10,5 L0,10 z"/></marker><marker id="topic1-ah-dead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah dead" d="M0,0 L10,5 L0,10 z"/></marker><marker id="topic1-ah-reply" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah reply" d="M0,0 L10,5 L0,10 z"/></marker><marker id="topic1-ah-retry" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah retry" d="M0,0 L10,5 L0,10 z"/></marker></defs><path class="dg-edge flow" d="M162.1,135.0 C199.1,135.0 213.2,135.0 250.2,135.0" marker-end="url(#topic1-ah-flow)"/><g class="dg-pill flow"><rect x="156.2" y="126.0" width="99.8" height="18" rx="9"/><text x="206.2" y="138.8" text-anchor="middle">order.paid.us</text></g><path class="dg-edge flow" d="M389.8,135.0 C506.3,135.0 465.7,50.0 582.2,50.0" marker-end="url(#topic1-ah-flow)"/><g class="dg-pill flow"><rect x="455.9" y="83.5" width="60.2" height="18" rx="9"/><text x="486.0" y="96.3" text-anchor="middle">order.#</text></g><path class="dg-edge flow" d="M389.8,135.0 C462.9,135.0 490.8,135.0 564.0,135.0" marker-end="url(#topic1-ah-flow)"/><g class="dg-pill flow"><rect x="436.9" y="126.0" width="80.0" height="18" rx="9"/><text x="476.9" y="138.8" text-anchor="middle">order.*.eu</text></g><path class="dg-edge flow" d="M389.8,135.0 C494.0,135.0 448.8,220.0 553.0,220.0" marker-end="url(#topic1-ah-flow)"/><g class="dg-pill flow"><rect x="408.3" y="168.5" width="126.2" height="18" rx="9"/><text x="471.4" y="181.3" text-anchor="middle">order.cancelled.*</text></g><path class="dg-edge flow" d="M717.8,50.0 C766.1,50.0 784.6,50.0 832.9,50.0" marker-end="url(#topic1-ah-flow)"/><path class="dg-edge flow" d="M736.0,135.0 C772.0,135.0 778.6,135.0 814.6,135.0" marker-end="url(#topic1-ah-flow)"/><path class="dg-edge flow" d="M747.0,220.0 C783.0,220.0 767.7,220.0 803.7,220.0" marker-end="url(#topic1-ah-flow)"/><g class="dg-node producer"><rect x="27.9" y="110.0" width="134.2" height="50" rx="14"/><text class="lbl" x="95.0" y="133.0" text-anchor="middle">emit-events.ts</text><text class="sub" x="95.0" y="149.0" text-anchor="middle">PRODUCER</text></g><g class="dg-node exchange"><polygon points="266.2,110.0 373.8,110.0 389.8,135.0 373.8,160.0 266.2,160.0 250.2,135.0"/><text class="lbl" x="320.0" y="133.0" text-anchor="middle">order.events</text><text class="sub" x="320.0" y="149.0" text-anchor="middle">TOPIC EXCHANGE</text></g><g class="dg-node queue"><rect x="582.2" y="25.0" width="135.6" height="50" rx="5"/><line class="slot" x1="707.8" y1="39.0" x2="707.8" y2="61.0"/><line class="slot" x1="701.8" y1="39.0" x2="701.8" y2="61.0"/><line class="slot" x1="695.8" y1="39.0" x2="695.8" y2="61.0"/><text class="lbl" x="641.0" y="48.0" text-anchor="middle">events.audit</text><text class="sub" x="641.0" y="64.0" text-anchor="middle">QUEUE</text></g><g class="dg-node queue"><rect x="564.0" y="110.0" width="172.1" height="50" rx="5"/><line class="slot" x1="726.1" y1="124.0" x2="726.1" y2="146.0"/><line class="slot" x1="720.1" y1="124.0" x2="720.1" y2="146.0"/><line class="slot" x1="714.1" y1="124.0" x2="714.1" y2="146.0"/><text class="lbl" x="641.0" y="133.0" text-anchor="middle">events.eu-support</text><text class="sub" x="641.0" y="149.0" text-anchor="middle">QUEUE</text></g><g class="dg-node queue"><rect x="553.0" y="195.0" width="194.0" height="50" rx="5"/><line class="slot" x1="737.0" y1="209.0" x2="737.0" y2="231.0"/><line class="slot" x1="731.0" y1="209.0" x2="731.0" y2="231.0"/><line class="slot" x1="725.0" y1="209.0" x2="725.0" y2="231.0"/><text class="lbl" x="641.0" y="218.0" text-anchor="middle">events.cancellations</text><text class="sub" x="641.0" y="234.0" text-anchor="middle">QUEUE</text></g><g class="dg-node consumer"><rect x="832.9" y="25.0" width="134.2" height="50" rx="14"/><text class="lbl" x="900.0" y="48.0" text-anchor="middle">listener audit</text><text class="sub" x="900.0" y="64.0" text-anchor="middle">CONSUMER</text></g><g class="dg-node consumer"><rect x="814.6" y="110.0" width="170.7" height="50" rx="14"/><text class="lbl" x="900.0" y="133.0" text-anchor="middle">listener eu-support</text><text class="sub" x="900.0" y="149.0" text-anchor="middle">CONSUMER</text></g><g class="dg-node consumer"><rect x="803.7" y="195.0" width="192.6" height="50" rx="14"/><text class="lbl" x="900.0" y="218.0" text-anchor="middle">listener cancellations</text><text class="sub" x="900.0" y="234.0" text-anchor="middle">CONSUMER</text></g></svg></div>
+        <figcaption>Three listeners, three patterns, one exchange.</figcaption>
+      </figure>
+      <div class="table-wrap">
+        <table class="t matrix">
+          <thead><tr><th>Routing key</th><th><code class="e-k">order.#</code></th><th><code class="e-k">order.*.eu</code></th><th><code class="e-k">order.cancelled.*</code></th></tr></thead>
+          <tbody>
+            <tr><td><code class="e-k">order.created.us</code></td><td class="yes">✓</td><td class="no">–</td><td class="no">–</td></tr>
+            <tr><td><code class="e-k">order.shipped.eu</code></td><td class="yes">✓</td><td class="yes">✓</td><td class="no">–</td></tr>
+            <tr><td><code class="e-k">order.cancelled.eu</code></td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+            <tr><td><code class="e-k">order.cancelled.apac</code></td><td class="yes">✓</td><td class="no">–</td><td class="yes">✓</td></tr>
+            <tr><td><code class="e-k">order.eu</code></td><td class="yes">✓</td><td class="no">–</td><td class="no">–</td></tr>
+            <tr><td><code class="e-k">invoice.created.us</code></td><td class="no">–</td><td class="no">–</td><td class="no">–</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figure class="code"><figcaption><span class="file">src/05-topic/emit-events.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import { connect, toBuffer } from '../lib/rabbit.js';
+import { fakeOrder, pick } from '../lib/order.js';
+
+const EXCHANGE = 'order.events';
+const EVENTS = ['created', 'paid', 'shipped', 'cancelled'];
+const count = Number(process.argv[2] ?? 8);
+
+const { connection, channel } = await connect();
+await channel.assertExchange(EXCHANGE, 'topic', { durable: true });
+
+for (let i = 0; i &lt; count; i++) {
+  const order = fakeOrder();
+  // Topic routing keys are dot-separated words: order.&lt;event&gt;.&lt;region&gt;
+  const routingKey = `order.${pick(EVENTS)}.${order.region}`;
+  channel.publish(EXCHANGE, routingKey, toBuffer(order), { contentType: 'application/json' });
+  console.log(`[x] ${routingKey.padEnd(22)} ${order.id}`);
+}
+
+await channel.close();
+await connection.close();</code></pre></figure>
+      <figure class="code"><figcaption><span class="file">src/05-topic/listener.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import { connect } from '../lib/rabbit.js';
+
+const EXCHANGE = 'order.events';
+const [name, ...patterns] = process.argv.slice(2);
+if (!name || patterns.length === 0) {
+  console.error('Usage: npx tsx src/05-topic/listener.ts &lt;name&gt; &lt;pattern&gt; [pattern...]');
+  process.exit(1);
+}
+
+const queue = `events.${name}`;
+const { channel } = await connect();
+
+await channel.assertExchange(EXCHANGE, 'topic', { durable: true });
+await channel.assertQueue(queue, { durable: true });
+for (const pattern of patterns) {
+  // * matches exactly one word, # matches zero or more words
+  await channel.bindQueue(queue, EXCHANGE, pattern);
+}
+
+console.log(`[${name}] Bound with ${patterns.join('  ')}`);
+await channel.consume(queue, (msg) =&gt; {
+  if (!msg) return;
+  console.log(`[${name}] ${msg.fields.routingKey}`);
+  channel.ack(msg);
+});</code></pre></figure>
+      <div class="prose"><h3>Run it</h3></div>
+      <figure class="code term"><figcaption><span class="file">Terminals 1, 2 and 3</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-bash">npx tsx src/05-topic/listener.ts audit 'order.#'
+npx tsx src/05-topic/listener.ts eu-support 'order.*.eu'
+npx tsx src/05-topic/listener.ts cancellations 'order.cancelled.*'</code></pre></figure>
+      <figure class="code term"><figcaption><span class="file">Terminal 4</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-bash">npx tsx src/05-topic/emit-events.ts 8</code></pre></figure>
+      <figure class="out"><figcaption>What you should see (events are random)</figcaption><div class="cols"><pre><span class="tag">emit-events</span>[x] order.shipped.eu       ord_9c3224e7
+[x] order.cancelled.apac   ord_5c35f2db
+[x] order.created.us       ord_0c01112e
+[x] order.shipped.us       ord_5de660b9
+[x] order.cancelled.us     ord_f4d9f462
+[x] order.cancelled.us     ord_cffdff3e
+[x] order.shipped.us       ord_9a1a71be
+[x] order.created.apac     ord_4dab43ce</pre><pre><span class="tag">eu-support and cancellations</span>[eu-support] Bound with order.*.eu
+[eu-support] order.shipped.eu
+
+[cancellations] Bound with order.cancelled.*
+[cancellations] order.cancelled.apac
+[cancellations] order.cancelled.us
+[cancellations] order.cancelled.us</pre></div></figure>
+      <div class="prose">
+        <p>Quote the patterns in your shell. Otherwise zsh or bash may try to expand <code>*</code> as a file glob.</p>
+      </div>
+      <div class="box warn">
+        <span class="box-label">Gotcha</span>
+        <p>Bindings belong to the broker, not to your process. They stay after the listener stops, and running <code>listener.ts audit 'order.paid.*'</code> later <em>adds</em> a binding to <code class="e-q">events.audit</code> instead of replacing <code class="e-k">order.#</code>. Remove old ones in <strong>Exchanges → order.events → Bindings → Unbind</strong>, or call <code>channel.unbindQueue()</code>.</p>
+      </div>
+      <div class="prose">
+        <h3>All exchange types side by side</h3>
+      </div>
+      <div class="table-wrap">
+        <table class="t">
+          <thead><tr><th>Type</th><th>Routes by</th><th>Typical use</th></tr></thead>
+          <tbody>
+            <tr><td>Default</td><td>Routing key = queue name</td><td>Simple point-to-point, <code>sendToQueue</code></td></tr>
+            <tr><td>Direct</td><td>Exact key match</td><td>Commands to a specific worker group</td></tr>
+            <tr><td>Fanout</td><td>Nothing: every bound queue</td><td>Broadcast events, cache invalidation</td></tr>
+            <tr><td>Topic</td><td>Dot-separated patterns with <code>*</code> and <code>#</code></td><td>Domain events consumed selectively</td></tr>
+            <tr><td>Headers</td><td>Message header values (<code>x-match: all</code> or <code>any</code>)</td><td>Routing on several attributes; rarely needed</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="box check">
+        <span class="box-label">Checkpoint</span>
+        <p>What does a topic binding of <code class="e-k">#</code> alone behave like? And a pattern with no wildcards?</p>
+        <details class="answer"><summary>Show answer</summary><p><code class="e-k">#</code> matches every key, so the queue behaves like it is bound to a fanout exchange. A pattern with no wildcards matches only that exact key, like a direct binding. Topic exchanges cover both cases, which is why many systems use them by default.</p></details>
+      </div>
+      <label class="done"><input type="checkbox" id="done-ch-topic" data-done="ch-topic"> I finished this chapter</label>
+    </section>
+
+    <!-- ============================================================ 10 -->
+    <section class="chapter" id="ch-reliable">
+      <header class="ch-head prose">
+        <p class="eyebrow"><b>10</b> · Production concerns · <code>src/06-reliability</code></p>
+        <h2>Reliable delivery</h2>
+        <p class="goal">Close every gap where a message can be lost between producer, broker and consumer.</p>
+      </header>
+      <div class="prose">
+        <p>A message passes through three handoffs. Each one needs its own safeguard.</p>
+      </div>
+      <div class="table-wrap">
+        <table class="t">
+          <thead><tr><th>Handoff</th><th>What can go wrong</th><th>Safeguard</th></tr></thead>
+          <tbody>
+            <tr><td>Producer → broker</td><td>Network drops, broker crashes before storing, no queue matches</td><td><strong>Publisher confirms</strong>, <code>mandatory: true</code> with a return handler</td></tr>
+            <tr><td>Inside the broker</td><td>Broker restarts or its disk fails</td><td><strong>Durable queue + persistent message</strong>; quorum queues replicate across nodes (chapter 11)</td></tr>
+            <tr><td>Broker → consumer</td><td>Consumer crashes mid-processing</td><td><strong>Manual ack after the work</strong> (chapter 06)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="prose">
+        <h3>Publisher confirms and returns</h3>
+        <p>On a <strong>confirm channel</strong> the broker answers every publish with an ack (stored safely) or a nack (could not store it). With <code>mandatory: true</code>, a message that matches no queue is handed back through a <code>return</code> event instead of being dropped.</p>
+      </div>
+      <figure class="code"><figcaption><span class="file">src/06-reliability/confirm-publisher.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import { connectWithConfirms, toBuffer } from '../lib/rabbit.js';
+import { fakeOrder } from '../lib/order.js';
+
+const EXCHANGE = 'order.events';
+const { connection, channel } = await connectWithConfirms();
+
+// With mandatory: true, the broker hands back any message that matched no queue.
+channel.on('return', (msg) =&gt; {
+  console.warn(`[!] Returned by broker: no queue bound for '${msg.fields.routingKey}'`);
+});
+
+await channel.assertExchange(EXCHANGE, 'topic', { durable: true });
+await channel.assertQueue('orders.audit', { durable: true });
+await channel.bindQueue('orders.audit', EXCHANGE, 'order.#');
+
+// 1. Routable: lands in orders.audit, then the broker confirms it.
+const order = fakeOrder();
+channel.publish(
+  EXCHANGE,
+  `order.created.${order.region}`,
+  toBuffer(order),
+  { persistent: true, mandatory: true, contentType: 'application/json' },
+  (err) =&gt; console.log(err ? `[✗] Broker nacked ${order.id}` : `[✓] Broker confirmed ${order.id}`),
+);
+
+// 2. Unroutable: nothing is bound to invoice.*, so the broker returns it.
+channel.publish(EXCHANGE, 'invoice.created.us', toBuffer({ invoice: 'inv_42' }), {
+  persistent: true,
+  mandatory: true,
+});
+
+await channel.waitForConfirms(); // resolves once the broker has answered every publish
+console.log('[x] Every publish was answered by the broker');
+
+await channel.close();
+await connection.close();</code></pre></figure>
+      <figure class="code term"><figcaption><span class="file">Terminal</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-bash">npx tsx src/06-reliability/confirm-publisher.ts</code></pre></figure>
+      <figure class="out"><figcaption>What you should see</figcaption><pre>[!] Returned by broker: no queue bound for 'invoice.created.us'
+[✓] Broker confirmed ord_e1a6537b
+[x] Every publish was answered by the broker</pre></figure>
+      <div class="prose">
+        <p>A returned message is still <em>confirmed</em>, because the broker did handle it. Treat the return as the signal that something is misconfigured. An alternative is an <strong>alternate exchange</strong> (<code>assertExchange(name, type, { alternateExchange: 'unrouted' })</code>), which routes unmatched messages to a catch-all queue instead.</p>
+        <p>Confirms are asynchronous. For throughput, publish a batch and call <code>waitForConfirms()</code> once, rather than waiting after every single message.</p>
+        <h3>At-least-once means duplicates</h3>
+        <p>Put the safeguards together and RabbitMQ gives you <strong>at-least-once</strong> delivery: nothing is lost, but a message can arrive twice. A consumer that finishes the work and crashes before its ack will see the message again. A producer that times out waiting for a confirm will publish again. Exactly-once delivery does not exist end to end, so make consumers <strong>idempotent</strong>: give each message a <code>messageId</code> and skip ids you have already processed. ShopFlow's notification service does this in chapter 14.</p>
+      </div>
+      <div class="table-wrap">
+        <table class="t">
+          <thead><tr><th>Guarantee</th><th>Settings</th><th>Trade-off</th></tr></thead>
+          <tbody>
+            <tr><td>At-most-once</td><td>Auto-ack, no confirms, transient messages</td><td>Fastest; loses messages on any failure</td></tr>
+            <tr><td>At-least-once</td><td>Manual acks, confirms, durable + persistent</td><td>No loss; consumers must handle duplicates</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="box check">
+        <span class="box-label">Checkpoint</span>
+        <p>Your API publishes an order, gets no confirm within 5 seconds, and publishes it again. Both copies reach the queue. Which component should deal with that, and how?</p>
+        <details class="answer"><summary>Show answer</summary><p>The consumer. Both copies carry the same <code>messageId</code> (the order id), so the consumer records processed ids in a store with a unique key and acks duplicates without doing the work again.</p></details>
+      </div>
+      <label class="done"><input type="checkbox" id="done-ch-reliable" data-done="ch-reliable"> I finished this chapter</label>
+    </section>
+
+    <!-- ============================================================ 11 -->
+    <section class="chapter" id="ch-types">
+      <header class="ch-head prose">
+        <p class="eyebrow"><b>11</b> · Production concerns · concept only</p>
+        <h2>Queue types</h2>
+        <p class="goal">Choose between classic, quorum and stream queues, and know why quorum is the default for data you cannot lose.</p>
+      </header>
+      <div class="prose">
+        <p>So far every queue has been a <strong>classic</strong> queue, the default type. RabbitMQ 4 offers two more, chosen with the <code>x-queue-type</code> argument when you declare the queue. Classic mirrored queues were removed in RabbitMQ 4.0; quorum queues replace them.</p>
+      </div>
+      <div class="table-wrap">
+        <table class="t">
+          <thead><tr><th></th><th>Classic</th><th>Quorum</th><th>Stream</th></tr></thead>
+          <tbody>
+            <tr><td>Declare with</td><td>(default)</td><td><code>'x-queue-type': 'quorum'</code></td><td><code>'x-queue-type': 'stream'</code></td></tr>
+            <tr><td>Replication</td><td>None, lives on one node</td><td>Raft consensus across 3, 5 or 7 nodes</td><td>Replicated append-only log</td></tr>
+            <tr><td>After consuming</td><td>Message deleted on ack</td><td>Message deleted on ack</td><td>Kept; consumers read from an offset and can replay</td></tr>
+            <tr><td>Poison messages</td><td>No built-in limit</td><td><code>x-delivery-limit</code> (default 20 in 4.x)</td><td>Not applicable</td></tr>
+            <tr><td>Exclusive, non-durable</td><td>Supported</td><td>Not supported: always durable</td><td>Not supported</td></tr>
+            <tr><td>Use it for</td><td>Temporary, exclusive and reply queues</td><td>Orders, payments, anything you cannot lose</td><td>Event history, many consumers reading the same data, replay</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="box key">
+        <span class="box-label">Rule of thumb</span>
+        <p>Quorum for anything important, classic for temporary and exclusive queues, stream when consumers need history. On a single node, as in this tutorial, a quorum queue cannot replicate, but you still get the delivery limit, and moving to a 3-node cluster later needs no code change.</p>
+      </div>
+      <div class="prose">
+        <p>Chapters 12 and 14 declare their important queues like this:</p>
+      </div>
+      <figure class="code"><figcaption><span class="file">Declaring a quorum queue</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">await channel.assertQueue('payments', {
+  durable: true, // required for quorum queues
+  deadLetterExchange: 'payments.dlx',
+  arguments: { 'x-queue-type': 'quorum', 'x-delivery-limit': 5 },
+});</code></pre></figure>
+      <div class="box warn">
+        <span class="box-label">Gotcha</span>
+        <p>A queue's type cannot change after it is created. Declaring an existing classic queue as quorum fails with <code>PRECONDITION_FAILED - inequivalent arg 'x-queue-type'</code>. Delete the queue and declare it again, or migrate to a new name.</p>
+      </div>
+      <label class="done"><input type="checkbox" id="done-ch-types" data-done="ch-types"> I finished this chapter</label>
+    </section>
+
+    <!-- ============================================================ 12 -->
+    <section class="chapter" id="ch-dlx">
+      <header class="ch-head prose">
+        <p class="eyebrow"><b>12</b> · Production concerns · <code>src/07-dead-letters</code></p>
+        <h2>Dead letters and retries</h2>
+        <p class="goal">Retry failures that might succeed later, park failures that never will, and stop poison messages from looping forever.</p>
+      </header>
+      <div class="prose">
+        <p>Charging a card can fail in two very different ways. A <strong>declined card</strong> will never succeed, so retrying is pointless. A <strong>gateway timeout</strong> might succeed in a few seconds. The payment worker treats them differently, using three queues:</p>
+        <ul>
+          <li><code class="e-q">payments</code>: the main work queue. Rejected messages are <strong>dead-lettered</strong> to <code class="e-x">payments.dlx</code>.</li>
+          <li><code class="e-q">payments.retry</code>: a waiting room with a 5-second <strong>TTL</strong> and no consumer. Expired messages dead-letter straight back into <code class="e-q">payments</code>.</li>
+          <li><code class="e-d">payments.dead</code>: the parking lot, where a human looks at what failed.</li>
+        </ul>
+      </div>
+      <figure class="diagram">
+        <div class="dg-scroll"><svg class="dg" viewBox="0 0 820 360" role="img" aria-labelledby="dlx1-t"><title id="dlx1-t">Payments flow: the worker sends transient failures to payments.retry, which expires them back into payments after 5 seconds; permanent failures and messages over the delivery limit are dead-lettered through payments.dlx into payments.dead.</title><defs><marker id="dlx1-ah-flow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah flow" d="M0,0 L10,5 L0,10 z"/></marker><marker id="dlx1-ah-dead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah dead" d="M0,0 L10,5 L0,10 z"/></marker><marker id="dlx1-ah-reply" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah reply" d="M0,0 L10,5 L0,10 z"/></marker><marker id="dlx1-ah-retry" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah retry" d="M0,0 L10,5 L0,10 z"/></marker></defs><path class="dg-edge flow" d="M185.3,70.0 C236.2,70.0 255.6,70.0 306.4,70.0" marker-end="url(#dlx1-ah-flow)"/><path class="dg-edge flow" d="M453.6,70.0 C507.5,70.0 528.0,70.0 582.0,70.0" marker-end="url(#dlx1-ah-flow)"/><path class="dg-edge retry" d="M660.0,95.0 C660.0,131.0 660.0,139.0 660.0,175.0" marker-end="url(#dlx1-ah-retry)"/><g class="dg-pill retry"><rect x="590.3" y="126.0" width="139.4" height="18" rx="9"/><text x="660.0" y="138.8" text-anchor="middle">timeout: copy + ack</text></g><path class="dg-edge retry" d="M574.0,200.0 L420.0,200.0 L420.0,95.0" marker-end="url(#dlx1-ah-retry)"/><g class="dg-pill retry"><rect x="437.2" y="191.0" width="119.6" height="18" rx="9"/><text x="497.0" y="203.8" text-anchor="middle">expires after 5s</text></g><path class="dg-edge dead" d="M330.0,95.0 C330.0,174.8 330.0,205.2 330.0,285.0" marker-end="url(#dlx1-ah-dead)"/><g class="dg-pill dead"><rect x="253.7" y="181.0" width="152.6" height="18" rx="9"/><text x="330.0" y="193.8" text-anchor="middle">nack · delivery limit</text></g><path class="dg-edge dead" d="M452.5,310.0 C509.6,310.0 531.4,310.0 588.5,310.0" marker-end="url(#dlx1-ah-dead)"/><g class="dg-pill dead"><rect x="470.6" y="301.0" width="99.8" height="18" rx="9"/><text x="520.5" y="313.8" text-anchor="middle">x-death added</text></g><g class="dg-node producer"><rect x="14.7" y="45.0" width="170.7" height="50" rx="14"/><text class="lbl" x="100.0" y="68.0" text-anchor="middle">publish-payments.ts</text><text class="sub" x="100.0" y="84.0" text-anchor="middle">PRODUCER</text></g><g class="dg-node queue"><rect x="306.4" y="45.0" width="147.2" height="50" rx="5"/><line class="slot" x1="443.6" y1="59.0" x2="443.6" y2="81.0"/><line class="slot" x1="437.6" y1="59.0" x2="437.6" y2="81.0"/><line class="slot" x1="431.6" y1="59.0" x2="431.6" y2="81.0"/><text class="lbl" x="371.0" y="68.0" text-anchor="middle">payments</text><text class="sub" x="371.0" y="84.0" text-anchor="middle">QUORUM · LIMIT 5</text></g><g class="dg-node consumer"><rect x="582.0" y="45.0" width="156.1" height="50" rx="14"/><text class="lbl" x="660.0" y="68.0" text-anchor="middle">payment-worker.ts</text><text class="sub" x="660.0" y="84.0" text-anchor="middle">CONSUMER</text></g><g class="dg-node queue"><rect x="574.0" y="175.0" width="172.0" height="50" rx="5"/><line class="slot" x1="736.0" y1="189.0" x2="736.0" y2="211.0"/><line class="slot" x1="730.0" y1="189.0" x2="730.0" y2="211.0"/><line class="slot" x1="724.0" y1="189.0" x2="724.0" y2="211.0"/><text class="lbl" x="651.0" y="198.0" text-anchor="middle">payments.retry</text><text class="sub" x="651.0" y="214.0" text-anchor="middle">TTL 5s · NO CONSUMER</text></g><g class="dg-node exchange"><polygon points="323.5,285.0 436.5,285.0 452.5,310.0 436.5,335.0 323.5,335.0 307.5,310.0"/><text class="lbl" x="380.0" y="308.0" text-anchor="middle">payments.dlx</text><text class="sub" x="380.0" y="324.0" text-anchor="middle">FANOUT EXCHANGE</text></g><g class="dg-node dead"><rect x="588.5" y="285.0" width="142.9" height="50" rx="5"/><line class="slot" x1="721.4" y1="299.0" x2="721.4" y2="321.0"/><line class="slot" x1="715.4" y1="299.0" x2="715.4" y2="321.0"/><line class="slot" x1="709.4" y1="299.0" x2="709.4" y2="321.0"/><text class="lbl" x="651.0" y="308.0" text-anchor="middle">payments.dead</text><text class="sub" x="651.0" y="324.0" text-anchor="middle">PARKING LOT</text></g></svg></div>
+        <figcaption>Dashed teal is the delayed retry loop. Dashed red is the path to the parking lot.</figcaption>
+      </figure>
+      <figure class="code"><figcaption><span class="file">src/07-dead-letters/topology.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import type { Channel } from 'amqplib';
+
+export type Payment = {
+  orderId: string;
+  amount: number;
+  scenario: 'ok' | 'declined' | 'flaky' | 'gateway-down'; // lets you trigger each path on purpose
+};
+
+export const PAYMENTS = 'payments';
+export const RETRY = 'payments.retry';
+export const DEAD = 'payments.dead';
+const DLX = 'payments.dlx';
+
+export async function setupPayments(channel: Channel) {
+  // Parking lot: messages we gave up on wait here for a human to look at.
+  await channel.assertExchange(DLX, 'fanout', { durable: true });
+  await channel.assertQueue(DEAD, { durable: true });
+  await channel.bindQueue(DEAD, DLX, '');
+
+  // Main queue. Rejected messages are dead-lettered to the parking lot.
+  // x-delivery-limit guards against poison messages that crash consumers over and over.
+  await channel.assertQueue(PAYMENTS, {
+    durable: true,
+    deadLetterExchange: DLX,
+    arguments: { 'x-queue-type': 'quorum', 'x-delivery-limit': 5 },
+  });
+
+  // Wait room. Nobody consumes it: after 5 seconds each message expires and is
+  // dead-lettered through the default exchange straight back into "payments".
+  await channel.assertQueue(RETRY, {
+    durable: true,
+    messageTtl: 5000,
+    deadLetterExchange: '',
+    deadLetterRoutingKey: PAYMENTS,
+    arguments: { 'x-queue-type': 'quorum' },
+  });
+}</code></pre></figure>
+      <figure class="code"><figcaption><span class="file">src/07-dead-letters/publish-payments.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import { connect, toBuffer } from '../lib/rabbit.js';
+import { PAYMENTS, setupPayments, type Payment } from './topology.js';
+
+const { connection, channel } = await connect();
+await setupPayments(channel);
+
+const payments: Payment[] = [
+  { orderId: 'ord_ok', amount: 49.0, scenario: 'ok' },
+  { orderId: 'ord_declined', amount: 120.0, scenario: 'declined' },
+  { orderId: 'ord_flaky', amount: 75.5, scenario: 'flaky' },
+  { orderId: 'ord_down', amount: 18.25, scenario: 'gateway-down' },
+];
+
+for (const payment of payments) {
+  channel.sendToQueue(PAYMENTS, toBuffer(payment), { persistent: true, contentType: 'application/json' });
+  console.log(`[x] Payment for ${payment.orderId} (${payment.scenario})`);
+}
+
+await channel.close();
+await connection.close();</code></pre></figure>
+      <figure class="code"><figcaption><span class="file">src/07-dead-letters/payment-worker.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import { setTimeout as sleep } from 'node:timers/promises';
+import { connect } from '../lib/rabbit.js';
+import { PAYMENTS, RETRY, setupPayments, type Payment } from './topology.js';
+
+const MAX_RETRIES = 3;
+
+class CardDeclined extends Error {} // permanent: retrying will never help
+class GatewayTimeout extends Error {} // transient: worth another try later
+
+// Pretend payment gateway. "flaky" succeeds on the third attempt.
+async function charge(payment: Payment, attempt: number) {
+  await sleep(300);
+  if (payment.scenario === 'declined') throw new CardDeclined('card declined');
+  if (payment.scenario === 'gateway-down') throw new GatewayTimeout('gateway timeout');
+  if (payment.scenario === 'flaky' &amp;&amp; attempt &lt; 2) throw new GatewayTimeout('gateway timeout');
+}
+
+const { channel } = await connect();
+await setupPayments(channel);
+await channel.prefetch(1);
+console.log('[payments] Waiting for payments...');
+
+await channel.consume(PAYMENTS, async (msg) =&gt; {
+  if (!msg) return;
+  const payment = JSON.parse(msg.content.toString()) as Payment;
+  const retries = Number(msg.properties.headers?.['retry-count'] ?? 0);
+
+  try {
+    await charge(payment, retries);
+    console.log(`[✓] ${payment.orderId} charged $${payment.amount}`);
+    channel.ack(msg);
+  } catch (err) {
+    if (err instanceof GatewayTimeout &amp;&amp; retries &lt; MAX_RETRIES) {
+      console.log(`[~] ${payment.orderId} ${err.message}, retry ${retries + 1}/${MAX_RETRIES} in 5s`);
+      // Park a copy in the wait room with a higher count, then ack the original.
+      channel.sendToQueue(RETRY, msg.content, {
+        persistent: true,
+        contentType: 'application/json',
+        headers: { 'retry-count': retries + 1 },
+      });
+      channel.ack(msg);
+    } else {
+      console.log(`[✗] ${payment.orderId} ${(err as Error).message}, giving up: dead-lettered`);
+      channel.nack(msg, false, false); // reject without requeue: the queue dead-letters it
+    }
+  }
+});</code></pre></figure>
+      <figure class="code"><figcaption><span class="file">src/07-dead-letters/inspect-dead.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import { connect } from '../lib/rabbit.js';
+import { DEAD, setupPayments, type Payment } from './topology.js';
+
+const { connection, channel } = await connect();
+await setupPayments(channel);
+
+// channel.get pulls one message at a time (handy for tools; use consume in services).
+let count = 0;
+for (let msg = await channel.get(DEAD); msg; msg = await channel.get(DEAD)) {
+  const payment = JSON.parse(msg.content.toString()) as Payment;
+  // The broker records every time this message died: why, in which queue, how often.
+  const deaths: { reason: string; queue: string; count: number }[] = msg.properties.headers?.['x-death'] ?? [];
+  const history = deaths.map((d) =&gt; `${d.reason} in ${d.queue} x${d.count}`).join(', ');
+  console.log(`${payment.orderId.padEnd(14)} ${history}`);
+  count++;
+}
+console.log(`[x] ${count} message(s) in ${DEAD}`);
+
+// We never acked them, so closing the channel puts them all back in the queue.
+await channel.close();
+await connection.close();</code></pre></figure>
+      <div class="prose"><h3>Run it</h3></div>
+      <figure class="code term"><figcaption><span class="file">Terminal 1</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-bash">npx tsx src/07-dead-letters/payment-worker.ts</code></pre></figure>
+      <figure class="code term"><figcaption><span class="file">Terminal 2: publish, wait about 20 seconds, then inspect</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-bash">npx tsx src/07-dead-letters/publish-payments.ts
+npx tsx src/07-dead-letters/inspect-dead.ts</code></pre></figure>
+      <figure class="out"><figcaption>What you should see</figcaption><div class="cols"><pre><span class="tag">payment-worker</span>[payments] Waiting for payments...
+[✓] ord_ok charged $49
+[✗] ord_declined card declined, giving up: dead-lettered
+[~] ord_flaky gateway timeout, retry 1/3 in 5s
+[~] ord_down gateway timeout, retry 1/3 in 5s
+[~] ord_flaky gateway timeout, retry 2/3 in 5s
+[~] ord_down gateway timeout, retry 2/3 in 5s
+[✓] ord_flaky charged $75.5
+[~] ord_down gateway timeout, retry 3/3 in 5s
+[✗] ord_down gateway timeout, giving up: dead-lettered</pre><pre><span class="tag">inspect-dead</span>ord_declined   rejected in payments x1
+ord_down       rejected in payments x1, expired in payments.retry x1
+[x] 2 message(s) in payments.dead</pre></div></figure>
+      <div class="prose">
+        <h3>How dead-lettering works</h3>
+        <p>A queue with a <code>deadLetterExchange</code> republishes a message to that exchange, instead of dropping it, when one of these happens:</p>
+      </div>
+      <div class="table-wrap">
+        <table class="t">
+          <thead><tr><th><code>x-death</code> reason</th><th>Cause</th><th>Seen in this chapter</th></tr></thead>
+          <tbody>
+            <tr><td><code>rejected</code></td><td>Consumer called <code>nack</code> or <code>reject</code> with <code>requeue: false</code></td><td>Declined card, retries used up</td></tr>
+            <tr><td><code>expired</code></td><td>Message TTL or per-message <code>expiration</code> ran out</td><td>Every pass through <code class="e-q">payments.retry</code></td></tr>
+            <tr><td><code>delivery_limit</code></td><td>A quorum queue redelivered it more than <code>x-delivery-limit</code> times</td><td>The poison message experiment below</td></tr>
+            <tr><td><code>maxlen</code></td><td>The queue hit its length limit with overflow set to drop the oldest</td><td>Not used here</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="prose">
+        <p>The broker adds an <code>x-death</code> header recording each death: reason, queue and count. <code>ord_down</code> shows <code>expired … x1</code> rather than <code>x3</code> because each retry publishes a fresh copy with a new <code>retry-count</code> header, so the broker's history restarts each time. Your own header carries the real attempt count.</p>
+        <p><code>inspect-dead.ts</code> reads with <code>channel.get</code> and never acks. Closing the channel returns every unacked message to the queue, so the parking lot stays intact no matter how often you inspect it.</p>
+      </div>
+      <div class="box try">
+        <span class="box-label">Try this: a poison message</span>
+        <ol>
+          <li>In <code class="e-c">payment-worker.ts</code>, change the last branch to <code>channel.nack(msg, false, true)</code>, which requeues instead of rejecting.</li>
+          <li>Publish the payments again. <code>ord_declined</code> is now redelivered immediately, over and over. Log <code>msg.properties.headers?.['x-delivery-count']</code> to watch it climb.</li>
+          <li>After the 6th delivery (1 + 5 redeliveries), the quorum queue gives up and dead-letters it. <code>inspect-dead.ts</code> shows <code>delivery_limit in payments x1</code>.</li>
+          <li>Change the line back. Purge <code class="e-d">payments.dead</code> from its page in the UI.</li>
+        </ol>
+        <p>This is why immediate requeue is dangerous: a message that always fails becomes a hot loop that burns CPU and blocks the queue. The delivery limit is the safety net; the delayed retry queue is the proper fix.</p>
+      </div>
+      <div class="box check">
+        <span class="box-label">Checkpoint</span>
+        <p>Why does the worker publish a copy to <code class="e-q">payments.retry</code> and ack the original, instead of nacking it?</p>
+        <details class="answer"><summary>Show answer</summary><p>A nack with requeue retries immediately, with no delay, which gives the gateway no time to recover. A nack without requeue sends the message to the parking lot. Publishing a copy with a higher <code>retry-count</code> to a TTL queue gives a delayed retry and lets the worker count attempts.</p></details>
+      </div>
+      <label class="done"><input type="checkbox" id="done-ch-dlx" data-done="ch-dlx"> I finished this chapter</label>
+    </section>
+
+    <!-- ============================================================ 13 -->
+    <section class="chapter" id="ch-rpc">
+      <header class="ch-head prose">
+        <p class="eyebrow"><b>13</b> · Production concerns · <code>src/08-rpc</code></p>
+        <h2>Request/reply (RPC)</h2>
+        <p class="goal">Ask a service a question over RabbitMQ and wait for the answer.</p>
+      </header>
+      <div class="prose">
+        <p>Checkout needs a shipping quote before the customer pays. The quote service sits behind a queue, so you can run several copies of it. The client sends a request with two properties:</p>
+        <ul>
+          <li><code>replyTo</code>: the queue the answer should go to, here the client's private exclusive queue.</li>
+          <li><code>correlationId</code>: a unique id the server copies into the reply, so the client can match answers to questions.</li>
+        </ul>
+      </div>
+      <figure class="diagram">
+        <div class="dg-scroll"><svg class="dg" viewBox="0 0 920 250" role="img" aria-labelledby="rpc1-t"><title id="rpc1-t">quote-client.ts sends requests with replyTo and correlationId to rpc.shipping-quotes; quote-server.ts replies to the client&#x27;s exclusive reply queue.</title><defs><marker id="rpc1-ah-flow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah flow" d="M0,0 L10,5 L0,10 z"/></marker><marker id="rpc1-ah-dead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah dead" d="M0,0 L10,5 L0,10 z"/></marker><marker id="rpc1-ah-reply" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah reply" d="M0,0 L10,5 L0,10 z"/></marker><marker id="rpc1-ah-retry" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah retry" d="M0,0 L10,5 L0,10 z"/></marker></defs><path class="dg-edge flow" d="M180.8,125.0 C290.3,125.0 257.1,50.0 366.6,50.0" marker-end="url(#rpc1-ah-flow)"/><g class="dg-pill flow"><rect x="190.8" y="78.5" width="165.8" height="18" rx="9"/><text x="273.7" y="91.3" text-anchor="middle">replyTo + correlationId</text></g><path class="dg-edge flow" d="M553.4,50.0 C658.7,50.0 623.9,125.0 729.2,125.0" marker-end="url(#rpc1-ah-flow)"/><path class="dg-edge reply" d="M729.2,125.0 C622.1,125.0 656.3,200.0 549.1,200.0" marker-end="url(#rpc1-ah-reply)"/><g class="dg-pill reply"><rect x="572.8" y="153.5" width="132.8" height="18" rx="9"/><text x="639.2" y="166.3" text-anchor="middle">same correlationId</text></g><path class="dg-edge reply" d="M370.9,200.0 C259.5,200.0 292.1,125.0 180.8,125.0" marker-end="url(#rpc1-ah-reply)"/><g class="dg-node producer"><rect x="39.2" y="100.0" width="141.5" height="50" rx="14"/><text class="lbl" x="110.0" y="123.0" text-anchor="middle">quote-client.ts</text><text class="sub" x="110.0" y="139.0" text-anchor="middle">CLIENT</text></g><g class="dg-node queue"><rect x="366.6" y="25.0" width="186.7" height="50" rx="5"/><line class="slot" x1="543.3" y1="39.0" x2="543.3" y2="61.0"/><line class="slot" x1="537.3" y1="39.0" x2="537.3" y2="61.0"/><line class="slot" x1="531.3" y1="39.0" x2="531.3" y2="61.0"/><text class="lbl" x="451.0" y="48.0" text-anchor="middle">rpc.shipping-quotes</text><text class="sub" x="451.0" y="64.0" text-anchor="middle">QUEUE</text></g><g class="dg-node consumer"><rect x="729.2" y="100.0" width="141.5" height="50" rx="14"/><text class="lbl" x="800.0" y="123.0" text-anchor="middle">quote-server.ts</text><text class="sub" x="800.0" y="139.0" text-anchor="middle">SERVER</text></g><g class="dg-node queue"><rect x="370.9" y="175.0" width="178.2" height="50" rx="5"/><line class="slot" x1="539.1" y1="189.0" x2="539.1" y2="211.0"/><line class="slot" x1="533.1" y1="189.0" x2="533.1" y2="211.0"/><line class="slot" x1="527.1" y1="189.0" x2="527.1" y2="211.0"/><text class="lbl" x="451.0" y="198.0" text-anchor="middle">amq.gen-…</text><text class="sub" x="451.0" y="214.0" text-anchor="middle">EXCLUSIVE REPLY QUEUE</text></g></svg></div>
+        <figcaption>Requests travel through a shared queue; replies come back on the client's own queue.</figcaption>
+      </figure>
+      <figure class="code"><figcaption><span class="file">src/08-rpc/quote-server.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import { connect, toBuffer } from '../lib/rabbit.js';
+
+export type QuoteRequest = { region: string; weightKg: number };
+export type Quote = QuoteRequest &amp; { price: number; days: number };
+
+const QUEUE = 'rpc.shipping-quotes';
+const RATES: Record&lt;string, { perKg: number; days: number }&gt; = {
+  us: { perKg: 4.0, days: 2 },
+  eu: { perKg: 6.5, days: 4 },
+  apac: { perKg: 9.0, days: 6 },
+};
+
+const { channel } = await connect();
+await channel.assertQueue(QUEUE, { durable: false });
+await channel.prefetch(10);
+console.log('[quotes] Ready for quote requests');
+
+await channel.consume(QUEUE, (msg) =&gt; {
+  if (!msg) return;
+  const request = JSON.parse(msg.content.toString()) as QuoteRequest;
+  const rate = RATES[request.region] ?? { perKg: 12, days: 10 };
+  const quote: Quote = { ...request, price: Number((rate.perKg * request.weightKg).toFixed(2)), days: rate.days };
+
+  // Reply to the queue the client named, echoing its correlation id.
+  channel.sendToQueue(msg.properties.replyTo, toBuffer(quote), {
+    correlationId: msg.properties.correlationId,
+    contentType: 'application/json',
+  });
+  channel.ack(msg);
+  console.log(`[quotes] ${request.region} ${request.weightKg}kg -&gt; $${quote.price}`);
+});</code></pre></figure>
+      <figure class="code"><figcaption><span class="file">src/08-rpc/quote-client.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import { randomUUID } from 'node:crypto';
+import { connect, toBuffer } from '../lib/rabbit.js';
+import type { Quote, QuoteRequest } from './quote-server.js';
+
+const QUEUE = 'rpc.shipping-quotes';
+const { connection, channel } = await connect();
+
+// One private reply queue for this client. Replies are matched by correlation id.
+const { queue: replyTo } = await channel.assertQueue('', { exclusive: true });
+const pending = new Map&lt;string, (quote: Quote) =&gt; void&gt;();
+
+await channel.consume(
+  replyTo,
+  (msg) =&gt; {
+    if (!msg) return;
+    const resolve = pending.get(msg.properties.correlationId);
+    if (!resolve) return; // a late reply for a request we already gave up on
+    pending.delete(msg.properties.correlationId);
+    resolve(JSON.parse(msg.content.toString()) as Quote);
+  },
+  { noAck: true },
+);
+
+function requestQuote(request: QuoteRequest, timeoutMs = 3000): Promise&lt;Quote&gt; {
+  const correlationId = randomUUID();
+  return new Promise((resolve, reject) =&gt; {
+    const timer = setTimeout(() =&gt; {
+      pending.delete(correlationId);
+      reject(new Error(`No quote for ${request.region} within ${timeoutMs}ms. Is quote-server running?`));
+    }, timeoutMs);
+    pending.set(correlationId, (quote) =&gt; {
+      clearTimeout(timer);
+      resolve(quote);
+    });
+    channel.sendToQueue(QUEUE, toBuffer(request), {
+      correlationId,
+      replyTo,
+      expiration: String(timeoutMs), // drop the request if no server picks it up in time
+    });
+  });
+}
+
+try {
+  const quotes = await Promise.all(['us', 'eu', 'apac'].map((region) =&gt; requestQuote({ region, weightKg: 2.5 })));
+  for (const q of quotes) console.log(`[x] ${q.region.padEnd(5)} $${q.price.toFixed(2).padStart(6)}  ${q.days} days`);
+} catch (err) {
+  console.error(`[!] ${(err as Error).message}`);
+} finally {
+  await connection.close();
+}</code></pre></figure>
+      <div class="prose"><h3>Run it</h3><p>First run the client alone to see the timeout, then start the server and run the client again.</p></div>
+      <figure class="code term"><figcaption><span class="file">Terminal 1, then Terminal 2</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-bash">npx tsx src/08-rpc/quote-client.ts
+npx tsx src/08-rpc/quote-server.ts</code></pre></figure>
+      <figure class="code term"><figcaption><span class="file">Terminal 1 again</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-bash">npx tsx src/08-rpc/quote-client.ts</code></pre></figure>
+      <figure class="out"><figcaption>What you should see</figcaption><div class="cols"><pre><span class="tag">client, no server running</span>[!] No quote for us within 3000ms. Is quote-server running?</pre><pre><span class="tag">client, server running</span>[x] us    $ 10.00  2 days
+[x] eu    $ 16.25  4 days
+[x] apac  $ 22.50  6 days</pre></div></figure>
+      <div class="prose">
+        <ul>
+          <li><strong>Always time out.</strong> If no server is running, the request waits in the queue. The client gives up after 3 seconds, and <code>expiration</code> makes the broker drop the stale request so no server wastes time on it later.</li>
+          <li><strong>Requests run in parallel.</strong> Three quotes go out at once; the correlation ids sort out the replies.</li>
+          <li><strong>Direct reply-to.</strong> RabbitMQ also offers the pseudo-queue <code>amq.rabbitmq.reply-to</code>, which skips declaring a reply queue. Try it as an extension.</li>
+        </ul>
+      </div>
+      <div class="box key">
+        <span class="box-label">When to use it</span>
+        <p>RPC over a broker adds latency and couples the caller to an answer. Use it when you want load-balanced workers behind a request, such as quotes, pricing or image processing. For workflows like "order placed → pack → ship", publish events and let services react, as ShopFlow does.</p>
+      </div>
+      <label class="done"><input type="checkbox" id="done-ch-rpc" data-done="ch-rpc"> I finished this chapter</label>
+    </section>
+
+    <!-- ============================================================ 14 -->
+    <section class="chapter" id="ch-shopflow">
+      <header class="ch-head prose">
+        <p class="eyebrow"><b>14</b> · Finish · <code>src/09-shopflow</code></p>
+        <h2>Assemble ShopFlow</h2>
+        <p class="goal">Combine the patterns into one small application that survives broker restarts.</p>
+      </header>
+      <figure class="diagram">
+        <div class="dg-scroll"><svg class="dg" viewBox="0 0 1000 400" role="img" aria-labelledby="shopflow2-t"><title id="shopflow2-t">ShopFlow architecture: the order API publishes to the shop topic exchange, which routes to fulfilment and notification queues; fulfilment publishes shipped events back; failed messages go to shop.dead.</title><defs><marker id="shopflow2-ah-flow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah flow" d="M0,0 L10,5 L0,10 z"/></marker><marker id="shopflow2-ah-dead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah dead" d="M0,0 L10,5 L0,10 z"/></marker><marker id="shopflow2-ah-reply" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah reply" d="M0,0 L10,5 L0,10 z"/></marker><marker id="shopflow2-ah-retry" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah retry" d="M0,0 L10,5 L0,10 z"/></marker></defs><path class="dg-edge flow" d="M152.5,120.0 C204.2,120.0 223.9,120.0 275.6,120.0" marker-end="url(#shopflow2-ah-flow)"/><g class="dg-pill flow"><rect x="154.2" y="111.0" width="119.6" height="18" rx="9"/><text x="214.1" y="123.8" text-anchor="middle">order.created.eu</text></g><path class="dg-edge flow" d="M414.4,120.0 C476.1,120.0 499.6,120.0 561.2,120.0" marker-end="url(#shopflow2-ah-flow)"/><g class="dg-pill flow"><rect x="431.3" y="111.0" width="113.0" height="18" rx="9"/><text x="487.8" y="123.8" text-anchor="middle">order.created.*</text></g><path class="dg-edge flow" d="M411.8,124.0 C517.0,124.0 445.1,236.0 550.3,236.0" marker-end="url(#shopflow2-ah-flow)"/><g class="dg-pill flow"><rect x="431.5" y="220.0" width="113.0" height="18" rx="9"/><text x="488.0" y="232.8" text-anchor="middle">order.created.*</text></g><path class="dg-edge flow" d="M400.3,142.0 C514.6,142.0 436.1,264.0 550.3,264.0" marker-end="url(#shopflow2-ah-flow)"/><g class="dg-pill flow"><rect x="431.5" y="250.0" width="113.0" height="18" rx="9"/><text x="488.0" y="262.8" text-anchor="middle">order.shipped.*</text></g><path class="dg-edge flow" d="M718.8,120.0 C760.6,120.0 776.5,120.0 818.3,120.0" marker-end="url(#shopflow2-ah-flow)"/><path class="dg-edge flow" d="M729.7,250.0 C765.7,250.0 775.0,250.0 811.0,250.0" marker-end="url(#shopflow2-ah-flow)"/><path class="dg-edge flow" d="M900.0,95.0 L900.0,40.0 L345.0,40.0 L345.0,95.0" marker-end="url(#shopflow2-ah-flow)"/><g class="dg-pill flow"><rect x="562.7" y="31.0" width="119.6" height="18" rx="9"/><text x="622.5" y="43.8" text-anchor="middle">order.shipped.eu</text></g><path class="dg-edge dead" d="M640.0,275.0 C640.0,311.0 640.0,289.0 640.0,325.0" marker-end="url(#shopflow2-ah-dead)"/><g class="dg-pill dead"><rect x="593.4" y="291.0" width="93.2" height="18" rx="9"/><text x="640.0" y="303.8" text-anchor="middle">dead letters</text></g><path class="dg-edge dead" d="M712.5,350.0 C766.8,350.0 787.6,350.0 841.9,350.0" marker-end="url(#shopflow2-ah-dead)"/><g class="dg-node producer"><rect x="27.5" y="95.0" width="125.0" height="50" rx="14"/><text class="lbl" x="90.0" y="118.0" text-anchor="middle">order-api.ts</text><text class="sub" x="90.0" y="134.0" text-anchor="middle">HTTP → PRODUCER</text></g><g class="dg-node exchange"><polygon points="291.6,95.0 398.4,95.0 414.4,120.0 398.4,145.0 291.6,145.0 275.6,120.0"/><text class="lbl" x="345.0" y="118.0" text-anchor="middle">shop</text><text class="sub" x="345.0" y="134.0" text-anchor="middle">TOPIC EXCHANGE</text></g><g class="dg-node queue"><rect x="561.2" y="95.0" width="157.5" height="50" rx="5"/><line class="slot" x1="708.8" y1="109.0" x2="708.8" y2="131.0"/><line class="slot" x1="702.8" y1="109.0" x2="702.8" y2="131.0"/><line class="slot" x1="696.8" y1="109.0" x2="696.8" y2="131.0"/><text class="lbl" x="631.0" y="118.0" text-anchor="middle">shop.fulfilment</text><text class="sub" x="631.0" y="134.0" text-anchor="middle">QUORUM QUEUE</text></g><g class="dg-node queue"><rect x="550.3" y="225.0" width="179.4" height="50" rx="5"/><line class="slot" x1="719.7" y1="239.0" x2="719.7" y2="261.0"/><line class="slot" x1="713.7" y1="239.0" x2="713.7" y2="261.0"/><line class="slot" x1="707.7" y1="239.0" x2="707.7" y2="261.0"/><text class="lbl" x="631.0" y="248.0" text-anchor="middle">shop.notifications</text><text class="sub" x="631.0" y="264.0" text-anchor="middle">QUORUM QUEUE</text></g><g class="dg-node consumer"><rect x="818.3" y="95.0" width="163.4" height="50" rx="14"/><text class="lbl" x="900.0" y="118.0" text-anchor="middle">fulfilment-service</text><text class="sub" x="900.0" y="134.0" text-anchor="middle">CONSUMER + PRODUCER</text></g><g class="dg-node consumer"><rect x="811.0" y="225.0" width="178.0" height="50" rx="14"/><text class="lbl" x="900.0" y="248.0" text-anchor="middle">notification-service</text><text class="sub" x="900.0" y="264.0" text-anchor="middle">CONSUMER</text></g><g class="dg-node exchange"><polygon points="583.5,325.0 696.5,325.0 712.5,350.0 696.5,375.0 583.5,375.0 567.5,350.0"/><text class="lbl" x="640.0" y="348.0" text-anchor="middle">shop.dlx</text><text class="sub" x="640.0" y="364.0" text-anchor="middle">FANOUT EXCHANGE</text></g><g class="dg-node dead"><rect x="841.9" y="325.0" width="116.2" height="50" rx="5"/><line class="slot" x1="948.1" y1="339.0" x2="948.1" y2="361.0"/><line class="slot" x1="942.1" y1="339.0" x2="942.1" y2="361.0"/><line class="slot" x1="936.1" y1="339.0" x2="936.1" y2="361.0"/><text class="lbl" x="891.0" y="348.0" text-anchor="middle">shop.dead</text><text class="sub" x="891.0" y="364.0" text-anchor="middle">PARKING LOT</text></g></svg></div>
+        <figcaption>Three processes, one topic exchange, two quorum queues and a parking lot.</figcaption>
+      </figure>
+      <div class="prose">
+        <h3>Topology as code</h3>
+        <p>Every exchange, queue and binding is declared in one file. Each service calls it on startup, so the broker always matches the code, whichever service starts first.</p>
+      </div>
+      <figure class="code"><figcaption><span class="file">src/09-shopflow/topology.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import type { Channel } from 'amqplib';
+
+export const SHOP = 'shop';
+const DLX = 'shop.dlx';
+
+// Every exchange, queue and binding ShopFlow uses, declared in one place.
+// Declarations are idempotent, so each service runs this at startup.
+export async function declareTopology(channel: Channel) {
+  await channel.assertExchange(SHOP, 'topic', { durable: true });
+
+  await channel.assertExchange(DLX, 'fanout', { durable: true });
+  await channel.assertQueue('shop.dead', { durable: true });
+  await channel.bindQueue('shop.dead', DLX, '');
+
+  await workQueue(channel, 'shop.fulfilment', ['order.created.*']);
+  await workQueue(channel, 'shop.notifications', ['order.created.*', 'order.shipped.*']);
+}
+
+async function workQueue(channel: Channel, name: string, patterns: string[]) {
+  await channel.assertQueue(name, {
+    durable: true,
+    deadLetterExchange: DLX,
+    arguments: { 'x-queue-type': 'quorum', 'x-delivery-limit': 5 },
+  });
+  for (const pattern of patterns) await channel.bindQueue(name, SHOP, pattern);
+}</code></pre></figure>
+      <div class="prose">
+        <h3>A service runner that reconnects</h3>
+        <p>Until now, a broker restart killed every script. amqplib 2 can reconnect for you: pass <code>recovery</code> options and a <code>setup</code> function. After every successful connect, including reconnects, <code>setup</code> runs again and re-creates the channel, the queues and the consumer.</p>
+      </div>
+      <figure class="code"><figcaption><span class="file">src/lib/service.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import * as amqp from 'amqplib';
+import { RABBIT_URL } from './rabbit.js';
+
+// Runs a long-lived service. amqplib 2 reconnects with backoff when the connection
+// drops and calls setup after every (re)connect, so the service re-creates its
+// channel, re-declares its queues and re-subscribes each time.
+export async function runService(name: string, setup: (model: amqp.ChannelModel) =&gt; Promise&lt;void&gt;) {
+  const connection = await amqp.connect(RABBIT_URL, {
+    recovery: {
+      initialDelay: 500,
+      maxDelay: 10_000,
+      async setup(model: amqp.ChannelModel) {
+        await setup(model);
+        console.log(`[${name}] Connected`);
+      },
+    },
+  });
+
+  connection.on('disconnect', (err) =&gt; console.warn(`[${name}] Connection lost: ${err.message}`));
+  connection.on('reconnect-scheduled', ({ attempt, delay }) =&gt;
+    console.warn(`[${name}] Reconnect attempt ${attempt} in ${Math.round(delay)}ms`),
+  );
+
+  // Ctrl+C: close cleanly. Unacked messages go back to their queues for another consumer.
+  process.once('SIGINT', async () =&gt; {
+    console.log(`[${name}] Shutting down`);
+    await connection.close();
+    process.exit(0);
+  });
+
+  return connection;
+}</code></pre></figure>
+      <div class="prose">
+        <h3>The order API</h3>
+        <p>A plain Node HTTP server. It answers <strong>202 Accepted</strong> only after the broker confirms the order, and <strong>503</strong> if it is offline, so a client never believes an order was taken when it was not.</p>
+      </div>
+      <figure class="code"><figcaption><span class="file">src/09-shopflow/order-api.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import { createServer, type IncomingMessage } from 'node:http';
+import type { ConfirmChannel } from 'amqplib';
+import { runService } from '../lib/service.js';
+import { toBuffer } from '../lib/rabbit.js';
+import { fakeOrder, type Order } from '../lib/order.js';
+import { declareTopology, SHOP } from './topology.js';
+
+const PORT = Number(process.env.PORT ?? 8080);
+
+// The current channel. It is replaced after every reconnect and cleared while we are offline.
+let channel: ConfirmChannel | undefined;
+
+const connection = await runService('api', async (model) =&gt; {
+  const ch = await model.createConfirmChannel();
+  await declareTopology(ch);
+  channel = ch;
+});
+connection.on('disconnect', () =&gt; (channel = undefined));
+
+// Resolve only once the broker has the order safely, so the API never loses one.
+function publishConfirmed(routingKey: string, order: Order) {
+  return new Promise&lt;void&gt;((resolve, reject) =&gt; {
+    if (!channel) return reject(new Error('Not connected to RabbitMQ'));
+    channel.publish(
+      SHOP,
+      routingKey,
+      toBuffer(order),
+      { persistent: true, contentType: 'application/json', messageId: order.id },
+      (err) =&gt; (err ? reject(err) : resolve()),
+    );
+  });
+}
+
+async function readJson(req: IncomingMessage): Promise&lt;Partial&lt;Order&gt;&gt; {
+  let raw = '';
+  for await (const chunk of req) raw += chunk;
+  return raw ? JSON.parse(raw) : {};
+}
+
+createServer(async (req, res) =&gt; {
+  if (req.method !== 'POST' || req.url !== '/orders') {
+    res.writeHead(404).end('Try POST /orders\n');
+    return;
+  }
+  let input: Partial&lt;Order&gt;;
+  try {
+    input = await readJson(req);
+  } catch {
+    res.writeHead(400).end('Body must be JSON\n');
+    return;
+  }
+  const order = fakeOrder(input);
+  try {
+    await publishConfirmed(`order.created.${order.region}`, order);
+    console.log(`[api] Accepted ${order.id} (${order.region})`);
+    res.writeHead(202, { 'content-type': 'application/json' }).end(JSON.stringify(order) + '\n');
+  } catch (err) {
+    console.warn(`[api] Rejected order: ${(err as Error).message}`);
+    res.writeHead(503).end('Order not accepted, try again\n');
+  }
+}).listen(PORT, () =&gt; console.log(`[api] POST http://localhost:${PORT}/orders`));</code></pre></figure>
+      <div class="prose">
+        <h3>The two consumers</h3>
+        <p>Fulfilment packs orders and publishes <code class="e-k">order.shipped.&lt;region&gt;</code> back to the same exchange, so it is a consumer and a producer. Notifications remembers what it already sent, which makes it idempotent.</p>
+      </div>
+      <figure class="code"><figcaption><span class="file">src/09-shopflow/fulfilment-service.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import { setTimeout as sleep } from 'node:timers/promises';
+import { runService } from '../lib/service.js';
+import { toBuffer } from '../lib/rabbit.js';
+import type { Order } from '../lib/order.js';
+import { declareTopology, SHOP } from './topology.js';
+
+await runService('fulfilment', async (model) =&gt; {
+  const channel = await model.createChannel();
+  await declareTopology(channel);
+  await channel.prefetch(5);
+
+  await channel.consume('shop.fulfilment', async (msg) =&gt; {
+    if (!msg) return;
+    const order = JSON.parse(msg.content.toString()) as Order;
+    console.log(`[fulfilment] Packing ${order.id} for ${order.region}`);
+    await sleep(1000 * order.items.length);
+
+    // Announce the next step, then ack. If we crash in between, the order is
+    // redelivered and "shipped" is published twice, so consumers must be idempotent.
+    channel.publish(SHOP, `order.shipped.${order.region}`, toBuffer(order), {
+      persistent: true,
+      contentType: 'application/json',
+      messageId: order.id,
+    });
+    channel.ack(msg);
+    console.log(`[fulfilment] Shipped ${order.id}`);
+  });
+});</code></pre></figure>
+      <figure class="code"><figcaption><span class="file">src/09-shopflow/notification-service.ts</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-typescript">import { runService } from '../lib/service.js';
+import type { Order } from '../lib/order.js';
+import { declareTopology } from './topology.js';
+
+// Remember what we already sent, so a redelivered event never emails twice.
+// In production this lives in Redis or a database table with a unique key.
+const sent = new Set&lt;string&gt;();
+
+await runService('notifications', async (model) =&gt; {
+  const channel = await model.createChannel();
+  await declareTopology(channel);
+
+  await channel.consume('shop.notifications', (msg) =&gt; {
+    if (!msg) return;
+    const order = JSON.parse(msg.content.toString()) as Order;
+    const event = msg.fields.routingKey.split('.')[1]; // order.&lt;event&gt;.&lt;region&gt;
+    const key = `${order.id}:${event}`;
+
+    if (!sent.has(key)) {
+      sent.add(key);
+      console.log(`[email] To ${order.customer}: your order ${order.id} was ${event}`);
+    }
+    channel.ack(msg);
+  });
+});</code></pre></figure>
+      <div class="prose"><h3>Run it</h3></div>
+      <figure class="code term"><figcaption><span class="file">Terminals 1, 2 and 3</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-bash">npx tsx src/09-shopflow/fulfilment-service.ts
+npx tsx src/09-shopflow/notification-service.ts
+npx tsx src/09-shopflow/order-api.ts</code></pre></figure>
+      <figure class="code term"><figcaption><span class="file">Terminal 4</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-bash">curl -X POST localhost:8080/orders -d '{"region":"eu","customer":"ada@example.com"}'
+curl -X POST localhost:8080/orders</code></pre></figure>
+      <figure class="out"><figcaption>What you should see</figcaption><div class="cols"><pre><span class="tag">fulfilment</span>[fulfilment] Connected
+[fulfilment] Packing ord_a8373616 for eu
+[fulfilment] Packing ord_a2173c67 for apac
+[fulfilment] Shipped ord_a2173c67
+[fulfilment] Shipped ord_a8373616</pre><pre><span class="tag">notifications</span>[notifications] Connected
+[email] To ada@example.com: your order ord_a8373616 was created
+[email] To linus@example.com: your order ord_a2173c67 was created
+[email] To linus@example.com: your order ord_a2173c67 was shipped
+[email] To ada@example.com: your order ord_a8373616 was shipped</pre></div></figure>
+      <div class="box try">
+        <span class="box-label">The resilience drill</span>
+        <ol>
+          <li>With all three services running, stop the broker: <code>docker compose stop rabbitmq</code>.</li>
+          <li>Every service logs <code>Connection lost</code> and starts reconnecting with growing delays. A <code>curl</code> now returns <code>Order not accepted, try again</code> (HTTP 503).</li>
+          <li>Start it again: <code>docker compose start rabbitmq</code>. Within a few seconds each service logs <code>Connected</code>, and new orders flow end to end.</li>
+          <li>Start a second <code>fulfilment-service</code> in another terminal and post five orders. Two competing consumers now share the packing.</li>
+        </ol>
+      </div>
+      <figure class="out"><figcaption>The drill, from the API's log</figcaption><pre>[api] Accepted ord_34c406b2 (eu)
+[api] Connection lost: Connection closed: 320 (CONNECTION-FORCED) with message "CONNECTION_FORCED - broker forced connection closure with reason 'shutdown'"
+[api] Reconnect attempt 1 in 527ms
+[api] Reconnect attempt 2 in 970ms
+[api] Reconnect attempt 3 in 1839ms
+[api] Rejected order: Not connected to RabbitMQ
+[api] Reconnect attempt 4 in 4176ms
+[api] Connected
+[api] Accepted ord_a698c27f (apac)</pre></figure>
+      <div class="prose">
+        <h3>What ShopFlow demonstrates</h3>
+        <ul>
+          <li><strong>Topic routing</strong> so new consumers can subscribe without touching producers.</li>
+          <li><strong>Publisher confirms at the edge</strong>: the API never acknowledges an order the broker does not have.</li>
+          <li><strong>Quorum queues with a delivery limit and a dead-letter exchange</strong> for failure handling.</li>
+          <li><strong>Automatic recovery</strong>, with topology re-declared after every reconnect.</li>
+          <li><strong>Idempotent consumers</strong>, because at-least-once delivery means duplicates.</li>
+          <li><strong>Graceful shutdown</strong>: on <kbd>Ctrl</kbd>+<kbd>C</kbd> the connection closes and unacked messages return to their queues.</li>
+        </ul>
+      </div>
+      <label class="done"><input type="checkbox" id="done-ch-shopflow" data-done="ch-shopflow"> I finished this chapter</label>
+    </section>
+
+    <!-- ============================================================ 15 -->
+    <section class="chapter" id="ch-ship">
+      <header class="ch-head prose">
+        <p class="eyebrow"><b>15</b> · Finish</p>
+        <h2>Ship it to GitHub</h2>
+        <p class="goal">Turn the practice project into a repo that shows what you learned.</p>
+      </header>
+      <div class="prose">
+        <h3>1. Add scripts and a .gitignore</h3>
+        <p>Merge these scripts into <code>package.json</code> so reviewers can run everything without reading the source.</p>
+      </div>
+      <figure class="code"><figcaption><span class="file">package.json (scripts)</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-json">"scripts": {
+  "broker": "docker compose up -d",
+  "api": "tsx src/09-shopflow/order-api.ts",
+  "fulfilment": "tsx src/09-shopflow/fulfilment-service.ts",
+  "notifications": "tsx src/09-shopflow/notification-service.ts",
+  "typecheck": "tsc -p ."
+}</code></pre></figure>
+      <figure class="code term"><figcaption><span class="file">Terminal</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-bash">printf "node_modules/\n.env\n" &gt; .gitignore
+git init -b main
+git add .
+git commit -m "ShopFlow: RabbitMQ order pipeline in TypeScript"
+gh repo create rabbitmq-shopflow --public --source . --push</code></pre></figure>
+      <div class="prose">
+        <h3>2. Write a README that shows the design</h3>
+        <p>Cover what it is, an architecture diagram, how to run it, and the decisions you made. GitHub renders Mermaid, so the diagram can live in the README as text:</p>
+      </div>
+      <figure class="code"><figcaption><span class="file">README.md (diagram section)</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-markdown">```mermaid
+flowchart LR
+  api[order-api] -->|order.created.*| shop{{shop: topic}}
+  shop -->|order.created.*| fq[(shop.fulfilment)]
+  shop -->|order.created.* and order.shipped.*| nq[(shop.notifications)]
+  fq --> ful[fulfilment-service]
+  ful -->|order.shipped.*| shop
+  nq --> notif[notification-service]
+  fq -. dead letters .-> dlx{{shop.dlx}} --> dead[(shop.dead)]
+  nq -.-> dlx
+```</code></pre></figure>
+      <div class="prose">
+        <p>Then add a <strong>Design decisions</strong> section with one short paragraph each: why a topic exchange, why quorum queues, why confirms in the API, how retries work, and how duplicates are handled. This is the part interviewers read.</p>
+        <h3>3. Add CI with a real broker</h3>
+        <p>A starting workflow that type-checks the code and runs the confirm publisher against RabbitMQ as a service container:</p>
+      </div>
+      <figure class="code"><figcaption><span class="file">.github/workflows/ci.yml</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-yaml">name: ci
+on: [push, pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      rabbitmq:
+        image: rabbitmq:4-management
+        ports: ["5672:5672"]
+        env:
+          RABBITMQ_DEFAULT_USER: shopflow
+          RABBITMQ_DEFAULT_PASS: shopflow
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 5s --health-timeout 10s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npx tsx src/06-reliability/confirm-publisher.ts # smoke test against a real broker</code></pre></figure>
+      <div class="prose">
+        <h3>4. Feature it on your profile</h3>
+        <p>Add topics (<code>rabbitmq</code>, <code>amqp</code>, <code>typescript</code>, <code>event-driven</code>, <code>microservices</code>), pin the repo, and add a row to the Featured projects table in your profile README:</p>
+      </div>
+      <figure class="code"><figcaption><span class="file">Profile README row</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-markdown">| [**rabbitmq-shopflow**](https://github.com/abdulhathi/rabbitmq-shopflow) | Order pipeline on RabbitMQ: topic routing, publisher confirms, quorum queues, dead letters with delayed retries, RPC, auto-reconnect | TypeScript · RabbitMQ · Docker |</code></pre></figure>
+      <div class="prose">
+        <h3>Where to go next</h3>
+        <ul>
+          <li><strong>Streams:</strong> an analytics consumer on a stream queue that can replay every order from offset <code>first</code>.</li>
+          <li><strong>A 3-node cluster</strong> in Docker Compose. Stop one node and watch a quorum queue keep serving.</li>
+          <li><strong>Metrics:</strong> the image already serves Prometheus metrics on port <code>15692</code>. Add Prometheus and a Grafana dashboard.</li>
+          <li><strong>Integration tests</strong> with Testcontainers, so each test gets a fresh broker.</li>
+          <li><strong>Tracing:</strong> carry an OpenTelemetry trace id in message headers from the API through both services.</li>
+        </ul>
+      </div>
+      <figure class="code term"><figcaption><span class="file">When you are finished: stop and delete the broker and its data</span><button class="copy" type="button">Copy</button></figcaption><pre><code class="language-bash">docker compose down -v</code></pre></figure>
+      <label class="done"><input type="checkbox" id="done-ch-ship" data-done="ch-ship"> I finished this chapter</label>
+    </section>
+
+    <!-- ============================================================ A -->
+    <section class="chapter" id="ref-trouble">
+      <header class="ch-head prose">
+        <p class="eyebrow"><b>A</b> · Reference</p>
+        <h2>Troubleshooting</h2>
+      </header>
+      <div class="table-wrap">
+        <table class="t">
+          <thead><tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr></thead>
+          <tbody>
+            <tr><td><code>ECONNREFUSED 127.0.0.1:5672</code></td><td>Broker not running or still starting</td><td><code>docker compose ps</code>, then wait for "Server startup complete" in the logs</td></tr>
+            <tr><td><code>ACCESS_REFUSED - Login was refused</code></td><td>Wrong user or password. The default user is created only on the very first start, so editing the compose file later changes nothing</td><td>Check <code>RABBIT_URL</code>, or reset with <code>docker compose down -v</code></td></tr>
+            <tr><td><code>PRECONDITION_FAILED - inequivalent arg</code></td><td>The queue or exchange already exists with different settings (durable, type, TTL, DLX)</td><td>Delete it in the UI and run again</td></tr>
+            <tr><td><code>NOT_FOUND - no queue</code></td><td>Consuming from or binding a queue nobody declared</td><td>Call <code>assertQueue</code> on both sides</td></tr>
+            <tr><td>Messages stuck in Unacked</td><td>The consumer never calls <code>ack</code>, or its handler threw before acking</td><td>Ack on every path, including errors. They return to Ready when the channel closes</td></tr>
+            <tr><td>Consumer receives nothing</td><td>Missing or wrong binding, or the producer uses another exchange or key</td><td>Open the exchange in the UI and compare bindings with the routing key</td></tr>
+            <tr><td>Messages vanish</td><td>Unroutable (no binding), non-durable queue after a restart, or auto-ack with a crashing consumer</td><td><code>mandatory: true</code>, durable + persistent, manual acks</td></tr>
+            <tr><td>A topic listener gets extra events</td><td>Old bindings from earlier runs are still on its queue</td><td>Unbind them in the UI or with <code>unbindQueue</code></td></tr>
+            <tr><td><code>Cannot find name 'process'</code></td><td>TypeScript 7 does not load <code>@types/node</code> by itself</td><td>Add <code>"types": ["node"]</code> to <code>tsconfig.json</code></td></tr>
+            <tr><td>Image pull: <code>authentication required</code></td><td>Stale Docker Hub credentials</td><td><code>docker logout</code>, then pull again</td></tr>
+            <tr><td>Crash: <code>.erlang.cookie: eacces</code></td><td>File permissions in some Docker Desktop setups</td><td>Add <code>user: "999:999"</code> to the service</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============================================================ B -->
+    <section class="chapter" id="ref-api">
+      <header class="ch-head prose">
+        <p class="eyebrow"><b>B</b> · Reference</p>
+        <h2>amqplib cheat sheet</h2>
+      </header>
+      <div class="table-wrap">
+        <table class="t">
+          <thead><tr><th>Call</th><th>What it does</th><th>Chapter</th></tr></thead>
+          <tbody>
+            <tr><td><code>amqp.connect(url, opts?)</code></td><td>Open a connection; pass <code>{ recovery }</code> to reconnect automatically</td><td>04, 14</td></tr>
+            <tr><td><code>createChannel()</code> / <code>createConfirmChannel()</code></td><td>Open a channel, optionally with publisher confirms</td><td>04, 10</td></tr>
+            <tr><td><code>assertQueue(name, opts)</code></td><td>Declare a queue: <code>durable</code>, <code>exclusive</code>, <code>messageTtl</code>, <code>deadLetterExchange</code>, <code>arguments</code></td><td>05</td></tr>
+            <tr><td><code>assertExchange(name, type, opts)</code></td><td>Declare a direct, fanout, topic or headers exchange</td><td>07</td></tr>
+            <tr><td><code>bindQueue(queue, exchange, key)</code></td><td>Route messages from an exchange to a queue</td><td>07</td></tr>
+            <tr><td><code>sendToQueue(queue, buf, props)</code></td><td>Publish through the default exchange</td><td>05</td></tr>
+            <tr><td><code>publish(exchange, key, buf, props, cb?)</code></td><td>Publish to an exchange; the callback fires on confirm</td><td>07, 10</td></tr>
+            <tr><td><code>consume(queue, handler, { noAck })</code></td><td>Subscribe to a queue</td><td>05</td></tr>
+            <tr><td><code>ack(msg)</code> / <code>nack(msg, all, requeue)</code></td><td>Confirm processing, or reject with or without requeue</td><td>06, 12</td></tr>
+            <tr><td><code>prefetch(n)</code></td><td>Limit unacked messages per consumer</td><td>06</td></tr>
+            <tr><td><code>get(queue)</code></td><td>Pull one message, or <code>false</code> when empty</td><td>12</td></tr>
+            <tr><td><code>waitForConfirms()</code></td><td>Resolve once every publish on a confirm channel is answered</td><td>10</td></tr>
+            <tr><td><code>channel.on('return', fn)</code></td><td>Receive unroutable messages published with <code>mandatory: true</code></td><td>10</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <footer class="end">
+        Every command and output on this page was run against RabbitMQ 4.2.0 with amqplib 2.2.0, tsx 4 and TypeScript 7 before publishing. IDs and timings in the outputs will differ on your machine.
+      </footer>
+    </section>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function () {
+  // Syntax colours, if the highlighter loaded. The page reads fine without it.
+  if (window.hljs) {
+    document.querySelectorAll('.code pre code').forEach(function (el) { window.hljs.highlightElement(el); });
+  }
+
+  // Copy buttons
+  document.querySelectorAll('.copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var code = btn.closest('figure').querySelector('code');
+      var text = code.textContent;
+      var done = function () { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy'; }, 1400); };
+      var fallback = function () {
+        var range = document.createRange();
+        range.selectNodeContents(code);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        btn.textContent = 'Selected';
+        setTimeout(function () { btn.textContent = 'Copy'; }, 1400);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, fallback);
+      } else {
+        fallback();
+      }
+    });
+  });
+
+  // Chapter progress, remembered in this browser only
+  var KEY = 'shopflow-lab.done';
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('input[data-done]'));
+  var saved = [];
+  try { saved = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { saved = []; }
+  boxes.forEach(function (b) { b.checked = saved.indexOf(b.dataset.done) !== -1; });
+
+  function render() {
+    var done = boxes.filter(function (b) { return b.checked; }).map(function (b) { return b.dataset.done; });
+    document.getElementById('progress-text').textContent = done.length + ' of ' + boxes.length + ' chapters done';
+    document.getElementById('progress-bar').style.width = Math.round(done.length / boxes.length * 100) + '%';
+    document.querySelectorAll('.toc a').forEach(function (a) {
+      a.classList.toggle('is-done', done.indexOf(a.getAttribute('href').slice(1)) !== -1);
+    });
+    try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) { /* progress lasts for this visit */ }
+  }
+  boxes.forEach(function (b) { b.addEventListener('change', render); });
+  render();
+
+  // Chapter list: open beside the page on wide screens, collapsed on phones
+  var toc = document.getElementById('toc');
+  var wide = window.matchMedia('(min-width: 961px)');
+  function syncToc() { toc.open = wide.matches; }
+  syncToc();
+  if (wide.addEventListener) wide.addEventListener('change', syncToc);
+  toc.querySelectorAll('a').forEach(function (a) {
+    a.addEventListener('click', function () { if (!wide.matches) toc.open = false; });
+  });
+
+  // Highlight the chapter you are reading
+  var links = {};
+  toc.querySelectorAll('a').forEach(function (a) { links[a.getAttribute('href').slice(1)] = a; });
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        Object.keys(links).forEach(function (id) { links[id].classList.toggle('is-current', id === e.target.id); });
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    document.querySelectorAll('section.chapter').forEach(function (s) { io.observe(s); });
+  }
+})();
+</script>
