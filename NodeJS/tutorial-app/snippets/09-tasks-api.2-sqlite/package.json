@@ -1,0 +1,24 @@
+{
+  "name": "09-tasks-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node src/server.ts",
+    "dev": "node --watch src/server.ts",
+    "typecheck": "tsc",
+    "db:seed": "node src/db/seed.ts"
+  },
+  "dependencies": {
+    "express": "^5.3.0",
+    "zod": "^4.6.6"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.19.2",
+    "typescript": "^7.0.2"
+  }
+}

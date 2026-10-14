@@ -1,0 +1,12 @@
+# Keep the build context small, and secrets and local data out of images.
+node_modules
+dist
+data
+coverage
+.git
+.github
+.env
+.env.*
+*.log
+Dockerfile
+compose.yaml

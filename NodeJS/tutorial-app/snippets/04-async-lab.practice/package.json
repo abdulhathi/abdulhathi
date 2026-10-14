@@ -1,0 +1,16 @@
+{
+  "name": "04-async-lab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "typescript": "^7.0.2"
+  }
+}

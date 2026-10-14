@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    // Node 24 runs .ts files itself, so tsc only checks types and never writes files.
+    "noEmit": true,
+    "target": "esnext",
+    "module": "nodenext",
+    "types": ["node"],
+
+    // Allow only TypeScript that Node can run by deleting the types.
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
+
+    // Catch as many mistakes as possible.
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true
+  },
+  "include": ["src"]
+}

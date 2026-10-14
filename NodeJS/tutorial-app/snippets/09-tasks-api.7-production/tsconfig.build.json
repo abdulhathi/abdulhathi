@@ -1,0 +1,14 @@
+{
+  // Compiles src/ to JavaScript in dist/ for production. Type checking still
+  // uses tsconfig.json; this file only changes what is emitted.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": "src",
+    "outDir": "dist",
+    // Imports say './app.ts'; the emitted files must say './app.js'.
+    "rewriteRelativeImportExtensions": true,
+    "sourceMap": true
+  },
+  "exclude": ["src/**/*.test.ts", "src/test-helpers.ts", "src/**/repository-contract.ts"]
+}

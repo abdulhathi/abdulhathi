@@ -1,0 +1,21 @@
+{
+  "name": "07-log-analyzer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "buffers": "node src/buffers.ts",
+    "generate": "node src/generate.ts",
+    "analyze": "node src/analyze.ts",
+    "compress": "node src/compress.ts",
+    "errors": "node src/errors-only.ts",
+    "typecheck": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "typescript": "^7.0.2"
+  }
+}

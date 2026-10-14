@@ -1,0 +1,19 @@
+{
+  "name": "10-cpu-lab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "blocking": "node src/blocking-server.ts",
+    "pooled": "node src/pool-server.ts",
+    "measure": "node src/measure.ts",
+    "typecheck": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "typescript": "^7.0.2"
+  }
+}

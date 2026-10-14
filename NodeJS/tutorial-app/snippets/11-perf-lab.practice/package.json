@@ -1,0 +1,20 @@
+{
+  "name": "11-perf-lab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node src/server.ts",
+    "load": "node src/load.ts",
+    "profile": "node --cpu-prof --cpu-prof-dir=profiles src/profile-report.ts",
+    "top": "node src/top-functions.ts",
+    "typecheck": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "typescript": "^7.0.2"
+  }
+}

@@ -1,0 +1,38 @@
+# Local PostgreSQL for development and the Postgres tests.
+# Start: docker compose up -d --wait    Stop: docker compose down    Wipe data: docker compose down -v
+# The whole stack, API included: docker compose --profile app up --build
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: tasks
+      POSTGRES_PASSWORD: tasks
+      POSTGRES_DB: tasks
+    ports:
+      - "5440:5432" # host port 5440, so it cannot clash with a Postgres already on 5432
+    volumes:
+      - pgdata:/var/lib/postgresql # Postgres 18 images keep their data under this folder
+      - ./db/init:/docker-entrypoint-initdb.d:ro # runs once, when the volume is first created
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tasks -d tasks"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  app:
+    profiles: [app] # only started when asked for, so db:up still starts just the database
+    build: .
+    environment:
+      DATABASE_URL: postgres://tasks:tasks@db:5432/tasks # "db" is the service name; 5432 inside the network
+      JWT_SECRET: ${JWT_SECRET:-} # from your shell or .env; the app refuses to start without one
+      LOG_LEVEL: info
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy # wait for pg_isready, not just for the container to start
+    restart: unless-stopped # a crashed process is replaced, as chapter 14 promised
+    stop_grace_period: 15s # longer than the app's 10 s shutdown deadline
+
+volumes:
+  pgdata:
