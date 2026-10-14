@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.venv/
+__pycache__/
+.env
+.env.local
+.DS_Store
+.claude/
+
+# Clone of LinkedIn Learning's course repo, with its own remote
+LinkedInLearning/
