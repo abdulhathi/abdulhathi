@@ -1,0 +1,106 @@
+{
+  "p-fizzbuzz": {
+    "language": "python",
+    "mode": "asserts",
+    "reference": "def fizzbuzz(n: int) -> list[str]:\n    rules = [(3, \"Fizz\"), (5, \"Buzz\")]\n    out: list[str] = []\n    for i in range(1, n + 1):\n        word = \"\".join(text for divisor, text in rules if i % divisor == 0)\n        out.append(word or str(i))\n    return out\n\nassert fizzbuzz(5) == [\"1\", \"2\", \"Fizz\", \"4\", \"Buzz\"]\nassert fizzbuzz(15)[-1] == \"FizzBuzz\"\nassert fizzbuzz(15)[8:10] == [\"Fizz\", \"Buzz\"]   # 9 and 10\nassert fizzbuzz(0) == []",
+    "starter": "def fizzbuzz(n: int) -> list[str]:\n    \"\"\"Strings for 1..n: \"Fizz\" for multiples of 3, \"Buzz\" for 5, \"FizzBuzz\" for both, else the number.\"\"\"\n    raise NotImplementedError\n",
+    "solution": "def fizzbuzz(n: int) -> list[str]:\n    rules = [(3, \"Fizz\"), (5, \"Buzz\")]\n    out: list[str] = []\n    for i in range(1, n + 1):\n        word = \"\".join(text for divisor, text in rules if i % divisor == 0)\n        out.append(word or str(i))\n    return out\n",
+    "tests": "assert fizzbuzz(5) == [\"1\", \"2\", \"Fizz\", \"4\", \"Buzz\"]\nassert fizzbuzz(15)[-1] == \"FizzBuzz\"\nassert fizzbuzz(15)[8:10] == [\"Fizz\", \"Buzz\"]   # 9 and 10\nassert fizzbuzz(0) == []\n"
+  },
+  "p-reverse-each-word": {
+    "language": "python",
+    "mode": "asserts",
+    "reference": "def reverse_each_word(s: str) -> str:\n    return \" \".join(word[::-1] for word in s.split(\" \"))\n\nassert reverse_each_word(\"Hello World\") == \"olleH dlroW\"\nassert reverse_each_word(\"a  bc\") == \"a  cb\"\nassert reverse_each_word(\"\") == \"\"\nassert reverse_each_word(\" lead\") == \" dael\"",
+    "starter": "def reverse_each_word(s: str) -> str:\n    \"\"\"Reverse the letters of every word, keeping word order and every space exactly as it is.\"\"\"\n    raise NotImplementedError\n",
+    "solution": "def reverse_each_word(s: str) -> str:\n    return \" \".join(word[::-1] for word in s.split(\" \"))\n",
+    "tests": "assert reverse_each_word(\"Hello World\") == \"olleH dlroW\"\nassert reverse_each_word(\"a  bc\") == \"a  cb\"\nassert reverse_each_word(\"\") == \"\"\nassert reverse_each_word(\" lead\") == \" dael\"\nassert reverse_each_word(\"trail \") == \"liart \"\nassert reverse_each_word(\"x\") == \"x\"\n"
+  },
+  "p-valid-palindrome": {
+    "language": "python",
+    "mode": "asserts",
+    "reference": "def is_palindrome_simple(s: str) -> bool:\n    cleaned = [ch.lower() for ch in s if ch.isalnum()]\n    return cleaned == cleaned[::-1]\n\ndef is_palindrome(s: str) -> bool:\n    left, right = 0, len(s) - 1\n    while left < right:\n        if not s[left].isalnum():\n            left += 1\n        elif not s[right].isalnum():\n            right -= 1\n        elif s[left].lower() != s[right].lower():\n            return False\n        else:\n            left += 1\n            right -= 1\n    return True\n\nfor fn in (is_palindrome_simple, is_palindrome):\n    assert fn(\"A man, a plan, a canal: Panama\")\n    assert not fn(\"race a car\")\n    assert fn(\"\")\n    assert fn(\" .,\")          # nothing left after cleaning\n    assert fn(\"0P\") is False  # digits count\n    assert fn(\"ab_a\")",
+    "starter": "def is_palindrome(s: str) -> bool:\n    \"\"\"True if s reads the same both ways after lower-casing and keeping only letters and digits.\n\n    (Optional extension: do it in O(1) extra space with two pointers instead of a cleaned copy.)\n    \"\"\"\n    raise NotImplementedError\n",
+    "solution": "def is_palindrome(s: str) -> bool:\n    left, right = 0, len(s) - 1\n    while left < right:\n        if not s[left].isalnum():\n            left += 1\n        elif not s[right].isalnum():\n            right -= 1\n        elif s[left].lower() != s[right].lower():\n            return False\n        else:\n            left += 1\n            right -= 1\n    return True\n",
+    "tests": "assert is_palindrome(\"A man, a plan, a canal: Panama\")\nassert not is_palindrome(\"race a car\")\nassert is_palindrome(\"\")\nassert is_palindrome(\" .,\")              # nothing left after cleaning\nassert is_palindrome(\"0P\") is False      # digits count\nassert is_palindrome(\"ab_a\")             # \"_\" is not a letter or digit\n"
+  },
+  "p-count-vowels-and-consonants": {
+    "language": "python",
+    "mode": "asserts",
+    "reference": "VOWELS = frozenset(\"aeiou\")\n\ndef count_letters(s: str) -> tuple[int, int]:\n    vowels = consonants = 0\n    for ch in s.lower():\n        if not ch.isalpha():\n            continue\n        if ch in VOWELS:\n            vowels += 1\n        else:\n            consonants += 1\n    return vowels, consonants\n\nassert count_letters(\"Hello, World!\") == (3, 7)\nassert count_letters(\"\") == (0, 0)\nassert count_letters(\"AEIOU xyz 123\") == (5, 3)",
+    "starter": "VOWELS = frozenset(\"aeiou\")\n\ndef count_letters(s: str) -> tuple[int, int]:\n    \"\"\"(vowels, consonants) among the letters of s, case-insensitive; ignore everything that is not a letter.\"\"\"\n    raise NotImplementedError\n",
+    "solution": "VOWELS = frozenset(\"aeiou\")\n\ndef count_letters(s: str) -> tuple[int, int]:\n    vowels = consonants = 0\n    for ch in s.lower():\n        if not ch.isalpha():\n            continue\n        if ch in VOWELS:\n            vowels += 1\n        else:\n            consonants += 1\n    return vowels, consonants\n",
+    "tests": "assert count_letters(\"Hello, World!\") == (3, 7)\nassert count_letters(\"\") == (0, 0)\nassert count_letters(\"AEIOU xyz 123\") == (5, 3)\nassert count_letters(\"Python3!\") == (1, 5)\nassert count_letters(\"123 ?!\") == (0, 0)\n"
+  },
+  "p-second-largest-distinct-number": {
+    "language": "python",
+    "mode": "asserts",
+    "reference": "def second_largest(nums: list[int]) -> int | None:\n    first: int | None = None\n    second: int | None = None\n    for x in nums:\n        if first is None or x > first:\n            first, second = x, first\n        elif x != first and (second is None or x > second):\n            second = x\n    return second\n\ndef second_largest_sorted(nums: list[int]) -> int | None:\n    distinct = sorted(set(nums))\n    return distinct[-2] if len(distinct) >= 2 else None\n\nfor fn in (second_largest, second_largest_sorted):\n    assert fn([3, 5, 1, 5, 4]) == 4\n    assert fn([7, 7]) is None\n    assert fn([]) is None\n    assert fn([1]) is None\n    assert fn([5, 5, 4]) == 4\n    assert fn([-1, -3, -2]) == -2\n    assert fn([2, 1]) == 1",
+    "starter": "def second_largest(nums: list[int]) -> int | None:\n    \"\"\"The second largest distinct value, or None if there is none. One pass, no sorting.\n\n    (Optional extension: compare with the sorted(set(nums)) one-liner and its cost.)\n    \"\"\"\n    raise NotImplementedError\n",
+    "solution": "def second_largest(nums: list[int]) -> int | None:\n    first: int | None = None\n    second: int | None = None\n    for x in nums:\n        if first is None or x > first:\n            first, second = x, first\n        elif x != first and (second is None or x > second):\n            second = x\n    return second\n",
+    "tests": "assert second_largest([3, 5, 1, 5, 4]) == 4\nassert second_largest([7, 7]) is None\nassert second_largest([]) is None\nassert second_largest([1]) is None\nassert second_largest([5, 5, 4]) == 4\nassert second_largest([-1, -3, -2]) == -2\nassert second_largest([2, 1]) == 1\nassert second_largest([1, 2]) == 1\n"
+  },
+  "p-remove-duplicates-keeping-the-order": {
+    "language": "python",
+    "mode": "asserts",
+    "reference": "from collections.abc import Hashable, Iterable\n\ndef dedupe(items: Iterable[Hashable]) -> list[Hashable]:\n    seen: set[Hashable] = set()\n    out: list[Hashable] = []\n    for item in items:\n        if item not in seen:\n            seen.add(item)\n            out.append(item)\n    return out\n\ndef dedupe_short(items: list) -> list:\n    return list(dict.fromkeys(items))\n\nfor fn in (dedupe, dedupe_short):\n    assert fn([3, 1, 3, 2, 1]) == [3, 1, 2]\n    assert fn([]) == []\n    assert fn([\"a\", \"A\", \"a\"]) == [\"a\", \"A\"]",
+    "starter": "from collections.abc import Hashable, Iterable\n\ndef dedupe(items: Iterable[Hashable]) -> list[Hashable]:\n    \"\"\"Items without duplicates, keeping the first occurrence of each, in the original order.\n\n    (Optional extension: the one-line version with dict.fromkeys.)\n    \"\"\"\n    raise NotImplementedError\n",
+    "solution": "from collections.abc import Hashable, Iterable\n\n\ndef dedupe(items: Iterable[Hashable]) -> list[Hashable]:\n    seen: set[Hashable] = set()\n    out: list[Hashable] = []\n    for item in items:\n        if item not in seen:\n            seen.add(item)\n            out.append(item)\n    return out\n",
+    "tests": "assert dedupe([3, 1, 3, 2, 1]) == [3, 1, 2]\nassert dedupe([]) == []\nassert dedupe([\"a\", \"A\", \"a\"]) == [\"a\", \"A\"]\nassert dedupe(ch for ch in \"banana\") == [\"b\", \"a\", \"n\"]     # any iterable, not just lists\nassert dedupe([1, 2, 3]) == [1, 2, 3]\n"
+  },
+  "p-valid-anagram": {
+    "language": "python",
+    "mode": "asserts",
+    "reference": "from collections import Counter\n\ndef is_anagram(a: str, b: str) -> bool:\n    return len(a) == len(b) and Counter(a) == Counter(b)\n\ndef is_anagram_sorted(a: str, b: str) -> bool:\n    return sorted(a) == sorted(b)\n\ndef is_anagram_lowercase(a: str, b: str) -> bool:\n    \"\"\"Only lowercase a-z: a fixed array of 26 counts, O(1) extra space.\"\"\"\n    if len(a) != len(b):\n        return False\n    counts = [0] * 26\n    for x, y in zip(a, b):\n        counts[ord(x) - ord(\"a\")] += 1\n        counts[ord(y) - ord(\"a\")] -= 1\n    return all(c == 0 for c in counts)\n\nfor fn in (is_anagram, is_anagram_sorted, is_anagram_lowercase):\n    assert fn(\"listen\", \"silent\")\n    assert not fn(\"rat\", \"car\")\n    assert fn(\"\", \"\")\n    assert not fn(\"a\", \"ab\")\n    assert not fn(\"aab\", \"abb\")",
+    "starter": "from collections import Counter\n\ndef is_anagram(a: str, b: str) -> bool:\n    \"\"\"True if a and b hold exactly the same characters with the same counts.\n\n    (Optional extensions: the sorted() version, and a 26-slot count array for lowercase a-z only.)\n    \"\"\"\n    raise NotImplementedError\n",
+    "solution": "from collections import Counter\n\n\ndef is_anagram(a: str, b: str) -> bool:\n    return len(a) == len(b) and Counter(a) == Counter(b)\n",
+    "tests": "assert is_anagram(\"listen\", \"silent\")\nassert not is_anagram(\"rat\", \"car\")\nassert is_anagram(\"\", \"\")\nassert not is_anagram(\"a\", \"ab\")\nassert not is_anagram(\"aab\", \"abb\")\nassert not is_anagram(\"Listen\", \"silent\")      # case matters\n"
+  },
+  "p-missing-number": {
+    "language": "python",
+    "mode": "asserts",
+    "reference": "from functools import reduce\nfrom operator import xor\n\ndef missing_number(nums: list[int]) -> int:\n    n = len(nums)\n    return n * (n + 1) // 2 - sum(nums)\n\ndef missing_number_xor(nums: list[int]) -> int:\n    return reduce(xor, range(len(nums) + 1), 0) ^ reduce(xor, nums, 0)\n\nfor fn in (missing_number, missing_number_xor):\n    assert fn([3, 0, 1]) == 2\n    assert fn([0, 1]) == 2\n    assert fn([1]) == 0\n    assert fn([9, 6, 4, 2, 3, 5, 7, 0, 1]) == 8",
+    "starter": "def missing_number(nums: list[int]) -> int:\n    \"\"\"nums holds n distinct numbers from 0..n; return the one that is missing. O(n) time, O(1) space.\n\n    (Optional extension: an XOR version that cannot overflow in fixed-width languages.)\n    \"\"\"\n    raise NotImplementedError\n",
+    "solution": "def missing_number(nums: list[int]) -> int:\n    n = len(nums)\n    return n * (n + 1) // 2 - sum(nums)\n",
+    "tests": "assert missing_number([3, 0, 1]) == 2\nassert missing_number([0, 1]) == 2\nassert missing_number([1]) == 0\nassert missing_number([0]) == 1\nassert missing_number([9, 6, 4, 2, 3, 5, 7, 0, 1]) == 8\n"
+  },
+  "p-digit-sum-and-digital-root": {
+    "language": "python",
+    "mode": "asserts",
+    "reference": "def digit_sum(n: int) -> int:\n    n = abs(n)\n    total = 0\n    while n:\n        n, digit = divmod(n, 10)\n        total += digit\n    return total\n\ndef digital_root(n: int) -> int:\n    n = abs(n)\n    while n >= 10:\n        n = digit_sum(n)\n    return n\n\ndef digital_root_formula(n: int) -> int:\n    n = abs(n)\n    return 0 if n == 0 else 1 + (n - 1) % 9\n\nassert digit_sum(1234) == 10 and digit_sum(-56) == 11 and digit_sum(0) == 0\nfor fn in (digital_root, digital_root_formula):\n    assert fn(9875) == 2\n    assert fn(0) == 0\n    assert fn(9) == 9\n    assert fn(18) == 9\nassert all(digital_root(n) == digital_root_formula(n) for n in range(10_000))",
+    "starter": "def digit_sum(n: int) -> int:\n    \"\"\"Sum of the digits of n, ignoring the sign.\"\"\"\n    raise NotImplementedError\n\ndef digital_root(n: int) -> int:\n    \"\"\"Keep adding the digits of n (ignoring the sign) until one digit remains.\n\n    (Optional extension: the O(1) formula 1 + (n - 1) % 9.)\n    \"\"\"\n    raise NotImplementedError\n",
+    "solution": "def digit_sum(n: int) -> int:\n    n = abs(n)\n    total = 0\n    while n:\n        n, digit = divmod(n, 10)\n        total += digit\n    return total\n\n\ndef digital_root(n: int) -> int:\n    n = abs(n)\n    while n >= 10:\n        n = digit_sum(n)\n    return n\n",
+    "tests": "assert digit_sum(1234) == 10\nassert digit_sum(-56) == 11\nassert digit_sum(0) == 0\nassert digital_root(9875) == 2\nassert digital_root(0) == 0\nassert digital_root(9) == 9\nassert digital_root(18) == 9\nassert all(digital_root(n) == (0 if n == 0 else 1 + (n - 1) % 9) for n in range(10_000))\n"
+  },
+  "p-fibonacci": {
+    "language": "python",
+    "mode": "asserts",
+    "reference": "from functools import cache\nfrom collections.abc import Iterator\n\ndef fib(n: int) -> int:\n    if n < 0:\n        raise ValueError(\"n must be non-negative\")\n    a, b = 0, 1\n    for _ in range(n):\n        a, b = b, a + b\n    return a\n\n@cache\ndef fib_memo(n: int) -> int:\n    return n if n < 2 else fib_memo(n - 1) + fib_memo(n - 2)\n\ndef fib_stream() -> Iterator[int]:\n    a, b = 0, 1\n    while True:\n        yield a\n        a, b = b, a + b\n\nassert [fib(i) for i in range(10)] == [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]\nassert fib(10) == 55 == fib_memo(10)\nassert fib(90) == 2880067194370816120\nfrom itertools import islice\nassert list(islice(fib_stream(), 6)) == [0, 1, 1, 2, 3, 5]\ntry:\n    fib(-1)\n    raise AssertionError(\"expected ValueError\")\nexcept ValueError:\n    pass",
+    "starter": "def fib(n: int) -> int:\n    \"\"\"The n-th Fibonacci number (fib(0) = 0, fib(1) = 1) in O(n) time and O(1) space.\n\n    Raise ValueError for negative n.\n    (Optional extensions: a memoised recursive version with @functools.cache, and a generator.)\n    \"\"\"\n    raise NotImplementedError\n",
+    "solution": "def fib(n: int) -> int:\n    if n < 0:\n        raise ValueError(\"n must be non-negative\")\n    a, b = 0, 1\n    for _ in range(n):\n        a, b = b, a + b\n    return a\n",
+    "tests": "assert [fib(i) for i in range(10)] == [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]\nassert fib(10) == 55\nassert fib(90) == 2880067194370816120\ntry:\n    fib(-1)\n    raise AssertionError(\"expected ValueError\")\nexcept ValueError:\n    pass\n"
+  },
+  "p-primes-up-to-n": {
+    "language": "python",
+    "mode": "asserts",
+    "reference": "import math\n\ndef is_prime(n: int) -> bool:\n    if n < 2:\n        return False\n    if n % 2 == 0:\n        return n == 2\n    for d in range(3, math.isqrt(n) + 1, 2):\n        if n % d == 0:\n            return False\n    return True\n\ndef primes_up_to(n: int) -> list[int]:\n    if n < 2:\n        return []\n    is_p = [True] * (n + 1)\n    is_p[0] = is_p[1] = False\n    for p in range(2, math.isqrt(n) + 1):\n        if is_p[p]:\n            is_p[p * p :: p] = [False] * len(range(p * p, n + 1, p))\n    return [i for i, flag in enumerate(is_p) if flag]\n\nassert primes_up_to(20) == [2, 3, 5, 7, 11, 13, 17, 19]\nassert primes_up_to(1) == [] and primes_up_to(2) == [2]\nassert primes_up_to(1000) == [i for i in range(1001) if is_prime(i)]\nassert len(primes_up_to(100_000)) == 9592",
+    "starter": "import math\n\ndef primes_up_to(n: int) -> list[int]:\n    \"\"\"All primes <= n, in ascending order. Aim for a sieve: O(n log log n).\"\"\"\n    raise NotImplementedError\n",
+    "solution": "import math\n\n\ndef primes_up_to(n: int) -> list[int]:\n    if n < 2:\n        return []\n    is_p = [True] * (n + 1)\n    is_p[0] = is_p[1] = False\n    for p in range(2, math.isqrt(n) + 1):\n        if is_p[p]:\n            is_p[p * p :: p] = [False] * len(range(p * p, n + 1, p))\n    return [i for i, flag in enumerate(is_p) if flag]\n",
+    "tests": "import math\ndef trial_division(k: int) -> bool:\n    return k >= 2 and all(k % d for d in range(2, math.isqrt(k) + 1))\nassert primes_up_to(20) == [2, 3, 5, 7, 11, 13, 17, 19]\nassert primes_up_to(1) == []\nassert primes_up_to(0) == []\nassert primes_up_to(2) == [2]\nassert primes_up_to(1000) == [k for k in range(1001) if trial_division(k)]\nassert len(primes_up_to(100_000)) == 9592\n"
+  },
+  "p-most-frequent-character": {
+    "language": "python",
+    "mode": "asserts",
+    "reference": "from collections import Counter\n\ndef most_frequent_char(s: str) -> str | None:\n    if not s:\n        return None\n    counts = Counter(s)\n    return max(counts, key=counts.get)\n\nassert most_frequent_char(\"abracadabra\") == \"a\"\nassert most_frequent_char(\"abba\") == \"a\"     # tie: \"a\" appears first\nassert most_frequent_char(\"bbaa\") == \"b\"\nassert most_frequent_char(\"\") is None\nassert most_frequent_char(\"z\") == \"z\"",
+    "starter": "from collections import Counter\n\ndef most_frequent_char(s: str) -> str | None:\n    \"\"\"The most common character; on a tie, the one that appears first in s. None for \"\".\"\"\"\n    raise NotImplementedError\n",
+    "solution": "from collections import Counter\n\ndef most_frequent_char(s: str) -> str | None:\n    if not s:\n        return None\n    counts = Counter(s)\n    return max(counts, key=counts.get)\n",
+    "tests": "assert most_frequent_char(\"abracadabra\") == \"a\"\nassert most_frequent_char(\"abba\") == \"a\"     # tie: \"a\" appears first\nassert most_frequent_char(\"bbaa\") == \"b\"\nassert most_frequent_char(\"\") is None\nassert most_frequent_char(\"z\") == \"z\"\n"
+  },
+  "p-is-one-string-a-rotation-of-another": {
+    "language": "python",
+    "mode": "asserts",
+    "reference": "def is_rotation(a: str, b: str) -> bool:\n    return len(a) == len(b) and b in a + a\n\nassert is_rotation(\"waterbottle\", \"erbottlewat\")\nassert not is_rotation(\"abc\", \"acb\")\nassert is_rotation(\"\", \"\")\nassert not is_rotation(\"aa\", \"a\")      # the length check matters\nassert is_rotation(\"abcd\", \"abcd\")     # rotating by 0",
+    "starter": "def is_rotation(a: str, b: str) -> bool:\n    \"\"\"True if b is a with some characters moved from the front to the back.\"\"\"\n    raise NotImplementedError\n",
+    "solution": "def is_rotation(a: str, b: str) -> bool:\n    return len(a) == len(b) and b in a + a\n",
+    "tests": "assert is_rotation(\"waterbottle\", \"erbottlewat\")\nassert not is_rotation(\"abc\", \"acb\")\nassert is_rotation(\"\", \"\")\nassert not is_rotation(\"aa\", \"a\")      # the length check matters\nassert is_rotation(\"abcd\", \"abcd\")     # rotating by 0\n"
+  }
+}

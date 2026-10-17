@@ -1,0 +1,83 @@
+{
+  "checked": "2026-10-16",
+  "courses": [
+    {
+      "title": "Redis Essential Training",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/redis-essential-training-15012713",
+      "duration": "1h 52m",
+      "level": "Beginner",
+      "updated": "Released 12/2/2022",
+      "why": "The shortest complete tour of Redis on LinkedIn Learning (Fernando Doglio): strings, hashes, lists, sets and sorted sets, key naming, pub/sub and keyspace notifications, and an introduction to Redis at scale. It predates Redis 8, so pair it with the redis chapter for what changed (hash-field expiry, the AGPL licence, Valkey)."
+    },
+    {
+      "title": "Advanced Redis",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/advanced-redis",
+      "duration": "2h 7m",
+      "level": "Advanced",
+      "updated": "Released 4/19/2023",
+      "why": "Janani Ravi's follow-up on pipelining, benchmarking with redis-benchmark, full-text search and RedisJSON. Take it after the first course if you want a second Redis certificate that goes beyond caching."
+    },
+    {
+      "title": "Get Started with Redis (Redis University)",
+      "provider": "Redis University",
+      "url": "https://university.redis.io/learningpath/14q8m6gilfwltm",
+      "duration": "Self-paced (length not stated)",
+      "level": "Beginner",
+      "updated": "Current platform, launched 9/18/2024; replaces RU101",
+      "why": "Free and official, written by Redis itself, and current with Redis 8. Passing every quiz at 80% or higher earns a Redis University certificate of completion, the only current Redis credential from Redis (the Redis Developer Certification was deprecated in June 2024), so add it to LinkedIn as your Redis certificate."
+    }
+  ],
+  "portals": [
+    {
+      "name": "Redis data types (official docs)",
+      "url": "https://redis.io/docs/latest/develop/data-types/",
+      "what": "Every data type with its commands, complexity and use cases: the reference interviewers expect you to know (strings, hashes, lists, sets, sorted sets, streams, HyperLogLog, JSON)."
+    },
+    {
+      "name": "Redis Dev Hub: tutorials (redis.io/dev)",
+      "url": "https://redis.io/dev/",
+      "what": "Official hands-on tutorials and how-tos, including Redis with FastAPI and with Node.js, caching and rate-limiting recipes."
+    },
+    {
+      "name": "roadmap.sh Redis roadmap",
+      "url": "https://roadmap.sh/redis",
+      "what": "A clickable map of every Redis topic from basics to clustering and persistence; use it as a self-check that you have covered the whole topic."
+    },
+    {
+      "name": "GeeksforGeeks: Redis interview questions",
+      "url": "https://www.geeksforgeeks.org/system-design/top-25-redis-interview-questions/",
+      "what": "A list of common Redis interview questions (persistence, eviction, clustering, Sentinel, Lua, transactions) to say out loud and check against the library's answers."
+    }
+  ],
+  "assessments": [
+    {
+      "name": "Operate Redis Cloud: certificate of completion",
+      "provider": "Redis University",
+      "url": "https://university.redis.io/learningpath/c3ot5o0wronhgz",
+      "cost": "Free",
+      "format": "Self-paced course with quizzes and exams; certificate when every assessment is passed at 80% or higher",
+      "credential": "Redis University certificate of completion (shareable, add under Licenses & certifications)",
+      "why": "Redis University's course on advanced operational topics for Redis Cloud. Take it after 'Get Started with Redis' (listed under courses, which carries its own certificate) to show you can run Redis in production, not only use it."
+    },
+    {
+      "name": "Get Started with Redis Cloud: certificate of completion",
+      "provider": "Redis University",
+      "url": "https://university.redis.io/learningpath/lwkfbjbbqetoqc",
+      "cost": "Free",
+      "format": "Self-paced course with quizzes; certificate at 80% or higher on all assessments",
+      "credential": "Redis University certificate of completion",
+      "why": "A second free certificate that adds the managed-service side (provisioning, configuring and operating a cloud database), which matches how Redis runs in production on Memorystore or Redis Cloud."
+    },
+    {
+      "name": "REST API (Intermediate)",
+      "provider": "HackerRank",
+      "url": "https://www.hackerrank.com/skills-verification/rest_api_intermediate",
+      "cost": "Free",
+      "format": "Timed online test, 1 hour 30 minutes, 2 coding questions, one attempt",
+      "credential": "HackerRank certificate with a shareable URL",
+      "why": "HackerRank has no Redis certificate; this one proves the API-building skill your Redis project sits behind (caching and rate limiting are API concerns)."
+    }
+  ]
+}

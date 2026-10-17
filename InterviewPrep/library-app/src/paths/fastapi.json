@@ -1,0 +1,60 @@
+{
+  "checked": "2026-10-16",
+  "courses": [
+    {
+      "title": "Build REST APIs with FastAPI",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/build-rest-apis-with-fastapi",
+      "duration": "1h 11m",
+      "level": "Intermediate",
+      "updated": "Released 12/17/2024",
+      "why": "Miki Tebeka's short, current course on building REST API servers with FastAPI and making them production ready: the one FastAPI-specific course on LinkedIn Learning, and an exact match for this path."
+    },
+    {
+      "title": "Advanced Python: Practical Database Examples",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/advanced-python-practical-database-examples",
+      "duration": "1h 48m",
+      "level": "Advanced",
+      "updated": "Released 5/8/2023",
+      "why": "Hands-on database projects in Python, including a lesson that integrates a database with a FastAPI application: the data-access half of this path (SQLAlchemy, transactions, an API over a database)."
+    }
+  ],
+  "portals": [
+    {
+      "name": "FastAPI Tutorial – User Guide (official)",
+      "url": "https://fastapi.tiangolo.com/tutorial/",
+      "what": "The official step-by-step guide: path and query parameters, request bodies, dependencies, security, and testing, each with runnable examples."
+    },
+    {
+      "name": "DataCamp: FastAPI interview questions",
+      "url": "https://www.datacamp.com/blog/fastapi-interview-questions",
+      "what": "A beginner-to-advanced guide with scenario questions, noting what junior versus senior interviews focus on (dependency injection, middleware, connection pools)."
+    },
+    {
+      "name": "roadmap.sh: Backend developer interview questions",
+      "url": "https://roadmap.sh/questions/backend",
+      "what": "50 backend questions (HTTP, APIs, caching, databases, auth) in beginner, intermediate and advanced sets: the API-design side of this path."
+    }
+  ],
+  "assessments": [
+    {
+      "name": "HackerRank Rest API (Intermediate) certificate",
+      "provider": "HackerRank",
+      "url": "https://www.hackerrank.com/skills-verification/rest_api_intermediate",
+      "cost": "Free",
+      "format": "90-minute online test, 2 problems on consuming and processing REST APIs; one attempt only, so practise first",
+      "credential": "Shareable HackerRank certificate URL for LinkedIn and your resume",
+      "why": "The closest coding-assessed credential to API work. Because you get only one attempt, take it after the chapters and the course."
+    },
+    {
+      "name": "HackerRank Software Engineer certificate",
+      "provider": "HackerRank",
+      "url": "https://www.hackerrank.com/skills-verification/software_engineer",
+      "cost": "Free",
+      "format": "75-minute online test, 3 problems covering problem solving, SQL and REST APIs",
+      "credential": "Shareable HackerRank role certificate",
+      "why": "A role-level certificate that combines the API, SQL and problem-solving skills a backend Python role asks for, from the same platform as your existing React certificate."
+    }
+  ]
+}

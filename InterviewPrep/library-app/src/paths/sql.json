@@ -1,0 +1,97 @@
+{
+  "checked": "2026-10-16",
+  "courses": [
+    {
+      "title": "Practice It: Advanced SQL",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/practice-it-advanced-sql",
+      "duration": "27m",
+      "level": "Advanced",
+      "updated": "Released 3/6/2024",
+      "why": "Guided exercises on window functions, CTEs, subqueries and date handling: the exact query patterns live SQL rounds use, in under half an hour."
+    },
+    {
+      "title": "Advanced SQL for Query Tuning and Performance Optimization",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/advanced-sql-for-query-tuning-and-performance-optimization-22894038",
+      "duration": "2h 9m",
+      "level": "Advanced",
+      "updated": "Released 10/11/2023",
+      "why": "Reading execution plans and applying indexing, join, partitioning and materialised-view strategies in PostgreSQL: the 'how do you fix a slow query' answer, with depth."
+    },
+    {
+      "title": "Level Up: PostgreSQL",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/level-up-postgresql",
+      "duration": "48m",
+      "level": "Intermediate",
+      "updated": "Released 10/5/2023",
+      "why": "A short set of PostgreSQL challenges from querying to data management and administration, run in GitHub Codespaces with nothing to install."
+    }
+  ],
+  "portals": [
+    {
+      "name": "LeetCode: SQL 50 study plan",
+      "url": "https://leetcode.com/studyplan/top-sql-50/",
+      "what": "50 curated SQL problems (selects, joins, aggregation, subqueries, window functions); the standard warm-up before a SQL screen."
+    },
+    {
+      "name": "HackerRank: SQL practice",
+      "url": "https://www.hackerrank.com/domains/sql",
+      "what": "Graded problems from basic select to advanced join, on the same platform as the HackerRank SQL certificates."
+    },
+    {
+      "name": "PostgreSQL Exercises",
+      "url": "https://pgexercises.com/",
+      "what": "Free exercises on one realistic dataset: joins and subqueries, modifying data, aggregates, dates, strings and recursive queries, all in PostgreSQL."
+    },
+    {
+      "name": "DataLemur: SQL interview questions",
+      "url": "https://datalemur.com/questions",
+      "what": "Around 250 real interview questions from large tech companies, tagged by difficulty; many are free, some need a paid plan."
+    },
+    {
+      "name": "PostgreSQL tutorial (official docs)",
+      "url": "https://www.postgresql.org/docs/current/tutorial.html",
+      "what": "The official tutorial for the current release (PostgreSQL 18): basics, joins, aggregates, transactions and window functions."
+    }
+  ],
+  "assessments": [
+    {
+      "name": "HackerRank SQL (Basic) certificate",
+      "provider": "HackerRank",
+      "url": "https://www.hackerrank.com/skills-verification/sql_basic",
+      "cost": "Free",
+      "format": "30-minute online test, 2 problems on simple queries",
+      "credential": "Shareable HackerRank certificate URL",
+      "why": "A quick first SQL credential; take it the same evening you do the intermediate one."
+    },
+    {
+      "name": "HackerRank SQL (Intermediate) certificate",
+      "provider": "HackerRank",
+      "url": "https://www.hackerrank.com/skills-verification/sql_intermediate",
+      "cost": "Free",
+      "format": "35-minute online test, 2 problems built around complex joins",
+      "credential": "Shareable HackerRank certificate URL",
+      "why": "Shows you can write the multi-table queries interviewers ask for, in a short timed setting."
+    },
+    {
+      "name": "HackerRank SQL (Advanced) certificate",
+      "provider": "HackerRank",
+      "url": "https://www.hackerrank.com/skills-verification/sql_advanced",
+      "cost": "Free",
+      "format": "60-minute online test, 2 problems including query optimisation",
+      "credential": "Shareable HackerRank certificate URL",
+      "why": "The top HackerRank SQL tier; the one worth featuring on LinkedIn for a senior engineer."
+    },
+    {
+      "name": "freeCodeCamp Relational Databases certification",
+      "provider": "freeCodeCamp",
+      "url": "https://www.freecodecamp.org/learn/relational-databases-v9/",
+      "cost": "Free",
+      "format": "Five certification projects (PostgreSQL, Bash, Git) plus a 50-question timed exam taken in freeCodeCamp's exam environment",
+      "credential": "Verified freeCodeCamp certification with a public URL",
+      "why": "A project-based credential: the five projects themselves are evidence you can design and query PostgreSQL databases."
+    }
+  ]
+}

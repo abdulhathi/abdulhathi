@@ -1,0 +1,114 @@
+{
+  "p-fizzbuzz-returning-an-array": {
+    "language": "ts",
+    "mode": "asserts",
+    "starter": "// Return the strings for 1..n: 'Fizz' for multiples of 3, 'Buzz' for 5, 'FizzBuzz' for both, else the number.\nfunction fizzBuzz(n: number): string[] {\n  throw new Error('Not implemented');\n}\n",
+    "solution": "function fizzBuzz(n: number): string[] {\n  const out: string[] = [];\n  for (let i = 1; i <= n; i++) {\n    const word = (i % 3 === 0 ? 'Fizz' : '') + (i % 5 === 0 ? 'Buzz' : '');\n    out.push(word || String(i));\n  }\n  return out;\n}\n",
+    "tests": "assert.deepEqual(fizzBuzz(5), ['1', '2', 'Fizz', '4', 'Buzz']);\nassert.equal(fizzBuzz(15)[14], 'FizzBuzz');\nassert.deepEqual(fizzBuzz(0), []);\n",
+    "reference": "import assert from 'node:assert/strict';\n\nfunction fizzBuzz(n: number): string[] {\n  const out: string[] = [];\n  for (let i = 1; i <= n; i++) {\n    const word = (i % 3 === 0 ? 'Fizz' : '') + (i % 5 === 0 ? 'Buzz' : '');\n    out.push(word || String(i));\n  }\n  return out;\n}\n\nassert.deepEqual(fizzBuzz(5), ['1', '2', 'Fizz', '4', 'Buzz']);\nassert.equal(fizzBuzz(15)[14], 'FizzBuzz');\nassert.deepEqual(fizzBuzz(0), []);"
+  },
+  "p-reverse-the-words-in-a-sentence": {
+    "language": "ts",
+    "mode": "asserts",
+    "starter": "// Return the words of s in reverse order, joined by single spaces, with no leading or trailing space.\nfunction reverseWords(s: string): string {\n  throw new Error('Not implemented');\n}\n",
+    "solution": "function reverseWords(s: string): string {\n  const trimmed = s.trim();\n  if (trimmed === '') return '';\n  return trimmed.split(/\\s+/).reverse().join(' ');\n}\n",
+    "tests": "assert.equal(reverseWords('  agent   run  failed '), 'failed run agent');\nassert.equal(reverseWords('one'), 'one');\nassert.equal(reverseWords('   '), '');\nassert.equal(reverseWords(''), '');\n",
+    "reference": "import assert from 'node:assert/strict';\n\nfunction reverseWords(s: string): string {\n  const trimmed = s.trim();\n  if (trimmed === '') return '';\n  return trimmed.split(/\\s+/).reverse().join(' ');\n}\n\nassert.equal(reverseWords('  agent   run  failed '), 'failed run agent');\nassert.equal(reverseWords('one'), 'one');\nassert.equal(reverseWords('   '), '');\nassert.equal(reverseWords(''), '');"
+  },
+  "p-valid-palindrome-ignoring-punctuation-and-case": {
+    "language": "ts",
+    "mode": "asserts",
+    "starter": "// Return true if s reads the same both ways, looking only at letters and digits and ignoring case.\nfunction isPalindrome(s: string): boolean {\n  throw new Error('Not implemented');\n}\n",
+    "solution": "const isAlnum = (ch: string) => /[a-z0-9]/i.test(ch);\nfunction isPalindrome(s: string): boolean {\n  let left = 0;\n  let right = s.length - 1;\n  while (left < right) {\n    if (!isAlnum(s[left])) left++;\n    else if (!isAlnum(s[right])) right--;\n    else if (s[left].toLowerCase() !== s[right].toLowerCase()) return false;\n    else {\n      left++;\n      right--;\n    }\n  }\n  return true;\n}\n",
+    "tests": "assert.equal(isPalindrome('A man, a plan, a canal: Panama'), true);\nassert.equal(isPalindrome('run, nur!'), true);\nassert.equal(isPalindrome('agent'), false);\nassert.equal(isPalindrome(''), true);\nassert.equal(isPalindrome('.,'), true);\nassert.equal(isPalindrome('0P'), false);\n",
+    "reference": "import assert from 'node:assert/strict';\n\nconst isAlnum = (ch: string) => /[a-z0-9]/i.test(ch);\n\nfunction isPalindrome(s: string): boolean {\n  let left = 0;\n  let right = s.length - 1;\n  while (left < right) {\n    if (!isAlnum(s[left])) left++;\n    else if (!isAlnum(s[right])) right--;\n    else if (s[left].toLowerCase() !== s[right].toLowerCase()) return false;\n    else {\n      left++;\n      right--;\n    }\n  }\n  return true;\n}\n\nassert.equal(isPalindrome('A man, a plan, a canal: Panama'), true);\nassert.equal(isPalindrome('run, nur!'), true);\nassert.equal(isPalindrome('agent'), false);\nassert.equal(isPalindrome(''), true);\nassert.equal(isPalindrome('.,'), true);\nassert.equal(isPalindrome('0P'), false);"
+  },
+  "p-first-non-repeating-character": {
+    "language": "ts",
+    "mode": "asserts",
+    "starter": "// Return the index of the first character that appears exactly once, or -1. Count in characters (code points),\n// so an emoji is one character.\nfunction firstUniqueIndex(s: string): number {\n  throw new Error('Not implemented');\n}\n",
+    "solution": "function firstUniqueIndex(s: string): number {\n  const chars = Array.from(s); // code points\n  const counts = new Map<string, number>();\n  for (const ch of chars) counts.set(ch, (counts.get(ch) ?? 0) + 1);\n  return chars.findIndex((ch) => counts.get(ch) === 1);\n}\n",
+    "tests": "assert.equal(firstUniqueIndex('streaming'), 0);\nassert.equal(firstUniqueIndex('loveleetcode'), 2);\nassert.equal(firstUniqueIndex('aabb'), -1);\nassert.equal(firstUniqueIndex(''), -1);\nassert.equal(firstUniqueIndex('👍a👍'), 1);\n",
+    "reference": "import assert from 'node:assert/strict';\n\nfunction firstUniqueIndex(s: string): number {\n  const chars = Array.from(s); // code points\n  const counts = new Map<string, number>();\n  for (const ch of chars) counts.set(ch, (counts.get(ch) ?? 0) + 1);\n  return chars.findIndex((ch) => counts.get(ch) === 1);\n}\n\nassert.equal(firstUniqueIndex('streaming'), 0);\nassert.equal(firstUniqueIndex('loveleetcode'), 2);\nassert.equal(firstUniqueIndex('aabb'), -1);\nassert.equal(firstUniqueIndex(''), -1);\nassert.equal(firstUniqueIndex('👍a👍'), 1); // index counted in characters (code points)"
+  },
+  "p-valid-anagram": {
+    "language": "ts",
+    "mode": "asserts",
+    "starter": "// Return true if a and b contain the same characters with the same counts.\nfunction isAnagram(a: string, b: string): boolean {\n  throw new Error('Not implemented');\n}\n",
+    "solution": "function isAnagram(a: string, b: string): boolean {\n  if (a.length !== b.length) return false;\n  const counts = new Map<string, number>();\n  for (const ch of a) counts.set(ch, (counts.get(ch) ?? 0) + 1);\n  for (const ch of b) {\n    const left = (counts.get(ch) ?? 0) - 1;\n    if (left < 0) return false;\n    counts.set(ch, left);\n  }\n  return true;\n}\n",
+    "tests": "assert.equal(isAnagram('listen', 'silent'), true);\nassert.equal(isAnagram('rat', 'car'), false);\nassert.equal(isAnagram('', ''), true);\nassert.equal(isAnagram('aab', 'abb'), false);\n",
+    "reference": "import assert from 'node:assert/strict';\n\nfunction isAnagram(a: string, b: string): boolean {\n  if (a.length !== b.length) return false;\n  const counts = new Map<string, number>();\n  for (const ch of a) counts.set(ch, (counts.get(ch) ?? 0) + 1);\n  for (const ch of b) {\n    const left = (counts.get(ch) ?? 0) - 1;\n    if (left < 0) return false;\n    counts.set(ch, left);\n  }\n  return true;\n}\n\nassert.equal(isAnagram('listen', 'silent'), true);\nassert.equal(isAnagram('rat', 'car'), false);\nassert.equal(isAnagram('', ''), true);\nassert.equal(isAnagram('aab', 'abb'), false);"
+  },
+  "p-dedupe-records-by-key-keeping-the-first": {
+    "language": "ts",
+    "mode": "asserts",
+    "starter": "// Return the items, keeping only the first item for each key(item), in the original order.\nfunction uniqueBy<T, K>(items: readonly T[], key: (item: T) => K): T[] {\n  throw new Error('Not implemented');\n}\n",
+    "solution": "function uniqueBy<T, K>(items: readonly T[], key: (item: T) => K): T[] {\n  const seen = new Set<K>();\n  const out: T[] = [];\n  for (const item of items) {\n    const k = key(item);\n    if (seen.has(k)) continue;\n    seen.add(k);\n    out.push(item);\n  }\n  return out;\n}\n",
+    "tests": "const events = [\n  { id: 'e1', v: 1 },\n  { id: 'e2', v: 2 },\n  { id: 'e1', v: 9 },\n];\nassert.deepEqual(uniqueBy(events, (e) => e.id), [\n  { id: 'e1', v: 1 },\n  { id: 'e2', v: 2 },\n]);\nassert.deepEqual(uniqueBy([], (x: number) => x), []);\nassert.deepEqual(uniqueBy(['A', 'a', 'b'], (s) => s.toLowerCase()), ['A', 'b']);\n",
+    "reference": "import assert from 'node:assert/strict';\n\nfunction uniqueBy<T, K>(items: readonly T[], key: (item: T) => K): T[] {\n  const seen = new Set<K>();\n  const out: T[] = [];\n  for (const item of items) {\n    const k = key(item);\n    if (seen.has(k)) continue;\n    seen.add(k);\n    out.push(item);\n  }\n  return out;\n}\n\nconst events = [\n  { id: 'e1', v: 1 },\n  { id: 'e2', v: 2 },\n  { id: 'e1', v: 9 },\n];\nassert.deepEqual(uniqueBy(events, (e) => e.id), [\n  { id: 'e1', v: 1 },\n  { id: 'e2', v: 2 },\n]);\nassert.deepEqual(uniqueBy([], (x: number) => x), []);\nassert.deepEqual(uniqueBy(['A', 'a', 'b'], (s) => s.toLowerCase()), ['A', 'b']);"
+  },
+  "p-chunk-an-array": {
+    "language": "ts",
+    "mode": "asserts",
+    "starter": "// Split items into chunks of `size` items (the last may be shorter); throw a RangeError if size is not a\n// positive integer.\nfunction chunk<T>(items: readonly T[], size: number): T[][] {\n  throw new Error('Not implemented');\n}\n",
+    "solution": "function chunk<T>(items: readonly T[], size: number): T[][] {\n  if (!Number.isInteger(size) || size < 1) throw new RangeError('size must be a positive integer');\n  const out: T[][] = [];\n  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));\n  return out;\n}\n",
+    "tests": "assert.deepEqual(chunk([1, 2, 3, 4, 5], 2), [[1, 2], [3, 4], [5]]);\nassert.deepEqual(chunk([1, 2], 5), [[1, 2]]);\nassert.deepEqual(chunk([], 3), []);\nassert.throws(() => chunk([1], 0), RangeError);\n",
+    "reference": "import assert from 'node:assert/strict';\n\nfunction chunk<T>(items: readonly T[], size: number): T[][] {\n  if (!Number.isInteger(size) || size < 1) throw new RangeError('size must be a positive integer');\n  const out: T[][] = [];\n  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));\n  return out;\n}\n\nassert.deepEqual(chunk([1, 2, 3, 4, 5], 2), [[1, 2], [3, 4], [5]]);\nassert.deepEqual(chunk([1, 2], 5), [[1, 2]]);\nassert.deepEqual(chunk([], 3), []);\nassert.throws(() => chunk([1], 0), RangeError);"
+  },
+  "p-flatten-a-nested-array-to-a-given-depth": {
+    "language": "ts",
+    "mode": "asserts",
+    "starter": "type Nested<T> = T | Nested<T>[];\n\n// Flatten nested arrays up to `depth` levels (all levels by default), without Array.prototype.flat.\nfunction flatten<T>(items: readonly Nested<T>[], depth = Infinity): Nested<T>[] {\n  throw new Error('Not implemented');\n}\n",
+    "solution": "type Nested<T> = T | Nested<T>[];\nfunction flatten<T>(items: readonly Nested<T>[], depth = Infinity): Nested<T>[] {\n  const out: Nested<T>[] = [];\n  for (const item of items) {\n    if (Array.isArray(item) && depth > 0) out.push(...flatten(item, depth - 1));\n    else out.push(item);\n  }\n  return out;\n}\n",
+    "tests": "assert.deepEqual(flatten([1, [2, [3, [4]]]]), [1, 2, 3, 4]);\nassert.deepEqual(flatten([1, [2, [3, [4]]]], 1), [1, 2, [3, [4]]]);\nassert.deepEqual(flatten([[], [[]]]), []);\nassert.deepEqual(flatten([1, 2], 0), [1, 2]);\n",
+    "reference": "import assert from 'node:assert/strict';\n\ntype Nested<T> = T | Nested<T>[];\n\nfunction flatten<T>(items: readonly Nested<T>[], depth = Infinity): Nested<T>[] {\n  const out: Nested<T>[] = [];\n  for (const item of items) {\n    if (Array.isArray(item) && depth > 0) out.push(...flatten(item, depth - 1));\n    else out.push(item);\n  }\n  return out;\n}\n\nassert.deepEqual(flatten([1, [2, [3, [4]]]]), [1, 2, 3, 4]);\nassert.deepEqual(flatten([1, [2, [3, [4]]]], 1), [1, 2, [3, [4]]]);\nassert.deepEqual(flatten([[], [[]]]), []);\nassert.deepEqual(flatten([1, 2], 0), [1, 2]);"
+  },
+  "p-second-largest-distinct-number": {
+    "language": "ts",
+    "mode": "asserts",
+    "starter": "// Return the second largest distinct value, or null if there is none.\nfunction secondLargest(nums: readonly number[]): number | null {\n  throw new Error('Not implemented');\n}\n",
+    "solution": "function secondLargest(nums: readonly number[]): number | null {\n  let first: number | null = null;\n  let second: number | null = null;\n  for (const n of nums) {\n    if (first === null || n > first) {\n      second = first;\n      first = n;\n    } else if (n < first && (second === null || n > second)) {\n      second = n;\n    }\n  }\n  return second;\n}\n",
+    "tests": "assert.equal(secondLargest([5, 1, 5, 3]), 3);\nassert.equal(secondLargest([2, 2]), null);\nassert.equal(secondLargest([]), null);\nassert.equal(secondLargest([-1, -5]), -5);\nassert.equal(secondLargest([3, -Infinity]), -Infinity);\nassert.equal(secondLargest([1, 2, 3, 4]), 3);\n",
+    "reference": "import assert from 'node:assert/strict';\n\nfunction secondLargest(nums: readonly number[]): number | null {\n  let first: number | null = null;\n  let second: number | null = null;\n  for (const n of nums) {\n    if (first === null || n > first) {\n      second = first;\n      first = n;\n    } else if (n < first && (second === null || n > second)) {\n      second = n;\n    }\n  }\n  return second;\n}\n\nassert.equal(secondLargest([5, 1, 5, 3]), 3);\nassert.equal(secondLargest([2, 2]), null);\nassert.equal(secondLargest([]), null);\nassert.equal(secondLargest([-1, -5]), -5);\nassert.equal(secondLargest([3, -Infinity]), -Infinity);\nassert.equal(secondLargest([1, 2, 3, 4]), 3);"
+  },
+  "p-missing-number-from-0-to-n": {
+    "language": "ts",
+    "mode": "asserts",
+    "starter": "// nums holds n distinct numbers from 0..n; return the one that is missing.\nfunction missingNumber(nums: readonly number[]): number {\n  throw new Error('Not implemented');\n}\n",
+    "solution": "function missingNumber(nums: readonly number[]): number {\n  const n = nums.length;\n  let expected = (n * (n + 1)) / 2;\n  for (const x of nums) expected -= x;\n  return expected;\n}\n",
+    "tests": "assert.equal(missingNumber([3, 0, 1]), 2);\nassert.equal(missingNumber([0]), 1);\nassert.equal(missingNumber([1]), 0);\nassert.equal(missingNumber([9, 6, 4, 2, 3, 5, 7, 0, 1]), 8);\n",
+    "reference": "import assert from 'node:assert/strict';\n\nfunction missingNumber(nums: readonly number[]): number {\n  const n = nums.length;\n  let expected = (n * (n + 1)) / 2;\n  for (const x of nums) expected -= x;\n  return expected;\n}\n\nassert.equal(missingNumber([3, 0, 1]), 2);\nassert.equal(missingNumber([0]), 1);\nassert.equal(missingNumber([1]), 0);\nassert.equal(missingNumber([9, 6, 4, 2, 3, 5, 7, 0, 1]), 8);"
+  },
+  "p-convert-camelcase-keys-to-snake-case": {
+    "language": "ts",
+    "mode": "asserts",
+    "starter": "// Convert a camelCase identifier to snake_case: 'agentRunId' → 'agent_run_id', 'HTTPStatus' → 'http_status'.\nfunction toSnake(name: string): string {\n  throw new Error('Not implemented');\n}\n\n// Return a new object with every key of a flat object converted by toSnake.\nfunction keysToSnake(obj: Record<string, unknown>): Record<string, unknown> {\n  throw new Error('Not implemented');\n}\n",
+    "solution": "function toSnake(name: string): string {\n  return name\n    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')\n    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')\n    .toLowerCase();\n}\nfunction keysToSnake(obj: Record<string, unknown>): Record<string, unknown> {\n  return Object.fromEntries(Object.entries(obj).map(([k, v]) => [toSnake(k), v]));\n}\n",
+    "tests": "assert.equal(toSnake('agentRunId'), 'agent_run_id');\nassert.equal(toSnake('HTTPStatus'), 'http_status');\nassert.equal(toSnake('step2Name'), 'step2_name');\nassert.equal(toSnake('id'), 'id');\nassert.deepEqual(keysToSnake({ runId: 1, createdAt: 'x' }), { run_id: 1, created_at: 'x' });\n",
+    "reference": "import assert from 'node:assert/strict';\n\nfunction toSnake(name: string): string {\n  return name\n    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')\n    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')\n    .toLowerCase();\n}\n\nfunction keysToSnake(obj: Record<string, unknown>): Record<string, unknown> {\n  return Object.fromEntries(Object.entries(obj).map(([k, v]) => [toSnake(k), v]));\n}\n\nassert.equal(toSnake('agentRunId'), 'agent_run_id');\nassert.equal(toSnake('HTTPStatus'), 'http_status');\nassert.equal(toSnake('step2Name'), 'step2_name');\nassert.equal(toSnake('id'), 'id');\nassert.deepEqual(keysToSnake({ runId: 1, createdAt: 'x' }), { run_id: 1, created_at: 'x' });"
+  },
+  "p-group-records-by-a-key": {
+    "language": "ts",
+    "mode": "asserts",
+    "starter": "// Return the items grouped by keyFn(item), each group in input order, without using Object.groupBy.\n// Follow-up: what goes wrong with a key of '__proto__', and how would you avoid it?\nfunction groupBy<T>(items: readonly T[], keyFn: (item: T) => string): Record<string, T[]> {\n  throw new Error('Not implemented');\n}\n",
+    "solution": "function groupBy<T>(items: readonly T[], keyFn: (item: T) => string): Record<string, T[]> {\n  const groups: Record<string, T[]> = {};\n  for (const item of items) {\n    const key = keyFn(item);\n    (groups[key] ??= []).push(item);\n  }\n  return groups;\n}\n",
+    "tests": "const runs = [\n  { id: 'r1', status: 'done' },\n  { id: 'r2', status: 'failed' },\n  { id: 'r3', status: 'done' },\n];\n// Spread into a plain object, so a Map-backed or null-prototype result also passes.\nassert.deepEqual({ ...groupBy(runs, (r) => r.status) }, {\n  done: [runs[0], runs[2]],\n  failed: [runs[1]],\n});\nassert.deepEqual({ ...groupBy([], (x: string) => x) }, {});\nassert.deepEqual({ ...groupBy(['a', 'bb', 'cc', 'd'], (s) => String(s.length)) }, { 1: ['a', 'd'], 2: ['bb', 'cc'] });\n// With built-ins allowed, this is one line (ES2024).\nassert.deepEqual({ ...Object.groupBy(runs, (r) => r.status) }, { ...groupBy(runs, (r) => r.status) });\n",
+    "reference": "import assert from 'node:assert/strict';\n\nfunction groupBy<T>(items: readonly T[], keyFn: (item: T) => string): Record<string, T[]> {\n  const groups: Record<string, T[]> = {};\n  for (const item of items) {\n    const key = keyFn(item);\n    (groups[key] ??= []).push(item);\n  }\n  return groups;\n}\n\nconst runs = [\n  { id: 'r1', status: 'done' },\n  { id: 'r2', status: 'failed' },\n  { id: 'r3', status: 'done' },\n];\nassert.deepEqual(groupBy(runs, (r) => r.status), {\n  done: [runs[0], runs[2]],\n  failed: [runs[1]],\n});\nassert.deepEqual(groupBy([], (x: string) => x), {});\n\n// With built-ins allowed, this is one line (ES2024).\nassert.deepEqual({ ...Object.groupBy(runs, (r) => r.status) }, groupBy(runs, (r) => r.status));\n\n// The prototype-key trap from the follow-up: \"__proto__\" finds Object.prototype, which has no push().\nassert.throws(() => groupBy([{ status: '__proto__' }], (r) => r.status), TypeError);\nassert.deepEqual(Object.keys(Object.groupBy([{ status: '__proto__' }], (r) => r.status)), ['__proto__']);"
+  },
+  "p-rotate-an-array-by-k-steps": {
+    "language": "ts",
+    "mode": "asserts",
+    "starter": "// Rotate nums to the right by k steps, in place (k can be larger than the length). Aim for O(1) extra space.\nfunction rotate(nums: number[], k: number): void {\n  throw new Error('Not implemented');\n}\n",
+    "solution": "function reverse(a: number[], from: number, to: number): void {\n  while (from < to) {\n    [a[from], a[to]] = [a[to], a[from]];\n    from++;\n    to--;\n  }\n}\nfunction rotate(nums: number[], k: number): void {\n  const n = nums.length;\n  if (n === 0) return;\n  k %= n;\n  reverse(nums, 0, n - 1);\n  reverse(nums, 0, k - 1);\n  reverse(nums, k, n - 1);\n}\n",
+    "tests": "const a = [1, 2, 3, 4, 5, 6, 7];\nrotate(a, 3);\nassert.deepEqual(a, [5, 6, 7, 1, 2, 3, 4]);\nconst b = [1, 2];\nrotate(b, 5);\nassert.deepEqual(b, [2, 1]);\nconst empty: number[] = [];\nrotate(empty, 3);\nassert.deepEqual(empty, []);\n",
+    "reference": "import assert from 'node:assert/strict';\n\nfunction reverse(a: number[], from: number, to: number): void {\n  while (from < to) {\n    [a[from], a[to]] = [a[to], a[from]];\n    from++;\n    to--;\n  }\n}\n\nfunction rotate(nums: number[], k: number): void {\n  const n = nums.length;\n  if (n === 0) return;\n  k %= n;\n  reverse(nums, 0, n - 1);\n  reverse(nums, 0, k - 1);\n  reverse(nums, k, n - 1);\n}\n\nconst a = [1, 2, 3, 4, 5, 6, 7];\nrotate(a, 3);\nassert.deepEqual(a, [5, 6, 7, 1, 2, 3, 4]);\nconst b = [1, 2];\nrotate(b, 5);\nassert.deepEqual(b, [2, 1]);\nconst empty: number[] = [];\nrotate(empty, 3);\nassert.deepEqual(empty, []);"
+  },
+  "p-top-k-most-frequent-words-with-tie-breaking": {
+    "language": "ts",
+    "mode": "asserts",
+    "starter": "// Return the k most frequent words, by count descending and then alphabetically; [] when k <= 0.\nfunction topKWords(words: readonly string[], k: number): string[] {\n  throw new Error('Not implemented');\n}\n",
+    "solution": "function topKWords(words: readonly string[], k: number): string[] {\n  const counts = new Map<string, number>();\n  for (const w of words) counts.set(w, (counts.get(w) ?? 0) + 1);\n  return [...counts]\n    .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))\n    .slice(0, Math.max(0, k)) // a negative k would make slice drop items from the end\n    .map(([w]) => w);\n}\n",
+    "tests": "assert.deepEqual(topKWords(['retry', 'ok', 'retry', 'timeout', 'ok', 'abort'], 2), ['ok', 'retry']);\nassert.deepEqual(topKWords(['b', 'a', 'c'], 2), ['a', 'b']);\nassert.deepEqual(topKWords([], 3), []);\nassert.deepEqual(topKWords(['x'], 0), []);\nassert.deepEqual(topKWords(['a', 'b'], -1), []);\n",
+    "reference": "import assert from 'node:assert/strict';\n\nfunction topKWords(words: readonly string[], k: number): string[] {\n  const counts = new Map<string, number>();\n  for (const w of words) counts.set(w, (counts.get(w) ?? 0) + 1);\n  return [...counts]\n    .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))\n    .slice(0, Math.max(0, k)) // a negative k would make slice drop items from the end\n    .map(([w]) => w);\n}\n\nassert.deepEqual(topKWords(['retry', 'ok', 'retry', 'timeout', 'ok', 'abort'], 2), ['ok', 'retry']);\nassert.deepEqual(topKWords(['b', 'a', 'c'], 2), ['a', 'b']);\nassert.deepEqual(topKWords([], 3), []);\nassert.deepEqual(topKWords(['x'], 0), []);\nassert.deepEqual(topKWords(['a', 'b'], -1), []);"
+  }
+}

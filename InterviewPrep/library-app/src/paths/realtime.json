@@ -1,0 +1,70 @@
+{
+  "checked": "2026-10-16",
+  "courses": [
+    {
+      "title": "WebSocket Communications with Node and Angular",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/websocket-communications-with-node-and-angular",
+      "duration": "1h 50m",
+      "level": "Advanced",
+      "updated": "Released 3/11/2022",
+      "why": "Builds a live chat on a TypeScript Node.js WebSocket backend with an Angular front end; you already know Angular, so the time goes into the WebSocket protocol and patterns."
+    },
+    {
+      "title": "gRPC in Python",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/grpc-in-python",
+      "duration": "41m",
+      "level": "Intermediate",
+      "updated": "Released 6/21/2022",
+      "why": "A 41-minute course on protocol buffers, HTTP/2, a gRPC server and client, streaming responses and interceptors: the gRPC half of this path in one sitting."
+    }
+  ],
+  "portals": [
+    {
+      "name": "MDN: The WebSocket API",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API",
+      "what": "The browser WebSocket API reference and guides, including writing your own WebSocket server."
+    },
+    {
+      "name": "MDN: Using server-sent events",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events",
+      "what": "The event-stream format, EventSource, reconnection and Last-Event-ID, worked through with examples."
+    },
+    {
+      "name": "gRPC: Node.js basics tutorial (official)",
+      "url": "https://grpc.io/docs/languages/node/basics/",
+      "what": "Write all four kinds of RPC (unary, server, client and bidirectional streaming) in Node.js step by step."
+    },
+    {
+      "name": "gRPC: Python basics tutorial (official)",
+      "url": "https://grpc.io/docs/languages/python/basics/",
+      "what": "The same route-guide exercise in Python, useful if the backend you interview for is Python."
+    },
+    {
+      "name": "javascript.info: WebSocket",
+      "url": "https://javascript.info/websocket",
+      "what": "A clear walkthrough of the handshake, frames, ping/pong and close codes, with a small chat example."
+    }
+  ],
+  "assessments": [
+    {
+      "name": "Rest API (Intermediate) certification",
+      "provider": "HackerRank",
+      "url": "https://www.hackerrank.com/skills-verification/rest_api_intermediate",
+      "cost": "Free",
+      "format": "1 hr 30 min online test, 2 questions on working with APIs; one attempt only",
+      "credential": "HackerRank certificate with a shareable URL",
+      "why": "There is no recognised certification for WebSockets, SSE or gRPC, so pair an API certificate with the project below, which is the real proof for this path."
+    },
+    {
+      "name": "Node.js (Intermediate) certification",
+      "provider": "HackerRank",
+      "url": "https://www.hackerrank.com/skills-verification/nodejs_intermediate",
+      "cost": "Free",
+      "format": "1-hour online test, 2 coding questions, one attempt (topics include event-driven architecture)",
+      "credential": "HackerRank certificate with a shareable URL",
+      "why": "Event-driven server code is the core skill behind real-time backends."
+    }
+  ]
+}

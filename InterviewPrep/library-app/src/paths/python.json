@@ -1,0 +1,88 @@
+{
+  "checked": "2026-10-16",
+  "courses": [
+    {
+      "title": "Advanced Python",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/advanced-python-23931756",
+      "duration": "2h 50m",
+      "level": "Advanced",
+      "updated": "Released 12/9/2024",
+      "why": "Joe Marini's current advanced course: special methods, iterators and sequences, string processing, exceptions and writing efficient code, with CoderPad code challenges. It maps closely onto the Python chapters' data-model and iterator questions."
+    },
+    {
+      "title": "Advanced Python: Classes and Functions",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/advanced-python-classes-and-functions",
+      "duration": "2h 16m",
+      "level": "Advanced",
+      "updated": "Released 3/9/2023",
+      "why": "Classes that behave like built-in types, readable functions and structural pattern matching: the OOP and functions material interviewers probe at senior level, in a short course with GitHub Codespaces exercises."
+    },
+    {
+      "title": "Asynchronous Python: Boost Performance and Efficiency for Real-World Apps",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/asynchronous-python-boost-performance-and-efficiency-for-real-world-apps",
+      "duration": "1h 3m",
+      "level": "Advanced",
+      "updated": "Released 9/7/2021",
+      "why": "Older (2021) but only an hour, and it applies asyncio to real services (aiohttp, Redis, ASGI). Take it if the concurrency chapter felt shaky; skip it otherwise."
+    }
+  ],
+  "portals": [
+    {
+      "name": "Exercism: Python track",
+      "url": "https://exercism.org/tracks/python",
+      "what": "146 exercises across 17 concepts, with optional human mentoring on your solutions. Free."
+    },
+    {
+      "name": "HackerRank: Python practice",
+      "url": "https://www.hackerrank.com/domains/python",
+      "what": "Short graded problems by topic (collections, itertools, closures and decorators, classes, regex), the same platform as the HackerRank Python certificate."
+    },
+    {
+      "name": "roadmap.sh: Python interview questions",
+      "url": "https://roadmap.sh/questions/python",
+      "what": "20 common questions from basics to advanced concepts, with short answers to compare against yours."
+    },
+    {
+      "name": "GeeksforGeeks: Python interview questions",
+      "url": "https://www.geeksforgeeks.org/python/python-interview-questions/",
+      "what": "68 questions with answers and code; useful as a fast self-check before a screening call."
+    },
+    {
+      "name": "The Python Tutorial (official)",
+      "url": "https://docs.python.org/3/tutorial/",
+      "what": "The official tutorial for the current release; the authoritative place to confirm any language detail."
+    }
+  ],
+  "assessments": [
+    {
+      "name": "HackerRank Python (Basic) certificate",
+      "provider": "HackerRank",
+      "url": "https://www.hackerrank.com/skills-verification/python_basic",
+      "cost": "Free",
+      "format": "90-minute online test, 2 coding problems; retake allowed after 30 days",
+      "credential": "Shareable HackerRank certificate URL for LinkedIn and your resume",
+      "why": "The quickest Python credential to earn and show, and the same certificate format as your Frontend Developer (React) certificate."
+    },
+    {
+      "name": "PCAP – Certified Associate Python Programmer (PCAP-31-03)",
+      "provider": "Python Institute (OpenEDG)",
+      "url": "https://pythoninstitute.org/pcap",
+      "cost": "From $295 (exam with a retake from $345)",
+      "format": "40 questions in 65 minutes, 70% to pass; Pearson VUE test centre, OnVUE online proctoring, or OpenEDG TestNow. An updated exam version (PCAP-31-04) is scheduled for release on 31 October 2026; the certification itself stays the same.",
+      "credential": "Digital certificate with verification code and a Credly badge, valid for 5 years",
+      "why": "The recognised vendor-neutral Python certification at the right level for an experienced developer: modules and packages, exceptions, strings and OOP."
+    },
+    {
+      "name": "PCPP1 – Certified Professional Python Programmer Level 1 (PCPP-32-101)",
+      "provider": "Python Institute (OpenEDG)",
+      "url": "https://pythoninstitute.org/pcpp1",
+      "cost": "From $325",
+      "format": "45 questions in 65 minutes, 70% to pass; Pearson VUE or OnVUE online proctoring",
+      "credential": "Professional-level certificate and badge (lifetime validity for PCPP-32-101)",
+      "why": "The professional tier: advanced OOP (decorators, metaclasses, serialisation), PEP 8 and PEP 257, network programming and file processing. The most prestigious Python-only credential; take it after PCAP."
+    }
+  ]
+}

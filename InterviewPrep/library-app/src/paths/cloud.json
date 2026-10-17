@@ -1,0 +1,97 @@
+{
+  "checked": "2026-10-16",
+  "courses": [
+    {
+      "title": "Learning GitHub Actions: Event-Driven Automation for Your Codebase",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/learning-github-actions-event-driven-automation-for-your-codebase",
+      "duration": "2h 9m",
+      "level": "Beginner",
+      "updated": "Released 9/15/2025",
+      "why": "Current and short (Michael Jenkins): workflows, events, CI/CD pipelines and custom actions, which is the CI/CD half of this path and of every project brief."
+    },
+    {
+      "title": "Learning Terraform",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/learning-terraform-15575129",
+      "duration": "2h 28m",
+      "level": "Beginner",
+      "updated": "Released 10/21/2022",
+      "why": "The shortest full Terraform course on LinkedIn Learning (Josh Samuelson). It is from 2022, but the core workflow (providers, state, plan and apply, modules) has not changed; it is also good preparation for the Terraform Associate exam below."
+    },
+    {
+      "title": "Develop Serverless Applications on Cloud Run",
+      "provider": "Google Cloud Skills Boost",
+      "url": "https://www.skills.google/course_templates/741",
+      "duration": "1h 15m",
+      "level": "Intermediate",
+      "updated": "Updated about a year ago (per the course page)",
+      "why": "LinkedIn Learning has no current Cloud Run course. This official one covers Cloud Run with Cloud Storage, Pub/Sub and API gateways, and finishing its challenge lab earns a Google Cloud skill badge. Check its credit cost before starting: the free tier gives monthly credits, otherwise it needs a subscription."
+    }
+  ],
+  "portals": [
+    {
+      "name": "Cloud Run quickstarts (official)",
+      "url": "https://docs.cloud.google.com/run/docs/quickstarts",
+      "what": "Deploy a service in your language from source or a container, then try jobs and functions; the fastest hands-on refresher."
+    },
+    {
+      "name": "HashiCorp Terraform tutorials: get started on GCP",
+      "url": "https://developer.hashicorp.com/terraform/tutorials/gcp-get-started",
+      "what": "Official step-by-step Terraform tutorials against Google Cloud (an AWS track is at /terraform/tutorials/aws-get-started)."
+    },
+    {
+      "name": "GitHub Skills (GitHub Learn)",
+      "url": "https://learn.github.com/skills",
+      "what": "Free interactive courses that run inside a GitHub repository, including Hello GitHub Actions and testing and deploying with Actions."
+    },
+    {
+      "name": "roadmap.sh DevOps roadmap",
+      "url": "https://roadmap.sh/devops",
+      "what": "A map of CI/CD, infrastructure as code, cloud providers and observability to check your coverage; roadmap.sh also has AWS and Terraform roadmaps."
+    },
+    {
+      "name": "DevOps exercises (GitHub)",
+      "url": "https://github.com/bregman-arie/devops-exercises",
+      "what": "A large open collection of interview questions and exercises on cloud, Terraform, Kubernetes, CI/CD and more."
+    }
+  ],
+  "assessments": [
+    {
+      "name": "HashiCorp Certified: Terraform Associate (004)",
+      "provider": "HashiCorp",
+      "url": "https://developer.hashicorp.com/certifications/terraform-associate",
+      "cost": "$70.50 plus taxes (no free retake)",
+      "format": "1-hour online proctored exam; true/false, multiple-choice and multiple-answer questions (tests Terraform 1.12)",
+      "credential": "HashiCorp certification and digital badge, valid for 2 years",
+      "why": "The cheapest recognised cloud-engineering certification and directly about infrastructure as code, which your resume does not show yet."
+    },
+    {
+      "name": "Google Cloud Associate Cloud Engineer",
+      "provider": "Google Cloud",
+      "url": "https://cloud.google.com/learn/certification/cloud-engineer",
+      "cost": "$125 plus tax",
+      "format": "2-hour proctored exam (online or test centre), 50–60 multiple-choice and multiple-select questions",
+      "credential": "Google Cloud certification and digital badge, valid for 3 years",
+      "why": "Turns your Cloud Run, Artifact Registry and Cloud Storage work at Quantiphi into a recognised credential; Google recommends 6+ months of hands-on Google Cloud."
+    },
+    {
+      "name": "Google Cloud Professional Cloud Developer",
+      "provider": "Google Cloud",
+      "url": "https://cloud.google.com/learn/certification/cloud-developer",
+      "cost": "$200 plus tax",
+      "format": "2-hour proctored exam (online or test centre), 50–60 multiple-choice and multiple-select questions",
+      "credential": "Google Cloud professional certification and digital badge",
+      "why": "The developer-focused Google Cloud certification (building and deploying applications on GCP): the strongest fit for full-stack roles on Google Cloud, after the Associate."
+    },
+    {
+      "name": "AWS Certified Developer – Associate",
+      "provider": "Amazon Web Services",
+      "url": "https://aws.amazon.com/certification/certified-developer-associate/",
+      "cost": "$150",
+      "format": "130-minute exam, 65 multiple-choice and multiple-response questions, test centre or online proctored",
+      "credential": "AWS certification and Credly badge, valid for 3 years",
+      "why": "If you target AWS roles instead. The exam is being updated: registration for DVA-C03 opens on 27 October 2026, and the last day for DVA-C02 is 30 November 2026, so study for the new version if you book later."
+    }
+  ]
+}

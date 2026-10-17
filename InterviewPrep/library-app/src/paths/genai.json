@@ -1,0 +1,86 @@
+{
+  "checked": "2026-10-16",
+  "courses": [
+    {
+      "title": "Model Context Protocol (MCP): Hands-On with Agentic AI",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/model-context-protocol-mcp-hands-on-with-agentic-ai",
+      "duration": "55m",
+      "level": "General",
+      "updated": "Released 3/24/2025",
+      "why": "Connecting LLMs to tools and data with MCP, including building MCP servers in Python and TypeScript: the agent tool-use half of this path, in under an hour."
+    },
+    {
+      "title": "Advanced RAG Applications with Vector Databases",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/advanced-rag-applications-with-vector-databases",
+      "duration": "1h 18m",
+      "level": "Advanced",
+      "updated": "Released 10/17/2024",
+      "why": "Chunking, embeddings and metadata optimisation for retrieval, plus multimodal RAG: the depth behind the RAG chapter's interview questions."
+    },
+    {
+      "title": "Building with the Claude API",
+      "provider": "Anthropic Academy",
+      "url": "https://anthropic.skilljar.com/claude-with-the-anthropic-api",
+      "duration": "11 sections, about 85 lessons, exercises and quizzes",
+      "level": "Developer",
+      "why": "Anthropic's free official developer course: prompting, tool use, RAG, MCP and agent workflows on the Claude API. Longer than the others, but you use Claude daily, and it gives a completion certificate."
+    }
+  ],
+  "portals": [
+    {
+      "name": "DeepLearning.AI short courses",
+      "url": "https://www.deeplearning.ai/courses",
+      "what": "About 100 short, hands-on courses (most around an hour), including AI Agents in LangGraph with LangChain's founder, retrieval and MCP."
+    },
+    {
+      "name": "Hugging Face LLM Course",
+      "url": "https://huggingface.co/learn/llm-course/chapter1/1",
+      "what": "A free course on transformers and LLMs: tokenizers, fine-tuning, datasets and building reasoning models."
+    },
+    {
+      "name": "Claude cookbooks (Anthropic, GitHub)",
+      "url": "https://github.com/anthropics/claude-cookbooks",
+      "what": "Runnable notebooks for RAG, tool use, agents, evals, prompt caching and structured output: good patterns to copy into your project."
+    }
+  ],
+  "assessments": [
+    {
+      "name": "Hugging Face AI Agents Course certificate",
+      "provider": "Hugging Face",
+      "url": "https://huggingface.co/learn/agents-course/unit0/introduction",
+      "cost": "Free",
+      "format": "Self-paced: Unit 1 for the fundamentals certificate; Unit 1, a use-case assignment and a final challenge for the certificate of completion. No deadline.",
+      "credential": "Hugging Face certificate (fundamentals, or completion)",
+      "why": "The quickest agent credential to earn, and the final challenge is real agent-building work."
+    },
+    {
+      "name": "Microsoft Applied Skills: Develop a Generative AI Chat App Using the Microsoft Foundry SDK",
+      "provider": "Microsoft",
+      "url": "https://learn.microsoft.com/en-us/credentials/applied-skills/build-a-generative-ai-chat-app/",
+      "cost": "Free",
+      "format": "Hands-on, unproctored interactive lab in Python or C#: deploy a model in Microsoft Foundry, build a chat app with the Foundry SDK, implement chat history. 72-hour wait between lab launches.",
+      "credential": "Microsoft Applied Skills credential on your Microsoft Learn profile, shareable to LinkedIn",
+      "why": "A free, performance-based credential (you build it in a lab rather than answer multiple choice), from a major cloud vendor."
+    },
+    {
+      "name": "Google Cloud Generative AI Leader",
+      "provider": "Google Cloud",
+      "url": "https://cloud.google.com/learn/certification/generative-ai-leader",
+      "cost": "$99",
+      "format": "50–60 multiple-choice questions in 90 minutes; online or onsite proctored",
+      "credential": "Google Cloud certification, valid for 3 years",
+      "why": "Business-oriented rather than hands-on, so less weight for an engineering role; worth it mainly if you want a cheap Google Cloud GenAI badge quickly."
+    },
+    {
+      "name": "AWS Certified Generative AI Developer – Professional (AIP-C01)",
+      "provider": "Amazon Web Services",
+      "url": "https://aws.amazon.com/certification/certified-generative-ai-developer-professional/",
+      "cost": "$300",
+      "format": "75 multiple-choice and multiple-response questions in 180 minutes; Pearson VUE test centre or online proctored",
+      "credential": "AWS professional-level certification with a Credly badge",
+      "why": "The most demanding developer-focused GenAI certification of the four; worth it once you have built the RAG and agent project."
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+import '@testing-library/jest-dom/vitest';
+import { afterEach } from 'vitest';
+import { cleanup } from '@testing-library/react';
+
+// Node 25 has its own localStorage global, which is unusable without
+// --localstorage-file and hides jsdom's. Swap in an in-memory Storage.
+if (typeof globalThis.localStorage?.getItem !== 'function') {
+  const store = new Map<string, string>();
+  const memoryStorage: Storage = {
+    getItem: (key) => store.get(key) ?? null,
+    setItem: (key, value) => void store.set(key, String(value)),
+    removeItem: (key) => void store.delete(key),
+    clear: () => store.clear(),
+    key: (index) => [...store.keys()][index] ?? null,
+    get length() {
+      return store.size;
+    },
+  };
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: memoryStorage });
+}
+
+// jsdom does not implement scrolling. (Server tests run in the node environment, without a window.)
+const hasWindow = typeof window !== 'undefined';
+if (hasWindow) window.scrollTo = () => {};
+// Nor text layout: CodeMirror measures ranges when its font size changes.
+if (hasWindow && !Range.prototype.getClientRects) {
+  Range.prototype.getClientRects = () => ({ length: 0, item: () => null, [Symbol.iterator]: [][Symbol.iterator] }) as unknown as DOMRectList;
+  Range.prototype.getBoundingClientRect = () => new DOMRect();
+}
+
+afterEach(() => {
+  if (!hasWindow) return;
+  cleanup();
+  localStorage.clear();
+  window.location.hash = '';
+});

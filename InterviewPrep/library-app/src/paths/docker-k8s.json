@@ -1,0 +1,88 @@
+{
+  "checked": "2026-10-16",
+  "courses": [
+    {
+      "title": "Docker for Developers: Create and Manage Docker Containers",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/docker-for-developers-create-and-manage-docker-containers",
+      "duration": "2h 10m",
+      "level": "Intermediate",
+      "updated": "Released 10/20/2025",
+      "why": "The most current developer-focused Docker course on LinkedIn Learning (Shelley Benhoff): building, running and managing containers the way you will in the project."
+    },
+    {
+      "title": "Kubernetes: Microservices",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/kubernetes-microservices-23787657",
+      "duration": "1h 20m",
+      "level": "Beginner",
+      "updated": "Released 4/26/2024",
+      "why": "A short, recent course (Kim Schlesinger, a certification exam developer) on deploying microservices to a cluster and service discovery: exactly the shape of this path's project."
+    },
+    {
+      "title": "Learning Azure Kubernetes Service (AKS)",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/learning-azure-kubernetes-service-aks-24206277",
+      "duration": "2h 32m",
+      "level": "Beginner",
+      "updated": "Released 4/23/2025",
+      "why": "You have deployed to AKS at The Dot Corp; this course (Richard Hooper, Azure MVP) turns that hands-on work into a certificate and fills in the parts of AKS you may not have touched."
+    }
+  ],
+  "portals": [
+    {
+      "name": "Kubernetes basics tutorial (official)",
+      "url": "https://kubernetes.io/docs/tutorials/kubernetes-basics/",
+      "what": "The official interactive walkthrough: create a cluster, deploy, expose, scale and update an app."
+    },
+    {
+      "name": "Killercoda CKAD practice",
+      "url": "https://killercoda.com/ckad",
+      "what": "Free browser-based Kubernetes clusters with CKAD-style tasks; the best way to practise kubectl without installing anything."
+    },
+    {
+      "name": "Docker: build and share a containerized application (official)",
+      "url": "https://docs.docker.com/get-started/tutorials/run-an-app/",
+      "what": "Containerise an app, persist data, use multi-container apps and Compose, with image-building best practices."
+    },
+    {
+      "name": "roadmap.sh Kubernetes roadmap",
+      "url": "https://roadmap.sh/kubernetes",
+      "what": "A topic map from pods to operators, useful as a checklist; the matching Docker roadmap is at roadmap.sh/docker."
+    },
+    {
+      "name": "GeeksforGeeks: Kubernetes interview questions",
+      "url": "https://www.geeksforgeeks.org/devops/kubernetes-interview-questions/",
+      "what": "Common Kubernetes interview questions to answer out loud; the site also has a Docker interview questions page."
+    }
+  ],
+  "assessments": [
+    {
+      "name": "Microsoft Applied Skills: Deploy cloud-native apps using Azure Container Apps",
+      "provider": "Microsoft",
+      "url": "https://learn.microsoft.com/en-us/credentials/applied-skills/deploy-cloud-native-apps-using-azure-container-apps/",
+      "cost": "Free",
+      "format": "Interactive hands-on lab assessment on Microsoft Learn (ACR, Container Apps, Azure Pipelines CI, scaling, revisions); 72 hours between lab launches",
+      "credential": "Microsoft Applied Skills credential on your Microsoft Learn profile, shareable to LinkedIn",
+      "why": "A free, practical container credential in the Azure ecosystem you already work in. (The AKS Applied Skill was retired in June 2024, so this is the container one to take.)"
+    },
+    {
+      "name": "Kubernetes and Cloud Native Associate (KCNA)",
+      "provider": "Linux Foundation / CNCF",
+      "url": "https://training.linuxfoundation.org/certification/kubernetes-cloud-native-associate/",
+      "cost": "$250 (includes one retake)",
+      "format": "90-minute online proctored multiple-choice exam",
+      "credential": "CNCF certificate and digital badge, valid for 2 years",
+      "why": "The entry-level Kubernetes certification: concepts, not command-line speed. A good first step if CKAD feels too far."
+    },
+    {
+      "name": "Certified Kubernetes Application Developer (CKAD)",
+      "provider": "Linux Foundation / CNCF",
+      "url": "https://training.linuxfoundation.org/certification/certified-kubernetes-application-developer-ckad/",
+      "cost": "$445 (includes one retake)",
+      "format": "2-hour online proctored, performance-based exam: real tasks on a command line running Kubernetes (v1.37)",
+      "credential": "CNCF certificate and digital badge, valid for 2 years",
+      "why": "The Kubernetes certification developers are asked about. Practise on Killercoda until the tasks feel routine before booking."
+    }
+  ]
+}

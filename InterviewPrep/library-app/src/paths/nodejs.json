@@ -1,0 +1,83 @@
+{
+  "checked": "2026-10-16",
+  "courses": [
+    {
+      "title": "Node.js Essential Training",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/node-js-essential-training-14888164",
+      "duration": "1h 19m",
+      "level": "Intermediate",
+      "updated": "Released 6/6/2022",
+      "why": "A short, practical pass over the Node.js core (modules, file system, I/O, running JavaScript on the server) by Eve Porcello; quick to finish and a clean certificate for the Node.js skill."
+    },
+    {
+      "title": "Building RESTful APIs with Node.js and Express",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/building-restful-apis-with-node-js-and-express-16069959",
+      "duration": "1h 17m",
+      "level": "Intermediate",
+      "updated": "Released 11/14/2022",
+      "why": "Covers building and testing an Express REST API end to end, which matches the node-apis chapter and the project for this path."
+    },
+    {
+      "title": "TypeScript for Node.js Developers",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/typescript-for-node-js-developers-25164739",
+      "duration": "1h 21m",
+      "level": "Intermediate",
+      "updated": "Released 1/31/2025",
+      "why": "The most current of the three: modern TypeScript features (decorators, Disposable/AsyncDisposable) applied in Node.js projects, which is how Node is written in most teams today."
+    }
+  ],
+  "portals": [
+    {
+      "name": "Node.js Learn (official)",
+      "url": "https://nodejs.org/learn/getting-started/introduction-to-nodejs",
+      "what": "The official guides on the event loop, asynchronous work, streams, file system and modules; the reference to check answers against."
+    },
+    {
+      "name": "roadmap.sh: Node.js questions",
+      "url": "https://roadmap.sh/questions/nodejs",
+      "what": "A bank of Node.js interview questions with short answers, good for a quick self-quiz after each chapter."
+    },
+    {
+      "name": "LeetCode: 30 Days of JavaScript",
+      "url": "https://leetcode.com/studyplan/30-days-of-javascript/",
+      "what": "Thirty small problems on closures, promises, timers and function composition, the async JavaScript that Node interviews test."
+    },
+    {
+      "name": "NodeSchool",
+      "url": "https://nodeschool.io/",
+      "what": "Free self-guided terminal workshops (learnyounode, stream-adventure) that make you write real Node.js code against automatic checks."
+    }
+  ],
+  "assessments": [
+    {
+      "name": "Node (Basic) certification",
+      "provider": "HackerRank",
+      "url": "https://www.hackerrank.com/skills-verification/nodejs_basic",
+      "cost": "Free",
+      "format": "1-hour online test, 2 coding questions, one attempt (topics include package and module management)",
+      "credential": "HackerRank certificate with a shareable URL for LinkedIn and your resume",
+      "why": "The quickest Node-specific credential. The OpenJS JSNAD and JSNSD exams were retired on 30 September 2025, so HackerRank's Node certificates are now the main Node-specific option."
+    },
+    {
+      "name": "Node.js (Intermediate) certification",
+      "provider": "HackerRank",
+      "url": "https://www.hackerrank.com/skills-verification/nodejs_intermediate",
+      "cost": "Free",
+      "format": "1-hour online test, 2 coding questions, one attempt (topics include event-driven architecture)",
+      "credential": "HackerRank certificate with a shareable URL",
+      "why": "The level a senior engineer should show; it tests event-driven Node code rather than syntax."
+    },
+    {
+      "name": "Rest API (Intermediate) certification",
+      "provider": "HackerRank",
+      "url": "https://www.hackerrank.com/skills-verification/rest_api_intermediate",
+      "cost": "Free",
+      "format": "1 hr 30 min online test, 2 questions on working with APIs; one attempt only",
+      "credential": "HackerRank certificate with a shareable URL",
+      "why": "Pairs with the Node.js API work in this path and is a common filter in backend job applications."
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "checked": "2026-10-16",
+  "courses": [
+    {
+      "title": "Learning RabbitMQ: Efficient Message Queuing",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/learning-rabbitmq-efficient-message-queuing",
+      "duration": "1h 22m",
+      "level": "Beginner",
+      "updated": "Released 12/1/2025",
+      "why": "You have already worked through this one (Peter Morlion; its exercise files are in your portfolio under LinkedInLearning/). If you have not claimed it yet, finish any remaining videos and add the certificate of completion under Licenses & certifications: it is the most current RabbitMQ course on LinkedIn Learning."
+    },
+    {
+      "title": "Data Resilience with Spring and RabbitMQ Event Streaming",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/data-resilience-with-spring-and-rabbitmq-event-streaming",
+      "duration": "2h 3m",
+      "level": "Intermediate",
+      "updated": "Released 9/10/2024",
+      "why": "The complementary next step: RabbitMQ resilience, streams and running RabbitMQ on Kubernetes (Gregory Green). The code is Java and Spring, but the RabbitMQ parts (quorum queues, streams, failover) are what interviewers ask about, whatever your language."
+    },
+    {
+      "title": "Software Architecture: Patterns for Developers",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/software-architecture-patterns-for-developers-25635719",
+      "duration": "1h 28m",
+      "level": "Intermediate",
+      "updated": "Released 4/9/2025",
+      "why": "By the same instructor as your RabbitMQ course; covers event-driven, microservice and other architecture patterns, so you can explain where a message broker fits and why, not just how to call it."
+    }
+  ],
+  "portals": [
+    {
+      "name": "RabbitMQ tutorials (official)",
+      "url": "https://www.rabbitmq.com/tutorials",
+      "what": "The seven classic tutorials (hello world, work queues, pub/sub, routing, topics, RPC, publisher confirms) in Python, JavaScript, Java, C# and more; redo them in Python with pika or aio-pika."
+    },
+    {
+      "name": "RabbitMQ reliability guide (official docs)",
+      "url": "https://www.rabbitmq.com/docs/reliability",
+      "what": "How acknowledgements, publisher confirms, durability and clustering combine to avoid message loss: the answer to the most common senior RabbitMQ interview question."
+    },
+    {
+      "name": "Quorum queues (official docs)",
+      "url": "https://www.rabbitmq.com/docs/quorum-queues",
+      "what": "Why quorum queues are the default for data you cannot lose, how they replicate, and what replaced classic mirrored queues in RabbitMQ 4.x."
+    },
+    {
+      "name": "CloudAMQP: RabbitMQ best practices",
+      "url": "https://www.cloudamqp.com/blog/part1-rabbitmq-best-practice/",
+      "what": "Practical advice from a large RabbitMQ host on queues, connections, prefetch and performance; good material for 'how would you run this in production?'."
+    }
+  ],
+  "assessments": [
+    {
+      "name": "Node.js (Intermediate)",
+      "provider": "HackerRank",
+      "url": "https://www.hackerrank.com/skills-verification/nodejs_intermediate",
+      "cost": "Free",
+      "format": "Timed online test, 1 hour, 2 coding questions (lists event-driven architecture as a topic), one attempt",
+      "credential": "HackerRank certificate with a shareable URL",
+      "why": "There is no current RabbitMQ certification from the RabbitMQ team or Broadcom, so prove the language you use RabbitMQ from. This test lists event-driven architecture as a topic, and your ShopFlow practice project uses Node.js and amqplib."
+    },
+    {
+      "name": "REST API (Intermediate)",
+      "provider": "HackerRank",
+      "url": "https://www.hackerrank.com/skills-verification/rest_api_intermediate",
+      "cost": "Free",
+      "format": "Timed online test, 1 hour 30 minutes, 2 coding questions, one attempt",
+      "credential": "HackerRank certificate with a shareable URL",
+      "why": "Message brokers sit behind APIs in almost every design; this certificate covers the API side of your RabbitMQ project."
+    },
+    {
+      "name": "Data Streaming Engineer Foundations",
+      "provider": "Confluent",
+      "url": "https://developer.confluent.io/certificates/",
+      "cost": "Free",
+      "format": "Online exam, 30 multiple-choice and true/false questions, 60 minutes, not proctored",
+      "credential": "Confluent digital badge",
+      "why": "If you want a messaging credential at all, this free streaming exam is the closest available, and knowing Kafka's model sharpens your 'RabbitMQ or Kafka?' answer."
+    }
+  ]
+}

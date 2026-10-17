@@ -1,0 +1,79 @@
+{
+  "checked": "2026-10-16",
+  "courses": [
+    {
+      "title": "Programming Foundations: Algorithms",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/programming-foundations-algorithms-22973142",
+      "duration": "2h 45m",
+      "level": "Beginner",
+      "updated": "Released 1/11/2024",
+      "why": "Searching, sorting, recursion, common data structures and Big-O by Joe Marini; a quick refresher before the pattern work, set up in GitHub Codespaces."
+    },
+    {
+      "title": "Data Structures in JavaScript: Trees and Graphs",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/data-structures-in-javascript-trees-and-graphs",
+      "duration": "2h 1m",
+      "level": "Intermediate",
+      "updated": "Released 6/12/2025",
+      "why": "Trees, BSTs and graphs in JavaScript with DFS/BFS and classic problems (islands, clone graph, course schedule), the hardest common interview area."
+    }
+  ],
+  "portals": [
+    {
+      "name": "LeetCode: Top Interview 150",
+      "url": "https://leetcode.com/studyplan/top-interview-150/",
+      "what": "150 classic interview problems grouped by topic; the standard list companies draw from."
+    },
+    {
+      "name": "NeetCode practice",
+      "url": "https://neetcode.io/practice",
+      "what": "The NeetCode 150 roadmap by pattern, with a free video explanation for each problem."
+    },
+    {
+      "name": "HackerRank Interview Preparation Kit",
+      "url": "https://www.hackerrank.com/interview/interview-preparation-kit",
+      "what": "Problems grouped by topic in the same editor HackerRank online assessments use, good practice for timed tests."
+    },
+    {
+      "name": "Grind 75 (Tech Interview Handbook)",
+      "url": "https://www.techinterviewhandbook.org/grind75",
+      "what": "A week-by-week plan of the 75 highest-value problems that adapts to the hours you have."
+    },
+    {
+      "name": "Codewars",
+      "url": "https://www.codewars.com/",
+      "what": "Short ranked kata in TypeScript and Python for daily warm-ups."
+    }
+  ],
+  "assessments": [
+    {
+      "name": "Problem Solving (Basic) certification",
+      "provider": "HackerRank",
+      "url": "https://www.hackerrank.com/skills-verification/problem_solving_basic",
+      "cost": "Free",
+      "format": "1 hr 30 min online test, 2 coding questions on arrays and strings",
+      "credential": "HackerRank certificate with a shareable URL",
+      "why": "The quickest problem-solving credential and a warm-up for the Intermediate test."
+    },
+    {
+      "name": "Problem Solving (Intermediate) certification",
+      "provider": "HackerRank",
+      "url": "https://www.hackerrank.com/skills-verification/problem_solving_intermediate",
+      "cost": "Free",
+      "format": "1 hr 30 min online test, 2 coding questions on data structures (hash maps, stacks, queues)",
+      "credential": "HackerRank certificate with a shareable URL",
+      "why": "The level that matters for senior roles; many online assessments use the same format."
+    },
+    {
+      "name": "Software Engineer certification",
+      "provider": "HackerRank",
+      "url": "https://www.hackerrank.com/skills-verification/software_engineer",
+      "cost": "Free",
+      "format": "1 hr 15 min online test, 3 questions covering problem solving, SQL and REST API",
+      "credential": "HackerRank role certificate with a shareable URL",
+      "why": "A role certificate that combines algorithms with practical backend skills; sits well next to your Frontend Developer (React) certificate."
+    }
+  ]
+}

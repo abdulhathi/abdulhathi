@@ -1,0 +1,83 @@
+{
+  "checked": "2026-10-16",
+  "courses": [
+    {
+      "title": "Applied Machine Learning: Foundations",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/applied-machine-learning-foundations-21404006",
+      "duration": "2h 17m",
+      "level": "Beginner",
+      "updated": "Released 5/22/2024",
+      "why": "Matt Harrison's end-to-end workflow in Python: exploration, data processing, building, evaluating and tuning a model, then deployment with MLflow. The lifecycle the ML chapters teach, in one practical pass."
+    },
+    {
+      "title": "Applied Machine Learning: Supervised Learning",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/applied-machine-learning-supervised-learning",
+      "duration": "2h 26m",
+      "level": "Intermediate",
+      "updated": "Released 7/25/2025",
+      "why": "The follow-on course: classification and regression from linear models to XGBoost, plus evaluation, tuning and serving."
+    },
+    {
+      "title": "Machine Learning with scikit-learn",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/machine-learning-with-scikit-learn-28473142",
+      "duration": "1h 8m",
+      "level": "Advanced",
+      "updated": "Released 1/22/2026",
+      "why": "The newest and shortest: supervised and unsupervised learning in scikit-learn, including pipelines. Good as a fast refresher right before an interview."
+    }
+  ],
+  "portals": [
+    {
+      "name": "Kaggle Learn: Intro to Machine Learning",
+      "url": "https://www.kaggle.com/learn/intro-to-machine-learning",
+      "what": "A free, hands-on course of short lessons with exercise notebooks (validation, under- and overfitting, random forests)."
+    },
+    {
+      "name": "Google Machine Learning Crash Course",
+      "url": "https://developers.google.com/machine-learning/crash-course",
+      "what": "Google's practical introduction: regression and classification, data preparation, overfitting, neural networks, embeddings and production ML."
+    },
+    {
+      "name": "GeeksforGeeks: Machine learning interview questions",
+      "url": "https://www.geeksforgeeks.org/machine-learning/machine-learning-interview-questions/",
+      "what": "A long list of ML interview questions with answers, from bias–variance to ensembles and evaluation metrics."
+    },
+    {
+      "name": "DataLemur: interview questions (ML and statistics)",
+      "url": "https://datalemur.com/questions",
+      "what": "Real interview questions from large tech companies; filter to Machine Learning, Statistics and Probability. Many free, some paid."
+    }
+  ],
+  "assessments": [
+    {
+      "name": "Kaggle Learn course certificates",
+      "provider": "Kaggle",
+      "url": "https://www.kaggle.com/learn/intro-to-machine-learning",
+      "cost": "Free",
+      "format": "Complete every lesson's exercise notebook; no proctored exam",
+      "credential": "Kaggle certificate of completion, linked from your Kaggle profile",
+      "why": "The quickest credential: a few hours each for Intro to ML and Intermediate ML. It shows hands-on practice, not certification-level depth."
+    },
+    {
+      "name": "AWS Certified Machine Learning Engineer – Associate",
+      "provider": "Amazon Web Services",
+      "url": "https://aws.amazon.com/certification/certified-machine-learning-engineer-associate/",
+      "cost": "$75 (MLA-C02 beta, English); the English MLA-C01 ($150) closed on 28 September 2026",
+      "format": "MLA-C02 beta: 85 multiple-choice and multiple-response questions in 170 minutes; Pearson VUE test centre or online proctored. MLA-C01 stays available only in Korean, Japanese and Simplified Chinese until MLA-C02 is generally available.",
+      "credential": "AWS certification with a Credly badge",
+      "why": "Validates building, deploying and operating ML workloads, which pairs well with your cloud and production background. The English MLA-C01 is available through September 28, 2026."
+    },
+    {
+      "name": "Google Cloud Professional Machine Learning Engineer",
+      "provider": "Google Cloud",
+      "url": "https://cloud.google.com/learn/certification/machine-learning-engineer",
+      "cost": "$200",
+      "format": "50–60 multiple-choice and multiple-select questions in 2 hours; online or onsite proctored (Pearson VUE)",
+      "credential": "Google Cloud professional certification",
+      "why": "The most prestigious of the three: architecting, serving, automating and monitoring ML on Google Cloud. Recently updated for the Gemini Enterprise Agent Platform; Google recommends 3+ years of industry experience."
+    }
+  ]
+}

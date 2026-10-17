@@ -1,0 +1,88 @@
+{
+  "checked": "2026-10-16",
+  "courses": [
+    {
+      "title": "Web Security: OAuth and OpenID Connect",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/web-security-oauth-and-openid-connect-23016424",
+      "duration": "1h 37m",
+      "level": "Advanced",
+      "updated": "Released 10/27/2023",
+      "why": "Tokens, scopes, the OAuth flows and OpenID Connect by Keith Casey: the identity half of this path, which comes up in every enterprise interview."
+    },
+    {
+      "title": "Learning the OWASP Top 10 (2025 Version)",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/learning-the-owasp-top-10-2025-version",
+      "duration": "3h 14m",
+      "level": "Beginner",
+      "updated": "Released 2/19/2026",
+      "why": "The 2025 OWASP Top 10 with real breach examples and prevention. Longer than 3 hours, but it is the current list, released this year."
+    },
+    {
+      "title": "The OWASP API 2023 Top 10: An Overview",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/the-owasp-api-2023-top-10-an-overview",
+      "duration": "42m",
+      "level": "Intermediate",
+      "updated": "Released 1/23/2024",
+      "why": "A 42-minute tour of the API-specific risks (broken object level authorisation and the rest) that backend interviews ask about."
+    }
+  ],
+  "portals": [
+    {
+      "name": "PortSwigger Web Security Academy: learning paths",
+      "url": "https://portswigger.net/web-security/learning-paths",
+      "what": "Free, structured paths through web vulnerabilities, from the makers of Burp Suite."
+    },
+    {
+      "name": "PortSwigger Web Security Academy: all labs",
+      "url": "https://portswigger.net/web-security/all-labs",
+      "what": "Hundreds of free hands-on labs (XSS, SQL injection, SSRF, JWT, OAuth) to exploit and then explain the fix."
+    },
+    {
+      "name": "OWASP Juice Shop",
+      "url": "https://owasp.org/projects/juice-shop",
+      "what": "A deliberately insecure web app you run locally and attack, covering the OWASP Top 10."
+    },
+    {
+      "name": "OWASP Cheat Sheet Series",
+      "url": "https://cheatsheetseries.owasp.org/",
+      "what": "Concise defensive guidance per topic (JWT, OAuth, session management, input validation) to check your answers."
+    },
+    {
+      "name": "OAuth 2.0 Playground (oauth.com)",
+      "url": "https://www.oauth.com/playground/",
+      "what": "Step through the authorization code, PKCE and OpenID Connect flows against a real server and see every request."
+    }
+  ],
+  "assessments": [
+    {
+      "name": "Developing Secure Software (LFD121)",
+      "provider": "OpenSSF / Linux Foundation",
+      "url": "https://training.linuxfoundation.org/training/developing-secure-software-lfd121/",
+      "cost": "Free",
+      "format": "Self-paced online course (16–20 hours of material) with labs, quizzes and a final exam",
+      "credential": "Linux Foundation digital badge and certificate of completion",
+      "why": "The best free credential for a developer (not a security specialist): secure design, common vulnerabilities and supply-chain security."
+    },
+    {
+      "name": "Certified in Cybersecurity (CC)",
+      "provider": "ISC2",
+      "url": "https://www.isc2.org/certifications/cc",
+      "cost": "About $199 exam fee plus a $50 annual maintenance fee (the free One Million Certified offer closed to new candidates on 20 May 2026; check isc2.org for the current price)",
+      "format": "Proctored multiple-choice exam, entry level, no work experience required",
+      "credential": "ISC2 certification with a verifiable digital badge",
+      "why": "A recognised name on a profile; broad security fundamentals rather than development-specific."
+    },
+    {
+      "name": "Burp Suite Certified Practitioner (BSCP)",
+      "provider": "PortSwigger",
+      "url": "https://portswigger.net/web-security/certification",
+      "cost": "About $99 for the exam, plus an active Burp Suite Professional licence",
+      "format": "4-hour hands-on practical exam: find and exploit vulnerabilities in web apps",
+      "credential": "Digital certificate with a unique ID, valid for five years",
+      "why": "The most respected hands-on web-security credential here; take it after working through the Web Security Academy labs."
+    }
+  ]
+}

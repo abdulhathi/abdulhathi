@@ -1,0 +1,79 @@
+{
+  "checked": "2026-10-16",
+  "courses": [
+    {
+      "title": "System Design in Cloud",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/system-design-in-cloud",
+      "duration": "51m",
+      "level": "Beginner",
+      "updated": "Released 10/31/2023",
+      "why": "A very short course (Priyanka Vergadia) that designs three systems end to end on Google Cloud: video streaming, maps and ride sharing. Good for the shape of a design answer."
+    },
+    {
+      "title": "Software Architecture: Patterns for Developers",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/software-architecture-patterns-for-developers-25635719",
+      "duration": "1h 28m",
+      "level": "Intermediate",
+      "updated": "Released 4/9/2025",
+      "why": "Recent and practical (Peter Morlion): layered, event-driven, microservice and other patterns, how to choose between them and how to recognise them in an existing system."
+    }
+  ],
+  "portals": [
+    {
+      "name": "The System Design Primer (GitHub)",
+      "url": "https://github.com/donnemartin/system-design-primer",
+      "what": "The classic free guide: building blocks, trade-offs and worked interview questions with solutions."
+    },
+    {
+      "name": "Hello Interview: system design in a hurry",
+      "url": "https://www.hellointerview.com/learn/system-design/in-a-hurry/introduction",
+      "what": "A free, interview-focused delivery framework and the core concepts to cover, with worked problem breakdowns elsewhere on the site."
+    },
+    {
+      "name": "ByteByteGo system design guides",
+      "url": "https://bytebytego.com/guides/",
+      "what": "Short illustrated explainers of real-world architectures and building blocks (caching, queues, databases, API design)."
+    },
+    {
+      "name": "roadmap.sh System Design roadmap",
+      "url": "https://roadmap.sh/system-design",
+      "what": "A topic map from performance and scalability basics to patterns; use it to find gaps."
+    },
+    {
+      "name": "GeeksforGeeks: top system design interview questions",
+      "url": "https://www.geeksforgeeks.org/system-design/top-10-system-design-interview-questions-and-answers/",
+      "what": "Common design prompts (URL shortener, chat, news feed, rate limiter…) to practise out loud against a clock."
+    }
+  ],
+  "assessments": [
+    {
+      "name": "Software Engineer (role certification)",
+      "provider": "HackerRank",
+      "url": "https://www.hackerrank.com/skills-verification/software_engineer",
+      "cost": "Free",
+      "format": "Timed online test, about 1 hour 15 minutes, 3 questions covering problem solving, SQL and REST APIs",
+      "credential": "HackerRank role certificate with a shareable URL",
+      "why": "There is no general system design certification; this role certificate shows the breadth (algorithms, data, APIs) a design interviewer expects you to build on."
+    },
+    {
+      "name": "AWS Certified Solutions Architect – Associate",
+      "provider": "Amazon Web Services",
+      "url": "https://aws.amazon.com/certification/certified-solutions-architect-associate/",
+      "cost": "$150",
+      "format": "130-minute exam, 65 multiple-choice and multiple-response questions, test centre or online proctored",
+      "credential": "AWS certification and Credly badge, valid for 3 years",
+      "why": "The most widely recognised architecture certification; its scenarios (availability, scaling, storage and database choices, cost) are system design questions with AWS names."
+    },
+    {
+      "name": "Google Cloud Professional Cloud Developer",
+      "provider": "Google Cloud",
+      "url": "https://cloud.google.com/learn/certification/cloud-developer",
+      "cost": "$200 plus tax",
+      "format": "2-hour proctored exam, 50–60 multiple-choice and multiple-select questions",
+      "credential": "Google Cloud professional certification and digital badge",
+      "why": "If your target roles run on Google Cloud: it tests designing scalable, reliable cloud-native applications, which overlaps heavily with design interviews."
+    }
+  ]
+}

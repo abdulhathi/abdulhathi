@@ -1,0 +1,74 @@
+{
+  "checked": "2026-10-16",
+  "courses": [
+    {
+      "title": "React Essential Training",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/react-essential-training",
+      "duration": "1h 45m",
+      "level": "Beginner",
+      "updated": "Released 10/4/2024",
+      "why": "The current flagship React course by Eve Porcello: components, hooks, Vite and Next, and React Server Components vs Client Components. Fast for an experienced developer and gives an up-to-date certificate."
+    },
+    {
+      "title": "React: Using TypeScript",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/react-using-typescript-23743818",
+      "duration": "47m",
+      "level": "Intermediate",
+      "updated": "Released 4/11/2024",
+      "why": "A short course on typing React components and hooks, which most React job descriptions now require."
+    },
+    {
+      "title": "Building Scalable React UI Component Libraries with Storybook",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/building-scalable-react-ui-component-libraries-with-storybook",
+      "duration": "1h 14m",
+      "level": "Intermediate",
+      "updated": "Released 9/15/2025",
+      "why": "The newest of the three: component libraries and design systems, the 'responsive UI component libraries' skill senior front-end JDs ask for."
+    }
+  ],
+  "portals": [
+    {
+      "name": "react.dev: Learn React (official)",
+      "url": "https://react.dev/learn",
+      "what": "The official guides with interactive challenges on state, effects, refs and 'you might not need an effect'."
+    },
+    {
+      "name": "GreatFrontEnd: React interview questions",
+      "url": "https://www.greatfrontend.com/questions/react-interview-questions",
+      "what": "React-specific front-end interview questions and component-building exercises, many free."
+    },
+    {
+      "name": "roadmap.sh: React questions",
+      "url": "https://roadmap.sh/questions/react",
+      "what": "A bank of React interview questions with short answers for quick self-quizzing."
+    },
+    {
+      "name": "Frontend Mentor challenges",
+      "url": "https://www.frontendmentor.io/challenges",
+      "what": "Realistic UI designs to build from scratch, good practice for live React component rounds."
+    }
+  ],
+  "assessments": [
+    {
+      "name": "JavaScript (Intermediate) certification",
+      "provider": "HackerRank",
+      "url": "https://www.hackerrank.com/skills-verification/javascript_intermediate",
+      "cost": "Free",
+      "format": "1 hr 30 min online test, 2 coding questions (topics include design patterns)",
+      "credential": "HackerRank certificate with a shareable URL",
+      "why": "You already hold HackerRank's Frontend Developer (React) role certificate; JavaScript (Intermediate) adds the language depth behind it and is quick to earn."
+    },
+    {
+      "name": "Software Engineer certification",
+      "provider": "HackerRank",
+      "url": "https://www.hackerrank.com/skills-verification/software_engineer",
+      "cost": "Free",
+      "format": "1 hr 15 min online test, 3 questions covering problem solving, SQL and REST API",
+      "credential": "HackerRank role certificate with a shareable URL",
+      "why": "A second role certificate next to your Frontend Developer (React) one, showing full-stack breadth."
+    }
+  ]
+}

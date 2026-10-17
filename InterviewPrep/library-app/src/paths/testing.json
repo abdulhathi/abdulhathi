@@ -1,0 +1,74 @@
+{
+  "checked": "2026-10-16",
+  "courses": [
+    {
+      "title": "Playwright: Design Patterns",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/playwright-design-patterns",
+      "duration": "1h 22m",
+      "level": "Intermediate",
+      "updated": "Released 11/25/2024",
+      "why": "Page Object Model, fixtures and data-driven testing in Playwright: how to keep an end-to-end suite maintainable, the exact topic of senior testing questions."
+    },
+    {
+      "title": "Unit Testing in Python",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/unit-testing-in-python",
+      "duration": "1h 31m",
+      "level": "Advanced",
+      "updated": "Released 3/3/2020",
+      "why": "Older (2020), but still the clearest short course on test-driven development with pytest; LinkedIn Learning has no newer pytest-focused course."
+    },
+    {
+      "title": "Playwright Essential Training: Abstractions, Fixtures, and Complex Scenarios",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/playwright-essential-training-abstractions-fixtures-and-complex-scenarios",
+      "duration": "4h 9m",
+      "level": "Intermediate",
+      "updated": "Released 5/29/2025",
+      "why": "Longer than 3 hours, but the most complete current Playwright course: abstractions, fixtures and complex scenarios as a suite grows. Take it if you want depth after Design Patterns."
+    }
+  ],
+  "portals": [
+    {
+      "name": "Playwright docs: Getting started (official)",
+      "url": "https://playwright.dev/docs/intro",
+      "what": "Install, project structure, running tests, the HTML report and UI Mode; the reference for every Playwright API."
+    },
+    {
+      "name": "Microsoft Learn: Build your first end-to-end test with Playwright",
+      "url": "https://learn.microsoft.com/en-us/training/modules/build-with-playwright/",
+      "what": "A free 8-unit module with exercises and a module assessment that records a pass on your Microsoft Learn profile."
+    },
+    {
+      "name": "pytest: Get started (official)",
+      "url": "https://docs.pytest.org/en/stable/getting-started.html",
+      "what": "Install and first tests, then fixtures, parametrisation and plugins in the rest of the docs."
+    },
+    {
+      "name": "React Testing Library: Introduction (official)",
+      "url": "https://testing-library.com/docs/react-testing-library/intro/",
+      "what": "The guiding principles and queries behind testing components the way users use them."
+    }
+  ],
+  "assessments": [
+    {
+      "name": "PCET – Certified Entry-Level Tester with Python (PCET-30-01)",
+      "provider": "Python Institute (OpenEDG)",
+      "url": "https://pythoninstitute.org/pcet",
+      "cost": "From $69 (exam with a retake from $86)",
+      "format": "35 questions in 45 minutes, 75% to pass; online through OpenEDG TestNow",
+      "credential": "Digital certificate with verification code and a Credly badge, valid for 7 years",
+      "why": "A quick, inexpensive testing credential: testing principles and techniques, debugging, and Python testing tools."
+    },
+    {
+      "name": "ISTQB Certified Tester Foundation Level (CTFL)",
+      "provider": "ISTQB, delivered in the US by ASTQB / AT*SQA",
+      "url": "https://astqb.org/istqb-faqs/what-is-the-price-of-an-istqb-exam/",
+      "cost": "$229 in the US",
+      "format": "Multiple-choice exam; at home online, at a public centre or onsite",
+      "credential": "ISTQB CTFL certificate, recognised internationally",
+      "why": "The most widely recognised software-testing certification. It is QA-flavoured rather than developer-flavoured, so pair it with the Playwright project to show you can also automate."
+    }
+  ]
+}

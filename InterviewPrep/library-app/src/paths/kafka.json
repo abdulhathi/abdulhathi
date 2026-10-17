@@ -1,0 +1,83 @@
+{
+  "checked": "2026-10-16",
+  "courses": [
+    {
+      "title": "Apache Kafka Essential Training: Getting Started",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/apache-kafka-essential-training-getting-started-22398044",
+      "duration": "1h 15m",
+      "level": "Intermediate",
+      "updated": "Released 6/23/2023",
+      "why": "The quickest Kafka certificate on LinkedIn Learning (Kumaran Ponnambalam): topics, partitions, consumer groups, the command line and a small use-case project. It predates Kafka 4.0, so read the kafka-core chapter for KRaft and the new consumer protocol."
+    },
+    {
+      "title": "Kafka: Building Reliable Real-Time Event Systems",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/kafka-building-reliable-real-time-event-systems",
+      "duration": "4h 13m (longer than the 3-hour target)",
+      "level": "Intermediate",
+      "updated": "Released 5/18/2026",
+      "why": "The most current Kafka course on LinkedIn Learning (KodeKloud): producers and consumers in depth, Confluent's offerings, Kafka Connect and building an event-driven system. Worth the extra time if you want one Kafka certificate that reflects 2026 Kafka."
+    },
+    {
+      "title": "Apache Kafka 101",
+      "provider": "Confluent Developer",
+      "url": "https://developer.confluent.io/courses/apache-kafka/events/",
+      "duration": "1h 16m (16 modules, plus untimed exercises)",
+      "level": "Beginner",
+      "updated": "Maintained by Confluent",
+      "why": "Free and written by the company founded by Kafka's creators. It is also the best preparation for Confluent's free Data Streaming Engineer Foundations exam below. Follow it with the 39-minute 'Apache Kafka for Python Developers' course on the same site."
+    }
+  ],
+  "portals": [
+    {
+      "name": "Apache Kafka quickstart (official)",
+      "url": "https://kafka.apache.org/quickstart",
+      "what": "Run a single-node KRaft broker, create a topic, produce and consume: the hands-on baseline before any interview."
+    },
+    {
+      "name": "Confluent Developer: free Kafka courses",
+      "url": "https://developer.confluent.io/courses/",
+      "what": "Short official courses on Kafka Streams, Schema Registry, Kafka Connect, internal architecture, security and Python clients."
+    },
+    {
+      "name": "Conduktor Kafkademy",
+      "url": "https://www.conduktor.io/kafka",
+      "what": "Free, well-illustrated lessons on Kafka concepts and the CLI, from topics and partitions to producer and consumer settings."
+    },
+    {
+      "name": "GeeksforGeeks: Kafka interview questions",
+      "url": "https://www.geeksforgeeks.org/apache-kafka/kafka-interview-questions/",
+      "what": "90+ Kafka interview questions including KRaft, ISR, acks, min.insync.replicas and idempotent producers (prefer this newer page; the older 'Top 70' page still describes ZooKeeper)."
+    }
+  ],
+  "assessments": [
+    {
+      "name": "Data Streaming Engineer Foundations",
+      "provider": "Confluent",
+      "url": "https://developer.confluent.io/certificates/",
+      "cost": "Free",
+      "format": "Online exam, 30 multiple-choice and true/false questions, 60 minutes, not proctored, take it any time",
+      "credential": "Confluent digital badge sent by email after you pass",
+      "why": "The fastest credible Kafka credential: free, unproctored, and from Confluent. Take it right after Apache Kafka 101."
+    },
+    {
+      "name": "Confluent Fundamentals Accreditation for Apache Kafka",
+      "provider": "Confluent",
+      "url": "https://training.confluent.io/learn/courses/1073/confluent-apache-kafka-fundamentals-course-accreditation",
+      "cost": "Free",
+      "format": "Free self-paced training with an accreditation exam",
+      "credential": "Shareable Confluent digital badge",
+      "why": "Confluent's official first step towards its paid certifications; a second free badge that shows structured Kafka study."
+    },
+    {
+      "name": "Confluent Certified Developer for Apache Kafka (CCDAK)",
+      "provider": "Confluent",
+      "url": "https://www.confluent.io/certification/",
+      "cost": "About $150 per attempt (Confluent's page shows the price at checkout; third-party guides list $150)",
+      "format": "90-minute proctored online exam; multiple-choice, matching and ordering questions",
+      "credential": "Confluent certification and digital badge, valid for 2 years",
+      "why": "The recognised Kafka developer certification. Worth it once you have built the Kafka project and passed the free exams; it is the credential recruiters search for."
+    }
+  ]
+}

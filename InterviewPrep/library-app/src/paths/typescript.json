@@ -1,0 +1,88 @@
+{
+  "checked": "2026-10-16",
+  "courses": [
+    {
+      "title": "Scaling TypeScript for Enterprise Developers",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/scaling-typescript-for-enterprise-developers",
+      "duration": "1h 45m",
+      "level": "Advanced",
+      "updated": "Released 8/23/2024",
+      "why": "Pitched at experienced developers: generics, utility types, organising large codebases, and testing with Vitest, which matches what senior interviews probe."
+    },
+    {
+      "title": "TypeScript for Node.js Developers",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/typescript-for-node-js-developers-25164739",
+      "duration": "1h 21m",
+      "level": "Intermediate",
+      "updated": "Released 1/31/2025",
+      "why": "Current TypeScript features (decorators, Disposable/AsyncDisposable, SuppressedError) applied on the server, a good complement if you take the advanced course first."
+    },
+    {
+      "title": "TypeScript Essential Training",
+      "provider": "LinkedIn Learning",
+      "url": "https://www.linkedin.com/learning/typescript-essential-training-14687057",
+      "duration": "2h 18m",
+      "level": "Intermediate",
+      "updated": "Released 3/24/2022",
+      "why": "The broad foundation course (types, classes, generics, modules, decorators) with practice challenges, if you want a single all-round certificate instead."
+    }
+  ],
+  "portals": [
+    {
+      "name": "Type Challenges",
+      "url": "https://github.com/type-challenges/type-challenges",
+      "what": "Graded type-level puzzles from easy to extreme (mapped types, conditional types, infer) that build the type-system fluency interviewers test."
+    },
+    {
+      "name": "TypeScript Handbook (official)",
+      "url": "https://www.typescriptlang.org/docs/handbook/intro.html",
+      "what": "The official reference for narrowing, generics and the type system; use it to check your spoken answers."
+    },
+    {
+      "name": "Exercism: TypeScript track",
+      "url": "https://exercism.org/tracks/typescript",
+      "what": "Free exercises with automated tests and optional human mentoring, good for writing idiomatic TypeScript."
+    },
+    {
+      "name": "roadmap.sh: JavaScript questions",
+      "url": "https://roadmap.sh/questions/javascript",
+      "what": "A JavaScript interview question bank (closures, this, the event loop, coercion) with short answers."
+    },
+    {
+      "name": "LeetCode: 30 Days of JavaScript",
+      "url": "https://leetcode.com/studyplan/30-days-of-javascript/",
+      "what": "Small coding problems on closures, promises and function composition; solve them in TypeScript for extra practice."
+    }
+  ],
+  "assessments": [
+    {
+      "name": "JavaScript (Basic) certification",
+      "provider": "HackerRank",
+      "url": "https://www.hackerrank.com/skills-verification/javascript_basic",
+      "cost": "Free",
+      "format": "1 hr 30 min online test, 2 coding questions (topics include functions)",
+      "credential": "HackerRank certificate with a shareable URL",
+      "why": "A fast first credential for the language; there is no widely recognised TypeScript-specific certification, so JavaScript certificates are what employers look for."
+    },
+    {
+      "name": "JavaScript (Intermediate) certification",
+      "provider": "HackerRank",
+      "url": "https://www.hackerrank.com/skills-verification/javascript_intermediate",
+      "cost": "Free",
+      "format": "1 hr 30 min online test, 2 coding questions (topics include design patterns)",
+      "credential": "HackerRank certificate with a shareable URL",
+      "why": "The senior-level JavaScript credential on HackerRank; worth more than the Basic one on a profile."
+    },
+    {
+      "name": "JavaScript Certification",
+      "provider": "freeCodeCamp",
+      "url": "https://www.freecodecamp.org/learn/javascript-v9/",
+      "cost": "Free",
+      "format": "Five certification projects, then a timed 50-question closed-book exam in freeCodeCamp's exam app (no AI tools, one attempt per week, passing exams reviewed manually)",
+      "credential": "Verified freeCodeCamp certification you can add to LinkedIn and your resume",
+      "why": "A longer, project-backed credential launched in December 2025; slower to earn than HackerRank but shows sustained work."
+    }
+  ]
+}
