@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.venv/
+scripts/.snippets/
+__pycache__/
+test-results/
+playwright-report/
+playwright/.auth/
+.auth/

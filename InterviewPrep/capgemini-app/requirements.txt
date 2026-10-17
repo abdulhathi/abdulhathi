@@ -1,0 +1,14 @@
+fastapi
+httpx
+pydantic
+pytest
+sqlalchemy
+psycopg[binary]
+fakeredis
+grpcio
+grpcio-tools
+langgraph
+numpy
+uvicorn
+lupa
+websockets

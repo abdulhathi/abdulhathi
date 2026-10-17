@@ -1,0 +1,5 @@
+# Only needed when running the backend outside the lab (the lab's .venv already has these).
+fastapi>=0.135
+uvicorn[standard]
+httpx
+pytest
