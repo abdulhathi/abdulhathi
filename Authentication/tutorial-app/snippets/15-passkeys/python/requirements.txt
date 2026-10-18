@@ -1,0 +1,5 @@
+fastapi==0.143.3
+webauthn==3.0.1
+cryptography
+httpx==0.28.1
+pytest==9.1.1

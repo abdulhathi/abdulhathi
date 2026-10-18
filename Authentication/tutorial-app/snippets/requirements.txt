@@ -1,0 +1,16 @@
+# Shared environment for every Python snippet project in the Auth Lab.
+fastapi==0.143.3
+uvicorn==0.54.0
+httpx==0.28.1
+pytest==9.1.1
+pyjwt[crypto]==2.15.1
+argon2-cffi==25.1.0
+bcrypt==5.0.0
+itsdangerous==2.2.0
+pyotp==2.10.0
+webauthn==3.0.1
+python-multipart==0.0.32
+authlib==1.9.1
+cryptography
+signxml
+lxml

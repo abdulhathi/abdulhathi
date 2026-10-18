@@ -39,6 +39,7 @@ by title and stack, never by staffing firm, recruiter, rate or end client (a tes
 | React + .NET lead: React date picker | 5186 | `InterviewPrep/react-dotnet-lead/react-date-picker` |
 | React + .NET lead: AgentInformation API (.NET) | 5290 | `InterviewPrep/react-dotnet-lead/AgentInformation` |
 | DSA Lab | 5182 | `DSA/tutorial-app` |
+| Auth Lab | 5190 | `Authentication/tutorial-app` |
 | Node.js Lab | 5181 | `NodeJS/tutorial-app` |
 | RabbitMQ tutorial | 5187 | `RabbitMQ/tutorial-app` |
 | AKS prep | 5188 | `AKS/aks-prep` |

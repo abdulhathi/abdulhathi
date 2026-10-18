@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Passkey demo</title>
+  <style>
+    body { font: 16px/1.5 system-ui, sans-serif; max-width: 40rem; margin: 2rem auto; padding: 0 1rem; }
+    input, button { font: inherit; padding: 0.4rem 0.7rem; }
+    pre { background: #f3f3f3; padding: 0.8rem; white-space: pre-wrap; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <h1>Passkey demo</h1>
+  <p>Open this page at <code>http://localhost:3000</code>: the RP ID is <code>localhost</code>, and browsers allow WebAuthn on localhost without HTTPS.</p>
+  <p><label>New username <input id="username" value="ada@example.com"></label> <button id="register">Create a passkey</button></p>
+  <p><button id="login">Sign in with a passkey</button> (no username needed)</p>
+  <pre id="log">Ready.</pre>
+
+  <script type="module">
+    // WebAuthn takes and returns ArrayBuffers; the server speaks JSON, so binary values travel as base64url.
+    const encode = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const decode = (text) => Uint8Array.from(atob(text.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
+    const show = (title, value) => (document.querySelector('#log').textContent = `${title}\n${typeof value === 'string' ? value : JSON.stringify(value, null, 2)}`);
+
+    async function post(path, body = {}) {
+      const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(`${res.status}: ${data.error}`);
+      return data;
+    }
+
+    document.querySelector('#register').addEventListener('click', async () => {
+      try {
+        const options = await post('/webauthn/register/options', { username: document.querySelector('#username').value });
+        const credential = await navigator.credentials.create({
+          publicKey: {
+            ...options,
+            challenge: decode(options.challenge),
+            user: { ...options.user, id: decode(options.user.id) },
+            excludeCredentials: (options.excludeCredentials ?? []).map((c) => ({ ...c, id: decode(c.id) })),
+          },
+        });
+        const r = credential.response;
+        show('Registered', await post('/webauthn/register/verify', {
+          id: credential.id,
+          rawId: encode(credential.rawId),
+          type: credential.type,
+          authenticatorAttachment: credential.authenticatorAttachment,
+          clientExtensionResults: credential.getClientExtensionResults(),
+          response: { clientDataJSON: encode(r.clientDataJSON), attestationObject: encode(r.attestationObject), transports: r.getTransports?.() ?? [] },
+        }));
+      } catch (err) {
+        show('Registration failed', String(err));
+      }
+    });
+
+    document.querySelector('#login').addEventListener('click', async () => {
+      try {
+        const options = await post('/webauthn/login/options');
+        const credential = await navigator.credentials.get({
+          publicKey: {
+            ...options,
+            challenge: decode(options.challenge),
+            allowCredentials: (options.allowCredentials ?? []).map((c) => ({ ...c, id: decode(c.id) })),
+          },
+        });
+        const r = credential.response;
+        show('Signed in', await post('/webauthn/login/verify', {
+          id: credential.id,
+          rawId: encode(credential.rawId),
+          type: credential.type,
+          authenticatorAttachment: credential.authenticatorAttachment,
+          clientExtensionResults: credential.getClientExtensionResults(),
+          response: {
+            clientDataJSON: encode(r.clientDataJSON),
+            authenticatorData: encode(r.authenticatorData),
+            signature: encode(r.signature),
+            userHandle: r.userHandle ? encode(r.userHandle) : null,
+          },
+        }));
+      } catch (err) {
+        show('Sign-in failed', String(err));
+      }
+    });
+  </script>
+</body>
+</html>

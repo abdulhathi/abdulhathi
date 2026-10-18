@@ -111,6 +111,17 @@ export const APPS: HubApp[] = [
     pages: { type: 'dsa-lab' },
   },
   {
+    id: 'auth',
+    name: 'Auth Lab',
+    group: 'Learning labs',
+    description: 'Every way to authenticate, built and tested in Node.js, Python and .NET: passwords, sessions, API keys, JWT, OAuth 2.0, OIDC, SAML, TOTP, passkeys, magic links and mTLS.',
+    port: 5190,
+    dir: 'Authentication/tutorial-app',
+    command: vite(5190),
+    needs: npmInstall('Authentication/tutorial-app'),
+    pages: { type: 'object-list', file: 'src/chapters/index.ts', hash: '#/' },
+  },
+  {
     id: 'nodejs',
     name: 'Node.js Lab',
     group: 'Learning labs',

@@ -1,0 +1,38 @@
+{
+  "name": "auth-lab-snippets",
+  "private": true,
+  "type": "module",
+  "description": "Shared install for every Node.js snippet project in the Auth Lab (npm workspaces: <topic>/node).",
+  "workspaces": [
+    "*/node"
+  ],
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.9",
+    "@types/express": "^5.0.3",
+    "@types/express-session": "^1.18.2",
+    "@types/node": "^24.3.0",
+    "typescript": "^7.0.2",
+    "@types/cors": "^2.8.19",
+    "@types/passport": "^1.0.17",
+    "@types/passport-local": "^1.0.38",
+    "@types/passport-jwt": "^4.0.1"
+  },
+  "dependencies": {
+    "express": "^5.3.0",
+    "jose": "^6.2.12",
+    "argon2": "^0.45.1",
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "express-session": "^1.19.0",
+    "helmet": "^8.3.0",
+    "cors": "^2.8.5",
+    "@simplewebauthn/server": "^14.0.3",
+    "openid-client": "^6.8.8",
+    "otpauth": "^9.5.2",
+    "xml-crypto": "^6.4.0",
+    "@xmldom/xmldom": "^0.9.12",
+    "passport": "^0.7.0",
+    "passport-local": "^1.0.0",
+    "passport-jwt": "^4.0.1"
+  }
+}
