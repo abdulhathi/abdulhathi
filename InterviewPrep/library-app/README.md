@@ -20,6 +20,8 @@ npm run dev -- --port 5189   # or start it from Study Hub
 - **Practice:** the mock interview follows the active track (its formats, topic weights and coding language). The
   flash-card drill and weak spots can cover the active track, one stack, or the whole library.
 - **Progress and ratings are shared** across tracks: a chapter you finished for one JD stays finished for the next.
+- **Layout:** **Hide menu** (or the `[` key) folds the left menu into a top bar, and **Width: Full / Reading** switches
+  between the whole screen (the default) and a narrower reading column. Both are remembered in this browser.
 
 ## Learning paths and the voice interviewer
 

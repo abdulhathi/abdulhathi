@@ -3,6 +3,7 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { evaluatorPlugin } from './server/evaluate';
 import { runPlugin } from './server/run-api';
+import { wordsPlugin } from './server/words';
 
 export default defineConfig(({ mode }) => {
   // ANTHROPIC_API_KEY may live in .env.local; an `ant auth login` profile works without it.
@@ -13,6 +14,8 @@ export default defineConfig(({ mode }) => {
       react(),
       evaluatorPlugin(fileURLToPath(new URL('./content', import.meta.url))),
       runPlugin(fileURLToPath(new URL('.', import.meta.url))),
+      // Select-a-word popup: translate (MyMemory) and explain (Claude).
+      wordsPlugin({ header: 'x-interview-library' }),
     ],
     // Runs write to .runs/ and exercises are data: neither should reload the page.
     server: { watch: { ignored: ['**/.runs/**', '**/.venv/**'] } },

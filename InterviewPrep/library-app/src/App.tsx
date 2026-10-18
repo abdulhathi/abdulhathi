@@ -17,9 +17,11 @@ import { ProgressProvider } from './lib/progress';
 import { RatingsProvider } from './lib/ratings';
 import { resolve } from './lib/resolve';
 import { hrefFor, splitRoute, useRawRoute } from './lib/route';
+import { useLayout } from './lib/layout';
 import { useTheme } from './lib/theme';
 import { TrackProvider, useActiveTrack } from './lib/track';
-import { VoiceProvider } from './lib/voice';
+import { useVoice, VoiceProvider } from './lib/voice';
+import { WordHelper } from './components/WordHelper';
 import { PRIORITY_LABEL, type Track } from './tracks';
 import { problemsOf } from './lib/md';
 
@@ -34,6 +36,7 @@ export default function App() {
           <VoiceProvider>
             <PathProgressProvider>
               <Library />
+              <Words />
             </PathProgressProvider>
           </VoiceProvider>
         </RatingsProvider>
@@ -41,6 +44,13 @@ export default function App() {
     </TrackProvider>
   );
 }
+
+/** Select a word or sentence anywhere: translate it to Tamil, hear it, or have Claude explain it in context. */
+function Words() {
+  const { settings } = useVoice();
+  return <WordHelper target="ta" headers={WORD_HEADERS} model={settings.model} />;
+}
+const WORD_HEADERS = { 'X-Interview-Library': '1' };
 
 const PAGES: Record<string, ComponentType> = { mock: Mock, drill: Drill, progress: WeakSpots };
 
@@ -64,6 +74,7 @@ function Library() {
   const view = resolve(id, anchor, track);
   const { mode, cycle } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
+  const layout = useLayout();
   const heading = useRef<HTMLHeadingElement>(null);
   const firstRender = useRef(true);
 
@@ -116,12 +127,18 @@ function Library() {
   const { prev, next } = chapter ? neighbours(chapter, track) : { prev: undefined, next: undefined };
 
   return (
-    <div className={view.kind === 'code' ? 'page code-view' : 'page'}>
+    <div className={['page', view.kind === 'code' && 'code-view', layout.menuHidden && 'menu-hidden', layout.width === 'full' && 'full'].filter(Boolean).join(' ')}>
       <aside className="rail">
         <div className="rail-head">
           <a className="brand" href="#/">Interview Library</a>
           <div className="rail-actions">
             <ThemeToggle mode={mode} onCycle={cycle} />
+            <button type="button" className="chip-btn desk-only" onClick={layout.toggleWidth} title="Use the whole screen, or a narrower column that is easier to read">
+              Width: {layout.width === 'full' ? 'Full' : 'Reading'}
+            </button>
+            <button type="button" className="chip-btn desk-only" aria-expanded={!layout.menuHidden} aria-controls="chapter-nav" onClick={layout.toggleMenu} title="Hide or show the menu (shortcut: [ )">
+              {layout.menuHidden ? 'Show menu' : 'Hide menu'}
+            </button>
             <button type="button" className="chip-btn menu-btn" aria-expanded={menuOpen} aria-controls="chapter-nav" onClick={() => setMenuOpen((o) => !o)}>
               {menuOpen ? 'Close' : 'Menu'}
             </button>
