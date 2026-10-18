@@ -5,10 +5,11 @@ import { questionsOf, type Question } from '../lib/md';
 import { useRatings } from '../lib/ratings';
 import { hrefFor } from '../lib/route';
 import { speak, speakingStats, useDictation } from '../lib/speech';
-import { needsWork, useVoice } from '../lib/voice';
+import { needsWork, nextToWork, useVoice, type VoiceResult } from '../lib/voice';
 import { findPath } from '../paths';
-import { Title } from './Cards';
+import { Title, TopicLink } from './Cards';
 import { Markdown } from './Markdown';
+import { FeedbackPanel, LastAnswer, ScoreBadge } from './VoiceAnswer';
 
 type Item = { key: string; chapter: Chapter; q: Question };
 
@@ -30,7 +31,10 @@ export function interviewScope(scopeId: string) {
 
 const MAX_TRIES_BEFORE_REFERENCE = 2;
 
-/** The voice interviewer: one question at a time, scored, and you move on only after a passing answer. */
+/**
+ * The voice interviewer: one question at a time, scored. A question counts as done only after a passing answer, but you
+ * can move between questions freely; a skipped one stays in the queue.
+ */
 export function Interview({ scopeId }: { scopeId: string }) {
   const scope = interviewScope(scopeId);
   const { results, record, settings, setSettings } = useVoice();
@@ -58,6 +62,7 @@ export function Interview({ scopeId }: { scopeId: string }) {
   const [currentKey, setCurrentKey] = useState<string | null>(null);
   const queue = deck.filter((x) => needsWork(results[x.key], now) || x.key === currentKey);
   const current = deck.find((x) => x.key === currentKey) ?? queue[0];
+  const index = current ? deck.indexOf(current) : -1;
   const passedCount = deck.filter((x) => results[x.key]?.passed).length;
   const dueCount = deck.filter((x) => results[x.key]?.passed && needsWork(results[x.key], now)).length;
 
@@ -126,7 +131,9 @@ export function Interview({ scopeId }: { scopeId: string }) {
         <QuestionRound
           key={current.key}
           item={current}
-          left={queue.length}
+          n={index + 1}
+          total={deck.length}
+          left={queue.filter((x) => needsWork(results[x.key], now)).length}
           ready={Boolean(status?.ready)}
           review={Boolean(results[current.key]?.passed)}
           // Pin the question first, so a passing answer keeps it on screen with its feedback until you press Next.
@@ -134,29 +141,88 @@ export function Interview({ scopeId }: { scopeId: string }) {
             setCurrentKey(current.key);
             record(current.key, score, settings.passMark);
           }}
-          onNext={() => setCurrentKey(queue.find((x) => x.key !== current.key && needsWork(results[x.key], now))?.key ?? '__done__')}
+          onNext={() => setCurrentKey(nextToWork(deck, index, (x) => needsWork(results[x.key], now))?.key ?? '__done__')}
+          onPrev={index > 0 ? () => setCurrentKey(deck[index - 1].key) : undefined}
+          onSkip={index < deck.length - 1 ? () => setCurrentKey(deck[index + 1].key) : undefined}
         />
       )}
+
+      <QuestionList deck={deck} results={results} passMark={settings.passMark} currentKey={current?.key} now={now} onPick={setCurrentKey} />
     </div>
+  );
+}
+
+/** Every question in the interview with your best score; pick one to answer it now. */
+function QuestionList({
+  deck,
+  results,
+  passMark,
+  currentKey,
+  now,
+  onPick,
+}: {
+  deck: Item[];
+  results: Readonly<Record<string, VoiceResult>>;
+  passMark: number;
+  currentKey: string | undefined;
+  now: number;
+  onPick: (key: string) => void;
+}) {
+  const answered = deck.filter((x) => results[x.key]?.attempts);
+  const average = answered.length ? Math.round(answered.reduce((s, x) => s + results[x.key].best, 0) / answered.length) : null;
+  return (
+    <details className="iv-list" open>
+      <summary>
+        All questions · {answered.length} of {deck.length} answered{average !== null ? ` · average best score ${average}%` : ''}
+      </summary>
+      <ol>
+        {deck.map((x) => {
+          const r = results[x.key];
+          const state = r?.passed ? (needsWork(r, now) ? 'due' : 'passed') : r?.attempts ? 'not yet' : 'new';
+          return (
+            <li key={x.key}>
+              <button
+                type="button"
+                className={x.key === currentKey ? 'iv-pick on' : 'iv-pick'}
+                aria-current={x.key === currentKey ? 'true' : undefined}
+                onClick={() => onPick(x.key)}
+              >
+                <Title text={x.q.title} as="span" className="iv-pick-title" />
+                <span className="iv-pick-state">{state === 'due' ? 'review due' : state === 'new' ? '' : state}</span>
+                <ScoreBadge result={r} passMark={passMark} />
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </details>
   );
 }
 
 function QuestionRound({
   item,
+  n,
+  total,
   left,
   ready,
   review,
   onRecord,
   onNext,
+  onPrev,
+  onSkip,
 }: {
   item: Item;
+  n: number;
+  total: number;
   left: number;
   ready: boolean;
   review: boolean;
   onRecord: (score: number) => void;
   onNext: () => void;
+  onPrev?: () => void;
+  onSkip?: () => void;
 }) {
-  const { settings } = useVoice();
+  const { settings, results, answers, saveAnswer } = useVoice();
   const { setRating } = useRatings();
   const dictation = useDictation();
   const [grading, setGrading] = useState(false);
@@ -194,10 +260,12 @@ function QuestionRound({
       setError(result.error);
       return;
     }
+    const spoken = speakingStats(answer, dictation.spokenMs);
     setTries((t) => t + 1);
     setFeedback(result.feedback);
-    setStats(speakingStats(answer, dictation.spokenMs));
+    setStats(spoken);
     onRecord(result.feedback.score);
+    saveAnswer(item.key, { answer, feedback: result.feedback, at: Date.now(), stats: spoken });
     const ok = result.feedback.score >= settings.passMark;
     if (ok) setPassed(true);
     setRating(item.key, ok ? 'good' : passed ? 'good' : result.feedback.verdict === 'close' ? 'shaky' : 'missed');
@@ -214,17 +282,26 @@ function QuestionRound({
 
   return (
     <article className="iv-card">
-      <p className="iv-meta">
-        {review ? 'Review' : 'Question'} · {left} left · <a href={hrefFor(item.chapter.id, item.q.id)}>{item.chapter.title}</a>
-        {tries > 0 && ` · attempt ${tries + (feedback && !passed ? 1 : 0)}`}
-      </p>
+      <div className="iv-nav">
+        <button type="button" className="chip-btn" onClick={onPrev} disabled={!onPrev || grading}>← Previous</button>
+        <p className="iv-meta">
+          {review ? 'Review' : 'Question'} {n} of {total} · {left} to pass · <a href={hrefFor(item.chapter.id, item.q.id)}>{item.chapter.title}</a>
+          {tries > 0 && ` · attempt ${tries + (feedback && !passed ? 1 : 0)}`}
+        </p>
+        <ScoreBadge result={results[item.key]} passMark={settings.passMark} />
+        <button type="button" className="chip-btn" onClick={onSkip} disabled={!onSkip || grading}>{passed ? 'Next →' : 'Skip →'}</button>
+      </div>
       <h2 className="iv-q">
         <Title text={item.q.title} as="span" />
       </h2>
+      <p className="qtopic">
+        <TopicLink chapterId={item.chapter.id} questionId={item.q.id} elsewhere />
+      </p>
       <button type="button" className="chip-btn" onClick={() => speak(item.q.title)}>🔊 Read the question again</button>
 
       {!feedback && (
         <div className="iv-answer">
+          <LastAnswer saved={answers[item.key]} passMark={settings.passMark} />
           <div className="iv-mic">
             {dictation.supported ? (
               <button
@@ -276,8 +353,8 @@ function QuestionRound({
           ) : (
             <>
               <p className="iv-note">
-                An interviewer would not move on yet. Fix what is missing and answer again: you need {settings.passMark}% to
-                continue.
+                You need {settings.passMark}% to pass this question. Fix what is missing and answer again, or press Skip to come
+                back to it later: it stays in your queue until it passes.
               </p>
               <button type="button" className="chip-btn reveal" onClick={tryAgain}>Try again</button>
               {canReveal && !showReference && (
@@ -296,73 +373,10 @@ function QuestionRound({
             <summary>The library's model answer</summary>
             <Markdown src={item.q.body} />
           </details>
-          {!passed && <p className="iv-note">Now say it in your own words. You still need a passing answer to move on.</p>}
+          {!passed && <p className="iv-note">Now say it in your own words. The question stays in your queue until an answer passes.</p>}
         </div>
       )}
     </article>
-  );
-}
-
-function FeedbackPanel({ feedback, stats, passMark }: { feedback: Feedback; stats: ReturnType<typeof speakingStats> | null; passMark: number }) {
-  const ok = feedback.score >= passMark;
-  return (
-    <section className={`iv-feedback v-${feedback.verdict}`} aria-live="polite">
-      <div className="iv-score">
-        <span className="iv-pct">{feedback.score}%</span>
-        <span className="iv-verdict">{ok ? 'Pass' : feedback.verdict === 'close' ? 'Close: not yet' : 'Not yet'}</span>
-      </div>
-      <p>{feedback.summary}</p>
-      <FeedbackList title="What you got right" items={feedback.strengths} kind="good" />
-      <FeedbackList title="What the interviewer expected and did not hear" items={feedback.missing} kind="missing" />
-      <FeedbackList title="Corrections" items={feedback.incorrect} kind="wrong" />
-      {feedback.grammar.length > 0 && (
-        <div className="iv-block">
-          <h3>Grammar and wording</h3>
-          <div className="table-wrap">
-            <table className="t">
-              <thead>
-                <tr><th>You said</th><th>Better</th><th>Why</th></tr>
-              </thead>
-              <tbody>
-                {feedback.grammar.map((g, i) => (
-                  <tr key={i}>
-                    <td className="g-orig">{g.original}</td>
-                    <td className="g-fix">{g.corrected}</td>
-                    <td>{g.note}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-      {stats && stats.words > 0 && (
-        <p className="iv-stats">
-          {stats.words} words
-          {stats.seconds > 0 && ` in ${stats.seconds} s`}
-          {stats.wpm !== null && ` · ${stats.wpm} words a minute${stats.wpm > 170 ? ' (slow down a little)' : stats.wpm < 100 ? ' (a little faster is fine)' : ''}`}
-          {stats.fillerCount > 0 && ` · filler words: ${stats.fillers.map((f) => `"${f.word}" ×${f.count}`).join(', ')}`}
-          {stats.seconds > 120 && ' · aim for 30–90 seconds, then let them ask for more'}
-        </p>
-      )}
-      {feedback.speech_to_text.length > 0 && (
-        <p className="iv-note">Probably speech-recognition slips (not counted): {feedback.speech_to_text.join('; ')}</p>
-      )}
-    </section>
-  );
-}
-
-function FeedbackList({ title, items, kind }: { title: string; items: string[]; kind: string }) {
-  if (!items.length) return null;
-  return (
-    <div className={`iv-block k-${kind}`}>
-      <h3>{title}</h3>
-      <ul>
-        {items.map((x, i) => (
-          <li key={i}>{x}</li>
-        ))}
-      </ul>
-    </div>
   );
 }
 

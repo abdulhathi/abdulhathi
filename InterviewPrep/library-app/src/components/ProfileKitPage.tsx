@@ -6,7 +6,7 @@ import { useVoice } from '../lib/voice';
 import { PATHS, projectFor, resourcesFor } from '../paths';
 import { pathSteps } from './PathPage';
 
-const KEYS = ['done', 'ratings', 'voice', 'voice-settings', 'paths', 'track'].map((k) => `interview-library.${k}`);
+const KEYS = ['done', 'ratings', 'voice', 'voice-answers', 'voice-settings', 'paths', 'track'].map((k) => `interview-library.${k}`);
 
 /** Everything you have earned across paths, in one place, plus a backup of your progress. */
 export function ProfileKitPage() {

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { findChapter } from '../chapters';
 import { PROFILE_SKILLS } from '../credentials';
 import { speakingStats } from '../lib/speech';
-import { needsWork, nextResult, REVIEW_DAYS } from '../lib/voice';
+import { needsWork, nextResult, nextToWork, REVIEW_DAYS } from '../lib/voice';
 import { PATHS, projectFor, resourcesFor } from '../paths';
 
 const DAY = 86_400_000;
@@ -71,6 +71,12 @@ describe('voice results and spaced review', () => {
     const failed = nextResult(reviewed, 50, 80, reviewed.dueAt!);
     expect(failed).toMatchObject({ passed: false, stage: 0 });
     expect(failed.best).toBe(90);
+  });
+  it('after a question, moves on to the next one still open, wrapping round to the start', () => {
+    const open = (x: number) => x % 2 === 0;
+    expect(nextToWork([0, 1, 2, 3, 4], 2, open)).toBe(4);
+    expect(nextToWork([0, 1, 2, 3, 4], 4, open)).toBe(0);
+    expect(nextToWork([1, 2, 3], 1, open)).toBeUndefined(); // the only open one is the current question
   });
   it('answering a passed question again before it is due does not reset it', () => {
     const first = nextResult(undefined, 90, 80, now);

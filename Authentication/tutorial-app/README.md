@@ -35,7 +35,7 @@ You rebuild each method yourself in `Authentication/projects/<topic>/`, followin
 | `src/components/Stacks.tsx` | Node.js / Python / .NET tabs; the choice applies to every example and is remembered |
 | `snippets/<topic>/{node,python,dotnet}/` | The tested projects shown in the chapters, each with its own tests |
 | `scripts/verify.mjs` | Runs every snippet project's tests (`node --test` + tsc, pytest, `dotnet test`) |
-| `server/words.ts`, `src/components/WordHelper.tsx` | Select a word or sentence: translate it to Tamil, hear it, or have Claude explain it |
+| `server/words.ts`, `src/components/WordHelper.tsx` | Select a word or sentence: translate it to Tamil, hear it, have Claude explain it, or ask Claude your own questions about it |
 | `CONTENT-GUIDE.md` | How chapters and snippet projects are written and verified |
 
 The app imports snippet files as raw strings, so the code on screen is the code that passed its tests. Shared installs:
@@ -48,5 +48,5 @@ node scripts/verify.mjs              # every topic, every stack
 node scripts/verify.mjs 08-jwt       # one topic
 ```
 
-The word helper's **Explain** button calls Claude from the dev server; sign in once with `ant auth login` (or set
+The word helper's **Explain** and **Ask** buttons call Claude from the dev server; sign in once with `ant auth login` (or set
 `ANTHROPIC_API_KEY`). Translation uses the free MyMemory service.

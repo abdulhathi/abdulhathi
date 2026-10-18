@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { CHAPTERS, CONTENT_IDS, findChapter, PRACTICE_PAGES, REGISTERED_IDS, STACKS, TRACK_SLOTS } from '../chapters';
 import { problemsOf, questionsOf, slug } from '../lib/md';
+import { QUESTION_TOPICS } from '../lib/topics';
 import { TRACKS } from '../tracks';
 
 // Run one chapter's checks with: npx vitest run src/test/content.test.ts -t <id>
@@ -118,5 +119,23 @@ describe.each(written.map((c) => [c.id, c] as const))('%s', (id, chapter) => {
     // Company names and JD talk belong in the tracks; the library is reused across job descriptions.
     expect(text).not.toMatch(/\b(CitiusTech|Capgemini)\b/);
     expect(text).not.toMatch(/\b(the JD|this JD|job description)\b/i);
+  });
+});
+
+describe('question topics', () => {
+  const all = CHAPTERS.flatMap((c) => questionsOf(c.doc).map((q) => ({ key: `${c.id}/${q.id}`, chapter: c })));
+
+  it('names a topic (or null) for every question, as CONTENT-GUIDE.md asks', () => {
+    expect(all.filter((x) => !(x.key in QUESTION_TOPICS)).map((x) => x.key)).toEqual([]);
+  });
+
+  it('points every topic at a prose section of the question’s own chapter, and keeps no entries for removed questions', () => {
+    const known = new Set(all.map((x) => x.key));
+    expect(Object.keys(QUESTION_TOPICS).filter((k) => !known.has(k))).toEqual([]);
+    const broken = all.filter(({ key, chapter }) => {
+      const anchor = QUESTION_TOPICS[key];
+      return anchor !== null && anchor !== undefined && !chapter.doc.sections.some((s) => s.kind === 'prose' && `s-${slug(s.title)}` === anchor);
+    });
+    expect(broken.map((x) => `${x.key} → ${QUESTION_TOPICS[x.key]}`)).toEqual([]);
   });
 });

@@ -1,4 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import type { Feedback } from './evaluate';
+import type { SpeakingStats } from './speech';
 import { readJson, writeJson } from './storage';
 
 // Voice-interview results per question ("<chapter>/<question id>"). A question passes when one answer scores at or
@@ -18,11 +20,15 @@ export type VoiceResult = {
   lastAt?: number;
 };
 
+/** Your latest scored answer to a question and the grader's feedback on it. A newer scored answer replaces it. */
+export type SavedAnswer = { answer: string; feedback: Feedback; at: number; stats?: SpeakingStats };
+
 export type VoiceSettings = { model: string; passMark: number; mustKnowOnly: boolean; readAloud: boolean };
 export const DEFAULT_SETTINGS: VoiceSettings = { model: 'claude-opus-5-5', passMark: 80, mustKnowOnly: true, readAloud: true };
 
 const KEY = 'interview-library.voice';
 const SETTINGS_KEY = 'interview-library.voice-settings';
+const ANSWERS_KEY = 'interview-library.voice-answers';
 
 /** The next state after an answer scored `score`. Pure, so it can be tested. */
 export function nextResult(prev: VoiceResult | undefined, score: number, passMark: number, now: number): VoiceResult {
@@ -42,9 +48,20 @@ export function needsWork(r: VoiceResult | undefined, now: number) {
   return !r || !r.passed || (r.dueAt !== undefined && r.dueAt <= now);
 }
 
+/** The first item after `index` (wrapping round) that still needs work. */
+export function nextToWork<T>(deck: T[], index: number, open: (x: T) => boolean): T | undefined {
+  for (let step = 1; step < deck.length; step++) {
+    const x = deck[(index + step) % deck.length];
+    if (open(x)) return x;
+  }
+  return undefined;
+}
+
 type Value = {
   results: Readonly<Record<string, VoiceResult>>;
   record: (key: string, score: number, passMark: number) => VoiceResult;
+  answers: Readonly<Record<string, SavedAnswer>>;
+  saveAnswer: (key: string, saved: SavedAnswer) => void;
   settings: VoiceSettings;
   setSettings: (s: Partial<VoiceSettings>) => void;
 };
@@ -52,8 +69,10 @@ const Ctx = createContext<Value | null>(null);
 
 export function VoiceProvider({ children }: { children: ReactNode }) {
   const [results, setResults] = useState<Record<string, VoiceResult>>(() => readJson(KEY, {}));
+  const [answers, setAnswers] = useState<Record<string, SavedAnswer>>(() => readJson(ANSWERS_KEY, {}));
   const [settings, setAll] = useState<VoiceSettings>(() => ({ ...DEFAULT_SETTINGS, ...readJson<Partial<VoiceSettings>>(SETTINGS_KEY, {}) }));
   useEffect(() => writeJson(KEY, results), [results]);
+  useEffect(() => writeJson(ANSWERS_KEY, answers), [answers]);
   useEffect(() => writeJson(SETTINGS_KEY, settings), [settings]);
 
   const record = useCallback((key: string, score: number, passMark: number) => {
@@ -64,8 +83,12 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
     });
     return out ?? nextResult(undefined, score, passMark, Date.now());
   }, []);
+  const saveAnswer = useCallback((key: string, saved: SavedAnswer) => setAnswers((prev) => ({ ...prev, [key]: saved })), []);
   const setSettings = useCallback((s: Partial<VoiceSettings>) => setAll((prev) => ({ ...prev, ...s })), []);
-  const value = useMemo(() => ({ results, record, settings, setSettings }), [results, record, settings, setSettings]);
+  const value = useMemo(
+    () => ({ results, record, answers, saveAnswer, settings, setSettings }),
+    [results, record, answers, saveAnswer, settings, setSettings],
+  );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

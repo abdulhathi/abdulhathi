@@ -120,7 +120,8 @@ export function useDictation(lang = 'en-US') {
   return {
     supported: Boolean(Ctor),
     listening,
-    text: `${committed}${interim ? ` ${interim}` : ''}`.trim(),
+    // Trim only while words are still arriving: trimming typed text would eat each space as you type it.
+    text: interim ? `${committed} ${interim}`.trim() : committed,
     setText: setCommitted,
     error,
     start,
@@ -143,6 +144,8 @@ export function speak(text: string, lang = 'en-US'): () => void {
 }
 
 const FILLERS = ['um', 'uh', 'erm', 'like', 'basically', 'actually', 'you know', 'i mean', 'kind of', 'sort of', 'so yeah'];
+
+export type SpeakingStats = ReturnType<typeof speakingStats>;
 
 /** Speaking metrics for a spoken answer: length, pace, and filler words. */
 export function speakingStats(text: string, ms: number) {

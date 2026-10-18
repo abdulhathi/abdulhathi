@@ -1,17 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ALL_QUESTIONS } from '../chapters';
-import { RateButtons, TagBadges, Title } from '../components/Cards';
+import { MicButton, RateButtons, TagBadges, Title, TopicLink } from '../components/Cards';
 import { Markdown } from '../components/Markdown';
+import { LastAnswer, ScoreBadge, VoiceAnswer } from '../components/VoiceAnswer';
 import { useRatings } from '../lib/ratings';
 import { hrefFor } from '../lib/route';
 import { useScope } from '../lib/scope';
 import { useActiveTrack } from '../lib/track';
+import { useVoice } from '../lib/voice';
 import { newSeed, shuffle } from '../lib/random';
 
 type Which = 'all' | 'unrated' | 'weak';
 
 export function Drill() {
   const { ratings } = useRatings();
+  const { results, answers, settings } = useVoice();
   const { track } = useActiveTrack();
   const { scopes, scope, setScope } = useScope(track);
   const [coreOnly, setCoreOnly] = useState(true);
@@ -19,6 +22,7 @@ export function Drill() {
   const [seed, setSeed] = useState(newSeed);
   const [index, setIndex] = useState(0);
   const [shown, setShown] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
 
   // The deck is fixed when the filters change, not when a card is rated, so rating never reshuffles it.
   const deck = useMemo(() => {
@@ -34,12 +38,14 @@ export function Drill() {
   useEffect(() => {
     setIndex(0);
     setShown(false);
+    setSpeaking(false);
   }, [deck]);
 
   const card = deck[index];
   const go = (step: number) => {
     setIndex((i) => Math.min(Math.max(i + step, 0), deck.length - 1));
     setShown(false);
+    setSpeaking(false);
   };
   const good = deck.filter((x) => ratings[x.key] === 'good').length;
 
@@ -81,8 +87,17 @@ export function Drill() {
             <p className="drill-q">
               <a href={hrefFor(card.chapter.id, card.q.id)}>{card.chapter.num} {card.chapter.title}</a>
               <TagBadges tags={card.q.tags} />
+              <ScoreBadge result={results[card.key]} passMark={settings.passMark} />
             </p>
             <Title text={card.q.title} as="p" className="drill-summary" />
+            <p className="qtopic">
+              <TopicLink chapterId={card.chapter.id} questionId={card.q.id} elsewhere />
+            </p>
+            {speaking ? (
+              <VoiceAnswer key={card.key} chapterId={card.chapter.id} q={card.q} onClose={() => setSpeaking(false)} />
+            ) : (
+              <LastAnswer key={card.key} saved={answers[card.key]} passMark={settings.passMark} />
+            )}
             {shown ? (
               <div className="answer">
                 <Markdown src={card.q.body} />
@@ -91,6 +106,7 @@ export function Drill() {
               <p className="drill-tip">Answer out loud as if the interviewer just asked, then reveal.</p>
             )}
             <div className="pcard-actions">
+              {!speaking && <MicButton again={Boolean(answers[card.key])} onClick={() => setSpeaking(true)} />}
               {!shown && (
                 <button type="button" className="chip-btn reveal" onClick={() => setShown(true)}>Show answer</button>
               )}

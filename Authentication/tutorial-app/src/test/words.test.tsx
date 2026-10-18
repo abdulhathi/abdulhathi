@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { normalizeSelection, WordHelper } from '../components/WordHelper';
@@ -25,6 +25,10 @@ beforeEach(() => {
     vi.fn(async (url: string, init?: RequestInit) => {
       sent.push({ url, body: init?.body ? JSON.parse(String(init.body)) : undefined, headers: new Headers(init?.headers) });
       if (url.startsWith('/api/words/translate')) return Response.json({ translations: ['அங்கீகரிப்பு', 'அடையாளச் சோதனை'], cached: false });
+      if (url === '/api/words/ask') {
+        const n = sent.filter((x) => x.url === '/api/words/ask').length;
+        return Response.json({ answer: `Answer ${n}.`, model: 'claude-haiku-5-5' });
+      }
       return Response.json({ explanation: 'Proving who you are before you get access.', model: 'claude-haiku-5-5', cached: true });
     }),
   );
@@ -85,6 +89,43 @@ describe('the word helper', () => {
     await act(async () => new Promise((r) => setTimeout(r, 5)));
     await user.keyboard('{Escape}');
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  });
+
+  it('opens a question box from the chip, answers in context, and sends follow-ups with the conversation', async () => {
+    const user = userEvent.setup();
+    page();
+    const text = screen.getByTestId('para').firstChild!;
+    select(text, 0, 13);
+    fireEvent.mouseUp(screen.getByTestId('para'));
+    await user.click(await screen.findByRole('button', { name: /^Ask$/ }));
+    const dialog = screen.getByRole('dialog', { name: 'Ask a question' });
+    const box = within(dialog).getByRole('textbox', { name: 'Your question' });
+    expect(box).toHaveFocus();
+    await user.type(box, 'Why does this matter?{Enter}');
+    expect(await within(dialog).findByText('Answer 1.')).toBeInTheDocument();
+    expect(within(dialog).getByText('Why does this matter?')).toBeInTheDocument();
+    const first = sent.find((x) => x.url === '/api/words/ask')!;
+    expect(first.body).toMatchObject({ text: 'Every request', question: 'Why does this matter?', history: [], model: 'claude-haiku-5-5' });
+    expect(String(first.body!.context)).toContain('before the server answers it');
+    await user.type(within(dialog).getByRole('textbox', { name: 'Your question' }), 'Give an example.{Enter}');
+    expect(await within(dialog).findByText('Answer 2.')).toBeInTheDocument();
+    const second = sent.filter((x) => x.url === '/api/words/ask')[1];
+    expect(second.body).toMatchObject({ question: 'Give an example.', history: [{ question: 'Why does this matter?', answer: 'Answer 1.' }] });
+  });
+
+  it('lets you ask about an explanation, carrying it into the conversation', async () => {
+    const user = userEvent.setup();
+    page();
+    select(screen.getByTestId('word'));
+    fireEvent.dblClick(screen.getByTestId('word'));
+    await user.click(await screen.findByRole('button', { name: 'Explain with Claude' }));
+    await screen.findByText('Proving who you are before you get access.');
+    await user.type(screen.getByRole('textbox', { name: 'Your question' }), 'Is it the same as authorization?{Enter}');
+    const dialog = await screen.findByRole('dialog', { name: 'Ask a question' });
+    expect(await within(dialog).findByText('Answer 1.')).toBeInTheDocument();
+    expect(within(dialog).getByText('Explanation')).toBeInTheDocument();
+    const asked = sent.find((x) => x.url === '/api/words/ask')!;
+    expect(asked.body).toMatchObject({ question: 'Is it the same as authorization?', history: [{ question: '', answer: 'Proving who you are before you get access.' }] });
   });
 
   it('leaves selections in fields alone', async () => {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ALL_PROBLEMS, ALL_QUESTIONS, STACKS } from '../chapters';
-import { RateButtons, Title } from '../components/Cards';
+import { RateButtons, Title, TopicLink } from '../components/Cards';
 import { useRatings } from '../lib/ratings';
 import { hrefFor } from '../lib/route';
 import { scopesFor } from '../lib/scope';
@@ -78,6 +78,7 @@ export function WeakSpots() {
                 <div className="review-ch">
                   <span>{x.kind}</span>
                   <span>{x.chapter.num} {x.chapter.title}</span>
+                  {x.kind === 'Question' && <TopicLink chapterId={x.chapter.id} questionId={x.id} />}
                 </div>
               </div>
               <RateButtons id={x.key} />

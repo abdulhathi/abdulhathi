@@ -64,6 +64,9 @@ Rules the content test enforces (`npx vitest run src/test/content.test.ts -t <id
 - There is an intro paragraph before the first `##` heading. No `# ` H1 anywhere (the title comes from front matter).
 - The section titled exactly **Interview questions** holds the question cards: each `###` is one card.
   Question tags: `{core}` = very likely to be asked / must know, `{deep}` = follow-up or senior-level. Untagged is fine.
+  Every question also needs an entry in `src/topics.json`: `"<chapter>/q-<slug>": "s-<section slug>"`, the section of
+  the same chapter that teaches it (`null` if no one section does). It drives the "Topic:" link on the card, and the
+  content test fails until a new question has one.
 - The section titled exactly **Coding problems** holds problems: each `###` is one problem, tagged with one of
   `{easy}`, `{medium}`, `{hard}` and optionally `core` (e.g. `{medium core}`).
   Inside a problem, the only `####` headings allowed are **Hints** (a numbered list, 2–4 items), **Solution**

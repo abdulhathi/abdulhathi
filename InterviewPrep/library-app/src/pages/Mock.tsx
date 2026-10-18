@@ -156,7 +156,7 @@ function Round({ track, saved, plan, onChange }: { track: Track; saved: Saved; p
         return (
           <div key={item.key} className="mock-item">
             <p className="mock-from">{x.chapter.title}</p>
-            <QuestionCard chapterId={x.chapter.id} q={x.q} n={i + 1} />
+            <QuestionCard chapterId={x.chapter.id} q={x.q} n={i + 1} elsewhere />
           </div>
         );
       })}

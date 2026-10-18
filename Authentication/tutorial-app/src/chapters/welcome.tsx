@@ -87,8 +87,9 @@ export function Welcome() {
       <Box kind="tip" label="Stuck on a word?">
         <p>
           Double-click any word to see it in Tamil, or select a phrase or sentence for a small menu: <strong>Speak</strong>{' '}
-          reads it aloud, <strong>Translate</strong> shows it in Tamil, and <strong>Explain</strong> asks Claude for a
-          short explanation of what it means on this page. Explain needs the lab’s dev server and your Claude sign-in
+          reads it aloud, <strong>Translate</strong> shows it in Tamil, <strong>Explain</strong> asks Claude for a
+          short explanation of what it means on this page, and <strong>Ask</strong> opens a box where you type your own
+          question about it, then follow-ups. Explain and Ask need the lab’s dev server and your Claude sign-in
           (<code>ant auth login</code>).
         </p>
       </Box>
