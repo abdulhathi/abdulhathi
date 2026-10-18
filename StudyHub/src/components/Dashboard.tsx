@@ -1,5 +1,7 @@
 import { APPS, GROUPS, type HubApp } from '../apps';
-import { appHref } from '../lib/route';
+import { findPlan } from '../plans';
+import { appHref, planHref } from '../lib/route';
+import { clock, countdown, dayLabel, useNow, whereAmI } from '../lib/schedule';
 import { stateOf, type Hub } from '../lib/useHub';
 import { AppActions } from './AppActions';
 import { Logs } from './Logs';
@@ -33,6 +35,8 @@ export function Dashboard({ hub }: { hub: Hub }) {
           </div>
         </div>
       </header>
+
+      <PlanTeaser />
 
       {GROUPS.map((group) => (
         <section key={group} className="dash-group" aria-labelledby={`g-${group}`}>
@@ -99,5 +103,30 @@ function AppCard({ app, hub }: { app: HubApp; hub: Hub }) {
         </details>
       )}
     </article>
+  );
+}
+
+/** What the prep plan says to do now, with the next milestone; hidden once the plan is over. */
+function PlanTeaser() {
+  const plan = findPlan();
+  const now = useNow();
+  const { current, next } = whereAmI(plan, now);
+  const milestone = plan.milestones.find((m) => new Date(m.at) > now);
+  if (!current && !next) return null;
+  const slot = current ?? next!;
+  return (
+    <a className="plan-teaser" href={planHref(plan.id)}>
+      <span className="kicker">Prep plan</span>
+      <span>
+        <strong>{current ? 'Now' : 'Next'}:</strong> {current ? '' : `${dayLabel(slot.day.date).split(',')[0]} `}
+        {clock(slot.block.start)} · {slot.block.title}
+      </span>
+      {milestone && (
+        <span className="muted">
+          {milestone.label} in {countdown(new Date(milestone.at), now)}
+        </span>
+      )}
+      <span className="teaser-go" aria-hidden="true">→</span>
+    </a>
   );
 }

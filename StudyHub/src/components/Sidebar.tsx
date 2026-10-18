@@ -1,5 +1,5 @@
 import { APPS, GROUPS } from '../apps';
-import { appHref, homeHref, type Route } from '../lib/route';
+import { appHref, homeHref, planHref, type Route } from '../lib/route';
 import type { Hub } from '../lib/useHub';
 import { StatusDot } from './StatusBadge';
 
@@ -10,6 +10,10 @@ export function Sidebar({ hub, route, onNavigate }: { hub: Hub; route: Route; on
       <a href={homeHref} className={route.view === 'home' ? 'side-link is-current' : 'side-link'} aria-current={route.view === 'home' ? 'page' : undefined} onClick={onNavigate}>
         <span className="side-icon" aria-hidden="true">◆</span>
         <span>All apps</span>
+      </a>
+      <a href={planHref()} className={route.view === 'plan' ? 'side-link is-current' : 'side-link'} aria-current={route.view === 'plan' ? 'page' : undefined} onClick={onNavigate}>
+        <span className="side-icon" aria-hidden="true">◷</span>
+        <span>Prep plan</span>
       </a>
       {GROUPS.map((group) => (
         <div key={group} className="side-group">

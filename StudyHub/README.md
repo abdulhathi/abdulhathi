@@ -22,6 +22,14 @@ npm run dev     # http://localhost:5180
 - **Output:** each app the hub starts writes its output to `.hub/logs/<app>.log`, shown on its card and in the viewer
   when it is not running (useful when an app fails to start).
 
+## Prep plan
+
+`#/plan` (the **Prep plan** link in the sidebar) shows a timed preparation plan: countdowns to the interview and
+assessment deadlines, what to do now and next, and each day's blocks with links that open library chapters here,
+voice interviews in a new tab, and outside docs. Tick blocks off as you go; ticks are kept in this browser. Plans are
+data in `src/plans.ts` (add one to the top of `PLANS` to make it the current plan). That file is public: name roles
+by title and stack, never by staffing firm, recruiter, rate or end client (a test checks).
+
 ## The apps
 
 | App | Port | Folder |

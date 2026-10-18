@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { findApp } from './apps';
 import { AppView } from './components/AppView';
 import { Dashboard } from './components/Dashboard';
+import { PlanPage } from './components/PlanPage';
 import { Search } from './components/Search';
 import { Sidebar } from './components/Sidebar';
 import { NARROW, useMediaQuery, useSidebarHidden } from './lib/layout';
@@ -36,8 +37,8 @@ export default function App() {
   }, [toggleSide]);
 
   useEffect(() => {
-    document.title = app ? `${app.name} · Study Hub` : 'Study Hub';
-  }, [app]);
+    document.title = app ? `${app.name} · Study Hub` : route.view === 'plan' ? 'Prep plan · Study Hub' : 'Study Hub';
+  }, [app, route.view]);
 
   // Notices fade after a few seconds; errors stay until dismissed.
   const { notice, dismissNotice } = hub;
@@ -79,6 +80,8 @@ export default function App() {
           <p className="warn banner">
             No app called “{route.id}”. <a href={homeHref}>See all apps</a>.
           </p>
+        ) : route.view === 'plan' ? (
+          <PlanPage planId={route.id} />
         ) : (
           <Dashboard hub={hub} />
         )}
